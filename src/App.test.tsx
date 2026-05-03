@@ -19,4 +19,14 @@ describe('Portfolio dashboard', () => {
     expect(screen.getByText(/signal board/i)).toBeInTheDocument();
     expect(screen.getByText(/building calm interfaces/i)).toBeInTheDocument();
   });
+
+  it('opens external profile links safely', () => {
+    render(<App />);
+
+    const githubLink = screen.getByRole('link', { name: /github/i });
+
+    expect(githubLink).toHaveAttribute('href', 'https://github.com/');
+    expect(githubLink).toHaveAttribute('target', '_blank');
+    expect(githubLink).toHaveAttribute('rel', 'noreferrer');
+  });
 });
