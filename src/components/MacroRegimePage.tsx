@@ -31,7 +31,7 @@ function DecisionCard({ decision, onOpen }: { decision: MacroRegimeDecision; onO
     <button className="macro-regime-card" type="button" onClick={onOpen}>
       <div className="macro-card-meta">
         <span className="macro-market-chip">{decision.market}</span>
-        <time>{decision.dateLabel}</time>
+        <time dateTime={decision.runDate}>{decision.dateLabel}</time>
       </div>
       <strong>{decision.regime}</strong>
       <p>{decision.axisSummary}</p>
@@ -74,7 +74,7 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
           <div>
             <div className="macro-modal-meta">
               <span>{decision.market}</span>
-              <time>{decision.dateLabel}</time>
+              <time dateTime={decision.runDate}>{decision.dateLabel}</time>
             </div>
             <h3 id={titleId}>{decision.regime}</h3>
           </div>
@@ -88,8 +88,9 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
               <span key={item}>{item}</span>
             ))}
           </aside>
-          <main className="macro-modal-content">
+          <div className="macro-modal-content">
             <section className="macro-popup-panel">
+              <h4>요약</h4>
               <span className="macro-panel-kicker">TL;DR</span>
               <p>{decision.summary ?? '-'}</p>
             </section>
@@ -124,7 +125,7 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
               <h4>자산 영향</h4>
               <ul>
                 {decision.assetImplications.length > 0 ? (
-                  decision.assetImplications.map((item) => <li key={item}>{item}</li>)
+                  decision.assetImplications.map((item, index) => <li key={`${index}-${item}`}>{item}</li>)
                 ) : (
                   <li>표시할 자산 영향이 없습니다.</li>
                 )}
@@ -134,7 +135,7 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
               <h4>리스크</h4>
               <ul>
                 {decision.riskFactors.length > 0 ? (
-                  decision.riskFactors.map((item) => <li key={item}>{item}</li>)
+                  decision.riskFactors.map((item, index) => <li key={`${index}-${item}`}>{item}</li>)
                 ) : (
                   <li>표시할 리스크가 없습니다.</li>
                 )}
@@ -142,11 +143,11 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
             </section>
             <section className="macro-popup-panel">
               <h4>전문</h4>
-              {renderMarkdownText(decision.contentMarkdown).map((line) => (
-                <p key={line}>{line}</p>
+              {renderMarkdownText(decision.contentMarkdown).map((line, index) => (
+                <p key={`${index}-${line}`}>{line}</p>
               ))}
             </section>
-          </main>
+          </div>
         </div>
       </section>
     </div>

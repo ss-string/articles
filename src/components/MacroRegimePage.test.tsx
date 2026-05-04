@@ -59,12 +59,16 @@ const rows: RawMacroRegimeRow[] = [
 
 describe('MacroRegimePage', () => {
   it('renders KR and US latest decision cards', async () => {
-    render(<MacroRegimePage queryRows={async () => rows} />);
+    const { container } = render(<MacroRegimePage queryRows={async () => rows} />);
 
     expect(await screen.findByRole('heading', { name: '최신 매크로 레짐 판단' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /KR/ })).toHaveTextContent('골디락스(goldilocks)');
     expect(screen.getByRole('button', { name: /US/ })).toHaveTextContent('리플레이션(reflation)');
     expect(screen.getAllByText('2026.05.04')).not.toHaveLength(0);
+    expect(Array.from(container.querySelectorAll('time')).map((time) => time.getAttribute('dateTime'))).toEqual([
+      '2026-05-04',
+      '2026-05-04',
+    ]);
     expect(screen.getByText('expanding')).toBeInTheDocument();
     expect(screen.getByText('elevated')).toBeInTheDocument();
   });
@@ -79,6 +83,8 @@ describe('MacroRegimePage', () => {
     expect(within(dialog).getByText('2026.05.04')).toBeInTheDocument();
     expect(within(dialog).queryByText(/as of/i)).not.toBeInTheDocument();
     expect(within(dialog).queryByText(/updated_at 최신/)).not.toBeInTheDocument();
+    expect(within(dialog).queryByRole('main')).not.toBeInTheDocument();
+    expect(within(dialog).getByRole('heading', { name: '요약' })).toBeInTheDocument();
     expect(within(dialog).getByText(rows[1].summary as string)).toBeInTheDocument();
     expect(within(dialog).getByText('성장')).toBeInTheDocument();
     expect(within(dialog).getAllByText('판단 neutral')).toHaveLength(2);
@@ -99,6 +105,30 @@ describe('MacroRegimePage', () => {
     ]);
 
     await user.click(within(dialog).getByRole('button', { name: '상세 팝업 닫기' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('closes the popup when the backdrop is clicked', async () => {
+    const user = userEvent.setup();
+    render(<MacroRegimePage queryRows={async () => rows} />);
+
+    await user.click(await screen.findByRole('button', { name: /US/ }));
+    const dialog = screen.getByRole('dialog', { name: '리플레이션(reflation)' });
+
+    await user.click(dialog.parentElement as HTMLElement);
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('closes the popup when Escape is pressed', async () => {
+    const user = userEvent.setup();
+    render(<MacroRegimePage queryRows={async () => rows} />);
+
+    await user.click(await screen.findByRole('button', { name: /US/ }));
+    expect(screen.getByRole('dialog', { name: '리플레이션(reflation)' })).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });
