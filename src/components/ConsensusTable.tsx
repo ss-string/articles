@@ -22,6 +22,18 @@ function formatOneMonthBadge(value: number | null) {
   return '0.0%';
 }
 
+function formatGapDescription(gapAmount: number) {
+  if (gapAmount > 0) {
+    return `현재가가 적정주가 대비 ${formatWon(gapAmount)} 낮습니다.`;
+  }
+
+  if (gapAmount < 0) {
+    return `현재가가 적정주가 대비 ${formatWon(Math.abs(gapAmount))} 높습니다.`;
+  }
+
+  return '현재가와 적정주가가 같습니다.';
+}
+
 export function ConsensusTable({ rows }: ConsensusTableProps) {
   const [openRowKeys, setOpenRowKeys] = useState<Set<string>>(() => new Set());
 
@@ -41,7 +53,7 @@ export function ConsensusTable({ rows }: ConsensusTableProps) {
         const detailId = `consensus-detail-${index}`;
 
         return (
-          <div className="rank-detail" key={rowKey}>
+          <div className="rank-detail" key={rowKey} role="rowgroup">
             <div className="summary-row" role="row">
               <div role="cell">
                 <div className="stock-name">{row.name}</div>
@@ -87,31 +99,33 @@ export function ConsensusTable({ rows }: ConsensusTableProps) {
               </div>
             </div>
             {isOpen ? (
-              <div className="expanded-row" id={detailId} role="region" aria-label={`${row.name} 상세 정보`}>
-                <article className="detail-card">
-                  <h3>가격 비교</h3>
-                  <div className="price-compare">
-                    <div className="price-tile">
-                      <span>현재 가격</span>
-                      <strong>{formatWon(row.currentPrice)}</strong>
+              <div className="expanded-row" role="row">
+                <div className="expanded-cell" id={detailId} role="cell" aria-colspan={6}>
+                  <article className="detail-card">
+                    <h3>가격 비교</h3>
+                    <div className="price-compare">
+                      <div className="price-tile">
+                        <span>현재 가격</span>
+                        <strong>{formatWon(row.currentPrice)}</strong>
+                      </div>
+                      <div className="price-tile">
+                        <span>적정주가</span>
+                        <strong>{formatWon(row.fairPrice)}</strong>
+                      </div>
                     </div>
-                    <div className="price-tile">
-                      <span>적정주가</span>
-                      <strong>{formatWon(row.fairPrice)}</strong>
+                    <div className="gap-bar large">
+                      <span style={{ width: `${Math.min(Math.max(row.gapPercent, 0), 100)}%` }} />
                     </div>
-                  </div>
-                  <div className="gap-bar large">
-                    <span style={{ width: `${Math.min(Math.max(row.gapPercent, 0), 100)}%` }} />
-                  </div>
-                  <p className="muted">현재가가 적정주가 대비 {formatWon(row.gapAmount)} 낮습니다.</p>
-                </article>
-                <article className="detail-card">
-                  <h3>
-                    컨센서스 가격 변화
-                    <span className="consensus-badge">{formatOneMonthBadge(row.oneMonthConsensusChangePercent)}</span>
-                  </h3>
-                  <ConsensusTrendLine checkpoints={row.checkpoints} />
-                </article>
+                    <p className="muted">{formatGapDescription(row.gapAmount)}</p>
+                  </article>
+                  <article className="detail-card">
+                    <h3>
+                      컨센서스 가격 변화
+                      <span className="consensus-badge">{formatOneMonthBadge(row.oneMonthConsensusChangePercent)}</span>
+                    </h3>
+                    <ConsensusTrendLine checkpoints={row.checkpoints} />
+                  </article>
+                </div>
               </div>
             ) : null}
           </div>

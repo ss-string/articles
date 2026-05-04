@@ -60,6 +60,21 @@ describe('ConsensusTable', () => {
     expect(screen.getByText('컨센서스 가격 변화')).toBeInTheDocument();
   });
 
+  it('renders expanded detail as a row and cell inside its row group', async () => {
+    const user = userEvent.setup();
+    render(<ConsensusTable rows={[makeRow()]} />);
+
+    await user.click(screen.getByRole('button', { name: '삼성전자 상세 열기' }));
+
+    const table = screen.getByRole('table', { name: '컨센서스 랭킹 테이블' });
+    const expandedCell = within(table).getByRole('cell', { name: /가격 비교/ });
+
+    expect(expandedCell).toHaveClass('expanded-cell');
+    expect(expandedCell).toHaveAttribute('aria-colspan', '6');
+    expect(expandedCell.closest('[role="row"]')).toHaveClass('expanded-row');
+    expect(expandedCell.closest('[role="rowgroup"]')).toHaveClass('rank-detail');
+  });
+
   it('uses whitespace-free aria controls when stock code is missing and name has spaces', async () => {
     const user = userEvent.setup();
     render(<ConsensusTable rows={[makeRow({ id: '테스트 종목', name: '테스트 종목', code: null })]} />);
@@ -104,5 +119,24 @@ describe('ConsensusTable', () => {
 
     expect(screen.getAllByText('▼ -2.1%', { selector: '.consensus-badge' })).toHaveLength(2);
     expect(screen.queryByText('-2.1%', { selector: '.detail-card .consensus-badge' })).not.toBeInTheDocument();
+  });
+
+  it('describes a negative price gap as current price being higher than fair price', async () => {
+    const user = userEvent.setup();
+    render(<ConsensusTable rows={[makeRow({ currentPrice: 102200, fairPrice: 100200, gapAmount: -2000, gapPercent: -2 })]} />);
+
+    await user.click(screen.getByRole('button', { name: '삼성전자 상세 열기' }));
+
+    expect(screen.getByText('현재가가 적정주가 대비 2,000원 높습니다.')).toBeInTheDocument();
+    expect(screen.queryByText(/-2,000원 낮습니다/)).not.toBeInTheDocument();
+  });
+
+  it('describes a zero price gap as equal prices', async () => {
+    const user = userEvent.setup();
+    render(<ConsensusTable rows={[makeRow({ currentPrice: 100200, fairPrice: 100200, gapAmount: 0, gapPercent: 0 })]} />);
+
+    await user.click(screen.getByRole('button', { name: '삼성전자 상세 열기' }));
+
+    expect(screen.getByText('현재가와 적정주가가 같습니다.')).toBeInTheDocument();
   });
 });

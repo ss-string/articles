@@ -189,13 +189,12 @@ button {
 }
 
 .stock-name {
-  overflow: hidden;
   color: #111827;
   font-size: 15px;
   font-weight: 800;
   line-height: 1.35;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .stock-code,
@@ -295,13 +294,16 @@ button {
 }
 
 .expanded-row {
-  display: grid;
-  grid-template-columns: minmax(260px, 0.72fr) minmax(420px, 1.28fr);
-  gap: 12px;
   min-width: 860px;
   padding: 0 26px 18px;
   background: #f8fafc;
   border-top: 1px solid #e5e9f0;
+}
+
+.expanded-cell {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.72fr) minmax(420px, 1.28fr);
+  gap: 12px;
 }
 
 .detail-card {
@@ -638,10 +640,6 @@ button {
     grid-column: 2;
     grid-row: 1 / span 2;
     align-self: center;
-  }
-
-  .stock-name {
-    white-space: normal;
   }
 
   .expanded-row {
