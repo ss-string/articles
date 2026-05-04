@@ -4,6 +4,13 @@ import type { ConsensusRankingRow } from '../consensus/model';
 import { ConsensusTable } from './ConsensusTable';
 
 function makeRow(overrides: Partial<ConsensusRankingRow> = {}): ConsensusRankingRow {
+  const oneMonthConsensusChangePercent = Object.prototype.hasOwnProperty.call(
+    overrides,
+    'oneMonthConsensusChangePercent',
+  )
+    ? overrides.oneMonthConsensusChangePercent
+    : 6.8;
+
   return {
     id: overrides.id ?? '005930',
     name: overrides.name ?? '삼성전자',
@@ -13,7 +20,7 @@ function makeRow(overrides: Partial<ConsensusRankingRow> = {}): ConsensusRanking
     gapAmount: overrides.gapAmount ?? 27800,
     gapPercent: overrides.gapPercent ?? 38.4,
     oneMonthConsensusPrice: overrides.oneMonthConsensusPrice ?? 93800,
-    oneMonthConsensusChangePercent: overrides.oneMonthConsensusChangePercent ?? 6.8,
+    oneMonthConsensusChangePercent: oneMonthConsensusChangePercent ?? null,
     threeMonthConsensusPrice: overrides.threeMonthConsensusPrice ?? 96300,
     sixMonthConsensusPrice: overrides.sixMonthConsensusPrice ?? 91300,
     checkpoints:
@@ -51,5 +58,27 @@ describe('ConsensusTable', () => {
 
     expect(screen.getByRole('button', { name: '삼성전자 상세 닫기' })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText('컨센서스 가격 변화')).toBeInTheDocument();
+  });
+
+  it('uses whitespace-free aria controls when stock code is missing and name has spaces', async () => {
+    const user = userEvent.setup();
+    render(<ConsensusTable rows={[makeRow({ id: '테스트 종목', name: '테스트 종목', code: null })]} />);
+
+    const expandButton = screen.getByRole('button', { name: '테스트 종목 상세 열기' });
+    const controls = expandButton.getAttribute('aria-controls');
+
+    expect(controls).toBeTruthy();
+    expect(controls).not.toMatch(/\s/);
+
+    await user.click(expandButton);
+
+    expect(document.getElementById(controls ?? '')).toBeInTheDocument();
+  });
+
+  it('renders a neutral badge when one month consensus change is missing', () => {
+    render(<ConsensusTable rows={[makeRow({ oneMonthConsensusChangePercent: null })]} />);
+
+    expect(screen.getByText('-', { selector: '.consensus-badge' })).toBeInTheDocument();
+    expect(screen.queryByText('▲ -')).not.toBeInTheDocument();
   });
 });

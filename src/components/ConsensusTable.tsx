@@ -6,6 +6,10 @@ type ConsensusTableProps = {
   rows: ConsensusRankingRow[];
 };
 
+function formatOneMonthBadge(value: number | null) {
+  return value === null ? '-' : `▲ ${formatPercent(value)}`;
+}
+
 export function ConsensusTable({ rows }: ConsensusTableProps) {
   const [openRowKeys, setOpenRowKeys] = useState<Set<string>>(() => new Set());
 
@@ -22,7 +26,7 @@ export function ConsensusTable({ rows }: ConsensusTableProps) {
       {rows.map((row, index) => {
         const rowKey = `${row.id}-${index}`;
         const isOpen = openRowKeys.has(rowKey);
-        const detailId = `consensus-detail-${rowKey}`;
+        const detailId = `consensus-detail-${index}`;
 
         return (
           <div className="rank-detail" key={rowKey}>
@@ -45,7 +49,7 @@ export function ConsensusTable({ rows }: ConsensusTableProps) {
                 <div className="gap-bar">
                   <span style={{ width: `${Math.min(Math.max(row.gapPercent, 0), 100)}%` }} />
                 </div>
-                <span className="consensus-badge">▲ {formatPercent(row.oneMonthConsensusChangePercent)}</span>
+                <span className="consensus-badge">{formatOneMonthBadge(row.oneMonthConsensusChangePercent)}</span>
               </div>
               <div role="cell">
                 <button
