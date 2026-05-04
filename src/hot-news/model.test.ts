@@ -175,6 +175,34 @@ describe('hot-news model', () => {
     ]);
   });
 
+  it('falls back to top-level company evidence when payload entries have no usable company', () => {
+    const report = normalizeHotNewsReport({
+      id: 5,
+      title: '제목',
+      company_news_evidence: [
+        {
+          company: 'top company',
+          code: 'A654321',
+          detailedEvidence: ['top evidence'],
+        },
+      ],
+      report_payload: {
+        title: '제목',
+        companyNewsEvidence: [{ detailedEvidence: ['payload evidence without company'] }],
+      },
+    });
+
+    expect(report?.companyEvidence).toEqual([
+      {
+        company: 'top company',
+        code: 'A654321',
+        position: null,
+        evidence: ['top evidence'],
+        links: [],
+      },
+    ]);
+  });
+
   it('excludes rows without a usable title', () => {
     expect(normalizeHotNewsReport({ id: 2, title: '', report_payload: { title: '   ' } })).toBeNull();
     expect(buildHotNewsReports([sampleRow, { id: 2, title: '' }]).map((report) => report.id)).toEqual(['1']);

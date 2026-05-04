@@ -6,7 +6,7 @@ export type HotNewsArticle = {
 };
 
 export type HotNewsCompanyEvidence = {
-  company: string | null;
+  company: string;
   code: string | null;
   position: string | null;
   evidence: string[];
@@ -74,21 +74,21 @@ function normalizeCompanyEvidence(value: unknown): HotNewsCompanyEvidence[] {
 
   return value
     .filter(isRecord)
-    .map((item) => ({
-      company: parseText(item.company),
-      code: parseText(item.code),
-      position: parseText(item.position),
-      evidence: parseTextArray(item.detailedEvidence),
-      links: parseTextArray(item.detailedNewsLinks),
-    }))
-    .filter(
-      (item) =>
-        item.company !== null ||
-        item.code !== null ||
-        item.position !== null ||
-        item.evidence.length > 0 ||
-        item.links.length > 0,
-    );
+    .map((item) => {
+      const company = parseText(item.company);
+      if (!company) {
+        return null;
+      }
+
+      return {
+        company,
+        code: parseText(item.code),
+        position: parseText(item.position),
+        evidence: parseTextArray(item.detailedEvidence),
+        links: parseTextArray(item.detailedNewsLinks),
+      };
+    })
+    .filter((item): item is HotNewsCompanyEvidence => item !== null);
 }
 
 function preferText(payload: Record<string, unknown> | null, row: RawHotNewsReportRow, payloadKey: string, rowKey: string) {
