@@ -72,13 +72,23 @@ function normalizeCompanyEvidence(value: unknown): HotNewsCompanyEvidence[] {
     return [];
   }
 
-  return value.filter(isRecord).map((item) => ({
-    company: parseText(item.company),
-    code: parseText(item.code),
-    position: parseText(item.position),
-    evidence: parseTextArray(item.detailedEvidence),
-    links: parseTextArray(item.detailedNewsLinks),
-  }));
+  return value
+    .filter(isRecord)
+    .map((item) => ({
+      company: parseText(item.company),
+      code: parseText(item.code),
+      position: parseText(item.position),
+      evidence: parseTextArray(item.detailedEvidence),
+      links: parseTextArray(item.detailedNewsLinks),
+    }))
+    .filter(
+      (item) =>
+        item.company !== null ||
+        item.code !== null ||
+        item.position !== null ||
+        item.evidence.length > 0 ||
+        item.links.length > 0,
+    );
 }
 
 function preferText(payload: Record<string, unknown> | null, row: RawHotNewsReportRow, payloadKey: string, rowKey: string) {
