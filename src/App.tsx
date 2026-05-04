@@ -1,3 +1,4 @@
+import type { RawConsensusRow } from './consensus/model';
 import {
   articles,
   metrics,
@@ -6,7 +7,12 @@ import {
   projects,
   stackGroups,
 } from './content';
+import { ConsensusRankingPage } from './components/ConsensusRankingPage';
 import './styles.css';
+
+type AppProps = {
+  queryRows?: () => Promise<RawConsensusRow[]>;
+};
 
 function externalLinkProps(href: string) {
   if (href.startsWith('mailto:')) {
@@ -19,7 +25,7 @@ function externalLinkProps(href: string) {
   };
 }
 
-function App() {
+export default function App({ queryRows }: AppProps) {
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -94,6 +100,8 @@ function App() {
           </div>
         </section>
 
+        <ConsensusRankingPage queryRows={queryRows} />
+
         <section className="dashboard-section" id="work" aria-labelledby="work-title">
           <div className="section-heading">
             <span>Work</span>
@@ -134,7 +142,7 @@ function App() {
                   <p>{article.summary}</p>
                 </div>
                 <div className="article-side">
-                  <time dateTime={article.date.replaceAll('.', '-')}>{article.date}</time>
+                  <time dateTime={article.date.replace(/\./g, '-')}>{article.date}</time>
                   <a href={article.link} {...externalLinkProps(article.link)}>
                     Open
                   </a>
@@ -184,5 +192,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
