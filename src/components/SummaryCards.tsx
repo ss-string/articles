@@ -16,7 +16,7 @@ function InlinePieces({ value }: { value: string }) {
 }
 
 export function SummaryCards({ rows }: SummaryCardsProps) {
-  const maxGap = rows[0]?.gapPercent ?? null;
+  const maxGap = rows.length === 0 ? null : Math.max(...rows.map((row) => row.gapPercent));
   const averageGap =
     rows.length === 0 ? null : rows.reduce((sum, row) => sum + row.gapPercent, 0) / rows.length;
   const oneMonthUpCount = rows.filter(
