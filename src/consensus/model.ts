@@ -24,11 +24,18 @@ export type ConsensusRankingRow = {
 const columnCandidates = {
   name: ['stock_name', 'name', 'isu_nm', 'isu_abbrv', 'corp_name', '종목명'],
   code: ['stock_code', 'code', 'isu_srt_cd', 'ticker', '종목코드'],
-  currentPrice: ['current_price', 'close_price', 'price', 'now_price', '현재가'],
-  fairPrice: ['target_price', 'fair_price', 'consensus_price', '목표주가', '적정주가'],
+  currentPrice: ['current_price_value', 'current_price', 'close_price', 'price', 'now_price', '현재가'],
+  fairPrice: ['target_price_value', 'target_price', 'fair_price', 'consensus_price', '목표주가', '적정주가'],
   consensus1m: ['consensus_1m', 'target_price_1m', 'consensus_price_1m', '1개월컨센서스'],
   consensus3m: ['consensus_3m', 'target_price_3m', 'consensus_price_3m', '3개월컨센서스'],
   consensus6m: ['consensus_6m', 'target_price_6m', 'consensus_price_6m', '6개월컨센서스'],
+} as const;
+
+const trendValueCandidates = {
+  consensus1m: ['month_ago', 'one_month_ago', '1m', 'D_2'],
+  consensus3m: ['three_month_ago', '3m', 'D_3'],
+  consensus6m: ['six_month_ago', '6m', 'D_4'],
+  now: ['now', 'current', 'D_1'],
 } as const;
 
 function readValue(row: RawConsensusRow, candidates: readonly string[]) {
@@ -38,6 +45,25 @@ function readValue(row: RawConsensusRow, candidates: readonly string[]) {
     }
   }
   return null;
+}
+
+function readObjectValue(value: unknown, candidates: readonly string[]) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  for (const key of candidates) {
+    if (Object.prototype.hasOwnProperty.call(record, key)) {
+      return record[key];
+    }
+  }
+
+  return null;
+}
+
+function readTrendValue(row: RawConsensusRow, candidates: readonly string[]) {
+  return readObjectValue(row.consensus_trend_values, candidates);
 }
 
 function parseNumber(value: unknown): number | null {
@@ -79,10 +105,18 @@ export function normalizeConsensusRow(row: RawConsensusRow): ConsensusRankingRow
   const name = parseText(readValue(row, columnCandidates.name));
   const code = parseText(readValue(row, columnCandidates.code));
   const currentPrice = parseNumber(readValue(row, columnCandidates.currentPrice));
-  const fairPrice = parseNumber(readValue(row, columnCandidates.fairPrice));
-  const oneMonthConsensusPrice = parseNumber(readValue(row, columnCandidates.consensus1m));
-  const threeMonthConsensusPrice = parseNumber(readValue(row, columnCandidates.consensus3m));
-  const sixMonthConsensusPrice = parseNumber(readValue(row, columnCandidates.consensus6m));
+  const fairPrice =
+    parseNumber(readValue(row, columnCandidates.fairPrice)) ??
+    parseNumber(readTrendValue(row, trendValueCandidates.now));
+  const oneMonthConsensusPrice =
+    parseNumber(readValue(row, columnCandidates.consensus1m)) ??
+    parseNumber(readTrendValue(row, trendValueCandidates.consensus1m));
+  const threeMonthConsensusPrice =
+    parseNumber(readValue(row, columnCandidates.consensus3m)) ??
+    parseNumber(readTrendValue(row, trendValueCandidates.consensus3m));
+  const sixMonthConsensusPrice =
+    parseNumber(readValue(row, columnCandidates.consensus6m)) ??
+    parseNumber(readTrendValue(row, trendValueCandidates.consensus6m));
 
   if (!name || currentPrice === null || currentPrice <= 0 || fairPrice === null || fairPrice <= 0) {
     return null;

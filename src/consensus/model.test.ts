@@ -34,6 +34,42 @@ describe('consensus model', () => {
     ]);
   });
 
+  it('normalizes the krx_fnguide_consensus production schema from n8n', () => {
+    const row = normalizeConsensusRow({
+      stock_code: '035420',
+      stock_name: 'NAVER',
+      current_price_value: 209000,
+      consensus_trend_values: {
+        six_month_ago: 260000,
+        three_month_ago: 280000,
+        month_ago: 300000,
+        now: 313350,
+      },
+      target_price_value: 313350,
+      target_price_gap_rate: 49.93,
+    });
+
+    expect(row).toMatchObject({
+      id: '035420',
+      name: 'NAVER',
+      code: '035420',
+      currentPrice: 209000,
+      fairPrice: 313350,
+      gapAmount: 104350,
+      oneMonthConsensusPrice: 300000,
+      threeMonthConsensusPrice: 280000,
+      sixMonthConsensusPrice: 260000,
+    });
+    expect(row?.gapPercent).toBeCloseTo(((313350 - 209000) / 209000) * 100);
+    expect(row?.oneMonthConsensusChangePercent).toBeCloseTo(((313350 - 300000) / 300000) * 100);
+    expect(row?.checkpoints).toEqual([
+      { label: '지난 6개월', price: 260000, changePercent: expect.any(Number) },
+      { label: '지난 3개월', price: 280000, changePercent: expect.any(Number) },
+      { label: '지난 1개월', price: 300000, changePercent: expect.any(Number) },
+      { label: '현재 컨센서스', price: 313350, changePercent: 0 },
+    ]);
+  });
+
   it('sorts ranking rows by largest fair price gap first', () => {
     const rows = buildRankingRows([
       { stock_name: '낮은괴리', current_price: 10000, target_price: 11000, consensus_1m: 10000 },
