@@ -1,11 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
+import type { RawHotNewsReportRow } from './hot-news/model';
 
 const rows = [
   {
     stock_name: '삼성전자',
     stock_code: '005930',
+    fnguide_code: 'A005930',
     current_price: 72400,
     target_price: 100200,
     consensus_1m: 93800,
@@ -15,6 +17,7 @@ const rows = [
   {
     stock_name: '현대차',
     stock_code: '005380',
+    fnguide_code: 'A005380',
     current_price: 244000,
     target_price: 318000,
     consensus_1m: 303400,
@@ -64,11 +67,55 @@ const macroRows = [
   },
 ];
 
+const hotNewsRows: RawHotNewsReportRow[] = [
+  {
+    id: 1,
+    issue_date: '2026-05-04',
+    title: '2026-05-04 조선 에너지 수주',
+    perspective: '조선 에너지 수주',
+    tldr: ['국내 조선·해양 에너지 인프라 기업의 수주 뉴스가 집중'],
+  },
+];
+
+const reports = [
+  {
+    gicode: 'A005930',
+    co_nm: '삼성전자',
+    updated_at: '2026-05-04T08:24:38.946123+00:00',
+    analysis: {
+      'tl;dr': '삼성전자 컨센서스는 우호적이다.',
+      keyKeywords: ['메모리', 'AI'],
+      risks: ['업황 둔화 가능성'],
+      targetPriceRange: { min: 90000, median: 100200, max: 110000 },
+      securitiesFirmCount: 2,
+      securitiesFirms: [
+        { name: '테스트증권', reportCount: 1, targetPrices: [100200], recommendations: ['BUY'] },
+      ],
+    },
+  },
+];
+
 describe('App', () => {
-  it('renders app shell with macro regime and ranked consensus sections', async () => {
-    const { container } = render(<App queryRows={async () => rows} queryMacroRows={async () => macroRows} />);
+  afterEach(() => {
+    window.history.replaceState({}, '', '/');
+  });
+
+  it('renders ranked consensus rows with required fields', async () => {
+    const { container } = render(
+      <App
+        queryRows={async () => rows}
+        queryHotNewsRows={async () => hotNewsRows}
+        queryMacroRows={async () => macroRows}
+        queryReports={async () => []}
+      />,
+    );
 
     expect(screen.getByRole('heading', { name: 'Portfolio Dashboard' })).toBeInTheDocument();
+    const hotNewsLinks = screen.getAllByRole('link', { name: '핫뉴스 리포트' });
+    expect(hotNewsLinks).toHaveLength(2);
+    hotNewsLinks.forEach((link) => expect(link).toHaveAttribute('href', '#hot-news'));
+    expect(await screen.findByRole('heading', { name: '핫뉴스 리포트' })).toBeInTheDocument();
+    expect(screen.getByText('2026-05-04 조선 에너지 수주')).toBeInTheDocument();
     const macroLinks = screen.getAllByRole('link', { name: '매크로 레짐' });
     expect(macroLinks).toHaveLength(2);
     macroLinks.forEach((link) => expect(link).toHaveAttribute('href', '#macro-regime'));
@@ -100,23 +147,86 @@ describe('App', () => {
     expect(container.querySelector('.dashboard-section')).toBeInTheDocument();
   });
 
-  it('expands a row and shows checkpoint prices on the line chart', async () => {
+  it('opens a global detail popup with AI report data when a ranking row is selected', async () => {
     const user = userEvent.setup();
-    render(<App queryRows={async () => rows} queryMacroRows={async () => []} />);
+    render(
+      <App
+        queryRows={async () => rows}
+        queryHotNewsRows={async () => hotNewsRows}
+        queryMacroRows={async () => []}
+        queryReports={async () => reports}
+      />,
+    );
 
     await screen.findByText('삼성전자');
     await user.click(screen.getByRole('row', { name: /삼성전자/ }));
 
+    expect(screen.getByRole('dialog', { name: '삼성전자 상세 분석' })).toBeInTheDocument();
+    expect(screen.getByText('가격 비교')).toBeInTheDocument();
+    expect(screen.getByText('목표주가 범위')).toBeInTheDocument();
     expect(screen.getByText('컨센서스 가격 변화')).toBeInTheDocument();
-    expect(screen.getAllByText('91,300원')).not.toHaveLength(0);
-    expect(screen.getAllByText('96,300원')).not.toHaveLength(0);
-    expect(screen.getAllByText('93,800원')).not.toHaveLength(0);
-    expect(screen.getAllByText('현재 컨센서스')).not.toHaveLength(0);
+    expect(screen.getByText('AI 컨센서스 요약')).toBeInTheDocument();
+    expect(screen.getByText('삼성전자 컨센서스는 우호적이다.')).toBeInTheDocument();
+    expect(screen.getByText('주요 리스크').closest('.detail-card')).toHaveClass('risk-card');
+    expect(screen.queryByText(/URL 상태 예시/)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '닫기' }));
+    expect(screen.queryByRole('dialog', { name: '삼성전자 상세 분석' })).not.toBeInTheDocument();
+    expect(window.location.search).not.toContain('contentType');
+    expect(window.location.search).not.toContain('contentParams');
+  });
+
+  it('opens the matching detail popup from URL query parameters', async () => {
+    window.history.pushState(
+      {},
+      '',
+      '/?contentType=consensus&contentParams=%7B%22gicode%22%3A%22A005930%22%7D',
+    );
+
+    render(<App queryRows={async () => rows} queryHotNewsRows={async () => hotNewsRows} queryReports={async () => reports} />);
+
+    expect(await screen.findByRole('dialog', { name: '삼성전자 상세 분석' })).toBeInTheDocument();
+  });
+
+  it('opens a popup without URL state for a row that has no gicode', async () => {
+    const user = userEvent.setup();
+    render(
+      <App
+        queryRows={async () => [
+          {
+            stock_name: '코드없는종목',
+            stock_code: '000001',
+            current_price: 10000,
+            target_price: 12000,
+          },
+        ]}
+        queryHotNewsRows={async () => hotNewsRows}
+        queryMacroRows={async () => []}
+        queryReports={async () => []}
+      />,
+    );
+
+    await screen.findByText('코드없는종목');
+    expect(screen.queryByRole('dialog', { name: '코드없는종목 상세 분석' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('row', { name: /코드없는종목/ }));
+
+    expect(screen.getByRole('dialog', { name: '코드없는종목 상세 분석' })).toBeInTheDocument();
+    expect(screen.getByText('AI 분석 리포트가 없습니다.')).toBeInTheDocument();
+    expect(window.location.search).not.toContain('contentType');
+    expect(window.location.search).not.toContain('contentParams');
   });
 
   it('opens the macro regime popup from the app shell', async () => {
     const user = userEvent.setup();
-    render(<App queryRows={async () => rows} queryMacroRows={async () => macroRows} />);
+    render(
+      <App
+        queryRows={async () => rows}
+        queryHotNewsRows={async () => hotNewsRows}
+        queryMacroRows={async () => macroRows}
+        queryReports={async () => []}
+      />,
+    );
 
     await user.click(await screen.findByRole('button', { name: /US/ }));
 
@@ -126,7 +236,14 @@ describe('App', () => {
   });
 
   it('renders an empty state when there are no valid rows', async () => {
-    render(<App queryRows={async () => []} queryMacroRows={async () => []} />);
+    render(
+      <App
+        queryRows={async () => []}
+        queryHotNewsRows={async () => hotNewsRows}
+        queryMacroRows={async () => []}
+        queryReports={async () => []}
+      />,
+    );
 
     expect(await screen.findByText('표시할 컨센서스 데이터가 없습니다.')).toBeInTheDocument();
   });

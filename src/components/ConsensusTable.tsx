@@ -1,9 +1,8 @@
-import { useState } from 'react';
 import { formatPercent, formatWon, type ConsensusRankingRow } from '../consensus/model';
-import { ConsensusTrendLine } from './ConsensusTrendLine';
 
 type ConsensusTableProps = {
   rows: ConsensusRankingRow[];
+  onSelect: (row: ConsensusRankingRow) => void;
 };
 
 function formatOneMonthBadge(value: number | null) {
@@ -22,18 +21,6 @@ function formatOneMonthBadge(value: number | null) {
   return '0.0%';
 }
 
-function formatGapDescription(gapAmount: number) {
-  if (gapAmount > 0) {
-    return `현재가가 적정주가 대비 ${formatWon(gapAmount)} 낮습니다.`;
-  }
-
-  if (gapAmount < 0) {
-    return `현재가가 적정주가 대비 ${formatWon(Math.abs(gapAmount))} 높습니다.`;
-  }
-
-  return '현재가와 적정주가가 같습니다.';
-}
-
 function getGapClassName(gapPercent: number) {
   if (gapPercent > 0) {
     return 'gap-positive';
@@ -46,21 +33,7 @@ function getGapClassName(gapPercent: number) {
   return 'gap-neutral';
 }
 
-export function ConsensusTable({ rows }: ConsensusTableProps) {
-  const [openRowKeys, setOpenRowKeys] = useState<Set<string>>(() => new Set());
-
-  function toggleRow(rowKey: string) {
-    setOpenRowKeys((previous) => {
-      const next = new Set(previous);
-      if (next.has(rowKey)) {
-        next.delete(rowKey);
-      } else {
-        next.add(rowKey);
-      }
-      return next;
-    });
-  }
-
+export function ConsensusTable({ rows, onSelect }: ConsensusTableProps) {
   return (
     <section className="table-shell" role="table" aria-label="컨센서스 랭킹 테이블">
       <div className="table-head" role="row">
@@ -72,8 +45,6 @@ export function ConsensusTable({ rows }: ConsensusTableProps) {
       </div>
       {rows.map((row, index) => {
         const rowKey = `${row.id}-${index}`;
-        const isOpen = openRowKeys.has(rowKey);
-        const detailId = `consensus-detail-${index}`;
 
         return (
           <div className="rank-detail" key={rowKey} role="rowgroup">
@@ -81,13 +52,11 @@ export function ConsensusTable({ rows }: ConsensusTableProps) {
               className="summary-row"
               role="row"
               tabIndex={0}
-              aria-controls={detailId}
-              aria-expanded={isOpen}
-              onClick={() => toggleRow(rowKey)}
+              onClick={() => onSelect(row)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
-                  toggleRow(rowKey);
+                  onSelect(row);
                 }
               }}
             >
@@ -112,36 +81,6 @@ export function ConsensusTable({ rows }: ConsensusTableProps) {
                 <span className="consensus-badge">{formatOneMonthBadge(row.oneMonthConsensusChangePercent)}</span>
               </div>
             </div>
-            {isOpen ? (
-              <div className="expanded-row" role="row">
-                <div className="expanded-cell" id={detailId} role="cell" aria-colspan={6}>
-                  <article className="detail-card">
-                    <h3>가격 비교</h3>
-                    <div className="price-compare">
-                      <div className="price-tile">
-                        <span>현재 가격</span>
-                        <strong>{formatWon(row.currentPrice)}</strong>
-                      </div>
-                      <div className="price-tile">
-                        <span>적정주가</span>
-                        <strong>{formatWon(row.fairPrice)}</strong>
-                      </div>
-                    </div>
-                    <div className="gap-bar large">
-                      <span style={{ width: `${Math.min(Math.max(row.gapPercent, 0), 100)}%` }} />
-                    </div>
-                    <p className="muted">{formatGapDescription(row.gapAmount)}</p>
-                  </article>
-                  <article className="detail-card">
-                    <h3>
-                      컨센서스 가격 변화
-                      <span className="consensus-badge">{formatOneMonthBadge(row.oneMonthConsensusChangePercent)}</span>
-                    </h3>
-                    <ConsensusTrendLine checkpoints={row.checkpoints} />
-                  </article>
-                </div>
-              </div>
-            ) : null}
           </div>
         );
       })}

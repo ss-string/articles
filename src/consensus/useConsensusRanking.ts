@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
-import { queryConsensusRows } from './api';
-import { buildRankingRows, type ConsensusRankingRow, type RawConsensusRow } from './model';
+import { queryConsensusRows, querySummaryReportRows } from './api';
+import {
+  buildRankingRowsWithReports,
+  type ConsensusRankingRow,
+  type RawConsensusRow,
+  type RawSummaryReportRow,
+} from './model';
 
 type RankingState =
   | { status: 'loading'; rows: ConsensusRankingRow[]; error: null }
@@ -9,6 +14,7 @@ type RankingState =
 
 type UseConsensusRankingOptions = {
   queryRows?: () => Promise<RawConsensusRow[]>;
+  queryReports?: () => Promise<RawSummaryReportRow[]>;
 };
 
 export function useConsensusRanking(options: UseConsensusRankingOptions = {}): RankingState {
@@ -21,13 +27,14 @@ export function useConsensusRanking(options: UseConsensusRankingOptions = {}): R
   useEffect(() => {
     let isMounted = true;
     const loadRows = options.queryRows ?? queryConsensusRows;
+    const loadReports = options.queryReports ?? querySummaryReportRows;
 
     async function load() {
       setState({ status: 'loading', rows: [], error: null });
 
       try {
-        const rawRows = await loadRows();
-        const rows = buildRankingRows(rawRows);
+        const [rawRows, rawReports] = await Promise.all([loadRows(), loadReports()]);
+        const rows = buildRankingRowsWithReports(rawRows, rawReports);
 
         if (isMounted) {
           setState({ status: 'success', rows, error: null });
@@ -48,7 +55,7 @@ export function useConsensusRanking(options: UseConsensusRankingOptions = {}): R
     return () => {
       isMounted = false;
     };
-  }, [options.queryRows]);
+  }, [options.queryRows, options.queryReports]);
 
   return state;
 }
