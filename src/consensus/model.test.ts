@@ -24,8 +24,8 @@ describe('consensus model', () => {
       fairPrice: 100200,
       gapAmount: 27800,
     });
-    expect(row?.gapPercent).toBeCloseTo(38.397, 3);
-    expect(row?.oneMonthConsensusChangePercent).toBeCloseTo(6.823, 3);
+    expect(row?.gapPercent).toBe(((100200 - 72400) / 72400) * 100);
+    expect(row?.oneMonthConsensusChangePercent).toBe(((100200 - 93800) / 93800) * 100);
     expect(row?.checkpoints).toEqual([
       { label: '지난 6개월', price: 91300, changePercent: expect.any(Number) },
       { label: '지난 3개월', price: 96300, changePercent: expect.any(Number) },

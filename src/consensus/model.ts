@@ -72,11 +72,7 @@ function calculateChangePercent(current: number, previous: number | null): numbe
     return null;
   }
 
-  return truncatePercent(((current - previous) / previous) * 100);
-}
-
-function truncatePercent(value: number): number {
-  return Math.trunc(value * 1000) / 1000;
+  return ((current - previous) / previous) * 100;
 }
 
 export function normalizeConsensusRow(row: RawConsensusRow): ConsensusRankingRow | null {
@@ -93,7 +89,7 @@ export function normalizeConsensusRow(row: RawConsensusRow): ConsensusRankingRow
   }
 
   const gapAmount = fairPrice - currentPrice;
-  const gapPercent = truncatePercent((gapAmount / currentPrice) * 100);
+  const gapPercent = (gapAmount / currentPrice) * 100;
 
   const checkpoints: ConsensusCheckpoint[] = [
     {
