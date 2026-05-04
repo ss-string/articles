@@ -539,7 +539,18 @@ button {
   }
 
   .table-head {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0;
+    border: 0;
+    margin: -1px;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .rank-detail {
@@ -561,6 +572,41 @@ button {
 
   .summary-row [role="cell"] {
     padding: 6px 0;
+  }
+
+  .summary-row [role="cell"]:nth-child(2),
+  .summary-row [role="cell"]:nth-child(3),
+  .summary-row [role="cell"]:nth-child(4),
+  .summary-row [role="cell"]:nth-child(5) {
+    display: grid;
+    gap: 4px;
+  }
+
+  .summary-row [role="cell"]:nth-child(2)::before,
+  .summary-row [role="cell"]:nth-child(3)::before,
+  .summary-row [role="cell"]:nth-child(4)::before,
+  .summary-row [role="cell"]:nth-child(5)::before {
+    display: block;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.25;
+  }
+
+  .summary-row [role="cell"]:nth-child(2)::before {
+    content: "현재가";
+  }
+
+  .summary-row [role="cell"]:nth-child(3)::before {
+    content: "적정주가";
+  }
+
+  .summary-row [role="cell"]:nth-child(4)::before {
+    content: "갭";
+  }
+
+  .summary-row [role="cell"]:nth-child(5)::before {
+    content: "1개월 컨센서스";
   }
 
   .summary-row [role="cell"]:nth-child(1) {
@@ -627,12 +673,6 @@ button {
   }
 
   .point-label {
-    max-width: 88px;
-    padding: 4px 5px;
-    font-size: 10px;
-  }
-
-  .point-label small {
-    font-size: 9px;
+    display: none;
   }
 }
