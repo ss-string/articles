@@ -95,9 +95,13 @@ describe('macro regime model', () => {
     });
   });
 
-  it('returns null when required card fields are missing', () => {
+  it('returns null when required card fields are missing or invalid', () => {
     expect(normalizeMacroRegimeRow({ market: 'US', regime: '리플레이션(reflation)' })).toBeNull();
     expect(normalizeMacroRegimeRow({ run_date: '2026-05-04', regime: '리플레이션(reflation)' })).toBeNull();
+    expect(normalizeMacroRegimeRow({ market: 'JP', run_date: '2026-05-04', regime: 'x' })).toBeNull();
+    expect(normalizeMacroRegimeRow({ market: 'US', run_date: '2026-05-04' })).toBeNull();
+    expect(normalizeMacroRegimeRow({ market: 'US', run_date: 'not-a-date', regime: 'x' })).toBeNull();
+    expect(normalizeMacroRegimeRow({ market: 'US', run_date: 20260504, regime: 'x' })).toBeNull();
   });
 
   it('formats dates and trend labels', () => {

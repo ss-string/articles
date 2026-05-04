@@ -109,6 +109,28 @@ function formatIndicatorValue(value: unknown, unit: string | null): string {
   return `${text}${unit ?? ''}`;
 }
 
+function isValidDateParts(year: string, month: string, day: string): boolean {
+  const parsedYear = Number(year);
+  const parsedMonth = Number(month);
+  const parsedDay = Number(day);
+  const date = new Date(Date.UTC(parsedYear, parsedMonth - 1, parsedDay));
+
+  return (
+    date.getUTCFullYear() === parsedYear &&
+    date.getUTCMonth() === parsedMonth - 1 &&
+    date.getUTCDate() === parsedDay
+  );
+}
+
+function parseRunDate(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const text = value.trim();
+  return formatDecisionDate(text) === '-' ? null : text;
+}
+
 export function formatDecisionDate(value: string | null): string {
   const text = parseText(value);
   if (!text) {
@@ -117,8 +139,11 @@ export function formatDecisionDate(value: string | null): string {
 
   const datePart = text.slice(0, 10);
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(datePart);
+  if (!match || !isValidDateParts(match[1], match[2], match[3])) {
+    return '-';
+  }
 
-  return match ? `${match[1]}.${match[2]}.${match[3]}` : '-';
+  return `${match[1]}.${match[2]}.${match[3]}`;
 }
 
 export function formatTrendLabel(value: unknown): { label: string; tone: TrendTone } {
@@ -136,7 +161,7 @@ export function formatTrendLabel(value: unknown): { label: string; tone: TrendTo
 
 export function normalizeMacroRegimeRow(row: RawMacroRegimeRow): MacroRegimeDecision | null {
   const market = parseMarket(row.market);
-  const runDate = parseText(row.run_date);
+  const runDate = parseRunDate(row.run_date);
   const regime = parseText(row.regime);
 
   if (!market || !runDate || !regime) {
