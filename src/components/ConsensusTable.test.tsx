@@ -81,4 +81,18 @@ describe('ConsensusTable', () => {
     expect(screen.getByText('-', { selector: '.consensus-badge' })).toBeInTheDocument();
     expect(screen.queryByText('▲ -')).not.toBeInTheDocument();
   });
+
+  it('renders a downward badge for negative one month consensus change', () => {
+    render(<ConsensusTable rows={[makeRow({ oneMonthConsensusChangePercent: -2.1 })]} />);
+
+    expect(screen.getByText('▼ -2.1%', { selector: '.consensus-badge' })).toBeInTheDocument();
+    expect(screen.queryByText('▲ -2.1%')).not.toBeInTheDocument();
+  });
+
+  it('renders a neutral badge for zero one month consensus change', () => {
+    render(<ConsensusTable rows={[makeRow({ oneMonthConsensusChangePercent: 0 })]} />);
+
+    expect(screen.getByText('0.0%', { selector: '.consensus-badge' })).toBeInTheDocument();
+    expect(screen.queryByText('▲ +0.0%')).not.toBeInTheDocument();
+  });
 });

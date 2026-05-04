@@ -7,7 +7,19 @@ type ConsensusTableProps = {
 };
 
 function formatOneMonthBadge(value: number | null) {
-  return value === null ? '-' : `▲ ${formatPercent(value)}`;
+  if (value === null) {
+    return '-';
+  }
+
+  if (value > 0) {
+    return `▲ ${formatPercent(value)}`;
+  }
+
+  if (value < 0) {
+    return `▼ ${formatPercent(value)}`;
+  }
+
+  return '0.0%';
 }
 
 export function ConsensusTable({ rows }: ConsensusTableProps) {
