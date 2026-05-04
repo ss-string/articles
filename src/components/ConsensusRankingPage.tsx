@@ -42,7 +42,7 @@ export function ConsensusRankingPage({ queryRows, queryReports }: ConsensusRanki
             <span>Ranking</span>
             <h2 id="ranking-title">괴리율 순위</h2>
           </div>
-          <ConsensusTable rows={state.rows} />
+          <ConsensusTable rows={state.rows} onSelect={() => undefined} />
         </section>
       ) : null}
 
