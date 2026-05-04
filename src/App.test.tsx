@@ -25,7 +25,7 @@ const rows = [
 
 describe('App', () => {
   it('renders ranked consensus rows with required fields', async () => {
-    const { container } = render(<App queryRows={async () => rows} />);
+    const { container } = render(<App queryRows={async () => rows} queryReports={async () => []} />);
 
     expect(screen.getByRole('heading', { name: 'Portfolio Dashboard' })).toBeInTheDocument();
     const consensusLinks = screen.getAllByRole('link', { name: '컨센서스 괴리율 랭킹' });
@@ -55,7 +55,7 @@ describe('App', () => {
 
   it('expands a row and shows checkpoint prices on the line chart', async () => {
     const user = userEvent.setup();
-    render(<App queryRows={async () => rows} />);
+    render(<App queryRows={async () => rows} queryReports={async () => []} />);
 
     await screen.findByText('삼성전자');
     await user.click(screen.getByRole('row', { name: /삼성전자/ }));
@@ -68,7 +68,7 @@ describe('App', () => {
   });
 
   it('renders an empty state when there are no valid rows', async () => {
-    render(<App queryRows={async () => []} />);
+    render(<App queryRows={async () => []} queryReports={async () => []} />);
 
     expect(await screen.findByText('표시할 컨센서스 데이터가 없습니다.')).toBeInTheDocument();
   });

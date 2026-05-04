@@ -46,8 +46,9 @@ describe('useConsensusRanking', () => {
 
   it('returns an error when the query fails', async () => {
     const queryRows = vi.fn().mockRejectedValue(new Error('network failed'));
+    const queryReports = vi.fn().mockResolvedValue([]);
 
-    const { result } = renderHook(() => useConsensusRanking({ queryRows }));
+    const { result } = renderHook(() => useConsensusRanking({ queryRows, queryReports }));
 
     await waitFor(() => expect(result.current.status).toBe('error'));
     expect(result.current.error).toBe('network failed');

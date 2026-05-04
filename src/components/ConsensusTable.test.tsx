@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { vi } from 'vitest';
 import type { ConsensusRankingRow } from '../consensus/model';
 import { ConsensusTable } from './ConsensusTable';
 
@@ -15,10 +16,12 @@ function makeRow(overrides: Partial<ConsensusRankingRow> = {}): ConsensusRanking
     id: overrides.id ?? '005930',
     name: overrides.name ?? '삼성전자',
     code: overrides.code ?? '005930',
+    gicode: overrides.gicode ?? 'A005930',
     currentPrice: overrides.currentPrice ?? 72400,
     fairPrice: overrides.fairPrice ?? 100200,
     gapAmount: overrides.gapAmount ?? 27800,
     gapPercent: overrides.gapPercent ?? 38.4,
+    reportCount: overrides.reportCount ?? 11,
     oneMonthConsensusPrice: overrides.oneMonthConsensusPrice ?? 93800,
     oneMonthConsensusChangePercent: oneMonthConsensusChangePercent ?? null,
     threeMonthConsensusPrice: overrides.threeMonthConsensusPrice ?? 96300,
@@ -26,17 +29,19 @@ function makeRow(overrides: Partial<ConsensusRankingRow> = {}): ConsensusRanking
     checkpoints:
       overrides.checkpoints ??
       [
+        { label: '현재 가격', price: 72400, changePercent: null },
         { label: '지난 6개월', price: 91300, changePercent: 9.7 },
         { label: '지난 3개월', price: 96300, changePercent: 4.0 },
         { label: '지난 1개월', price: 93800, changePercent: 6.8 },
         { label: '현재 컨센서스', price: 100200, changePercent: 0 },
       ],
+    summaryReport: overrides.summaryReport ?? null,
   };
 }
 
 describe('ConsensusTable', () => {
   it('exposes table, header, row, and cell semantics', () => {
-    render(<ConsensusTable rows={[makeRow()]} />);
+    render(<ConsensusTable rows={[makeRow()]} onSelect={() => undefined} />);
 
     const table = screen.getByRole('table', { name: '컨센서스 랭킹 테이블' });
     expect(within(table).getByRole('columnheader', { name: '종목' })).toBeInTheDocument();
@@ -47,75 +52,67 @@ describe('ConsensusTable', () => {
     expect(screen.queryByRole('button', { name: /삼성전자 상세/ })).not.toBeInTheDocument();
   });
 
-  it('keeps detail content hidden until the row is expanded', async () => {
+  it('calls onSelect when a row is clicked without rendering inline detail content', async () => {
     const user = userEvent.setup();
-    render(<ConsensusTable rows={[makeRow()]} />);
+    const onSelect = vi.fn();
+    const row = makeRow();
 
-    expect(screen.queryByText('컨센서스 가격 변화')).not.toBeInTheDocument();
-
-    const row = screen.getByRole('row', { name: /삼성전자/ });
-    expect(row).toHaveAttribute('aria-expanded', 'false');
-    expect(row).toHaveAttribute('aria-controls', 'consensus-detail-0');
-
-    await user.click(row);
-
-    expect(row).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByText('컨센서스 가격 변화')).toBeInTheDocument();
-  });
-
-  it('renders expanded detail as a row and cell inside its row group', async () => {
-    const user = userEvent.setup();
-    render(<ConsensusTable rows={[makeRow()]} />);
+    render(<ConsensusTable rows={[row]} onSelect={onSelect} />);
 
     await user.click(screen.getByRole('row', { name: /삼성전자/ }));
 
-    const table = screen.getByRole('table', { name: '컨센서스 랭킹 테이블' });
-    const expandedCell = within(table).getByRole('cell', { name: /가격 비교/ });
-
-    expect(expandedCell).toHaveClass('expanded-cell');
-    expect(expandedCell).toHaveAttribute('aria-colspan', '6');
-    expect(expandedCell.closest('[role="row"]')).toHaveClass('expanded-row');
-    expect(expandedCell.closest('[role="rowgroup"]')).toHaveClass('rank-detail');
+    expect(onSelect).toHaveBeenCalledWith(row);
+    expect(screen.queryByText('가격 비교')).not.toBeInTheDocument();
+    expect(screen.queryByText('컨센서스 가격 변화')).not.toBeInTheDocument();
   });
 
-  it('uses whitespace-free aria controls when stock code is missing and name has spaces', async () => {
+  it('calls onSelect when Enter or Space is pressed on a row', async () => {
     const user = userEvent.setup();
-    render(<ConsensusTable rows={[makeRow({ id: '테스트 종목', name: '테스트 종목', code: null })]} />);
+    const onSelect = vi.fn();
+    const row = makeRow();
+
+    render(<ConsensusTable rows={[row]} onSelect={onSelect} />);
+
+    const summaryRow = screen.getByRole('row', { name: /삼성전자/ });
+    summaryRow.focus();
+    await user.keyboard('{Enter}');
+    await user.keyboard(' ');
+
+    expect(onSelect).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not expose inline expansion state attributes', () => {
+    render(<ConsensusTable rows={[makeRow({ id: '테스트 종목', name: '테스트 종목', code: null })]} onSelect={() => undefined} />);
 
     const row = screen.getByRole('row', { name: /테스트 종목/ });
-    const controls = row.getAttribute('aria-controls');
 
-    expect(controls).toBeTruthy();
-    expect(controls).not.toMatch(/\s/);
-
-    await user.click(row);
-
-    expect(document.getElementById(controls ?? '')).toBeInTheDocument();
+    expect(row).not.toHaveAttribute('aria-expanded');
+    expect(row).not.toHaveAttribute('aria-controls');
   });
 
   it('renders a neutral badge when one month consensus change is missing', () => {
-    render(<ConsensusTable rows={[makeRow({ oneMonthConsensusChangePercent: null })]} />);
+    render(<ConsensusTable rows={[makeRow({ oneMonthConsensusChangePercent: null })]} onSelect={() => undefined} />);
 
     expect(screen.getByText('-', { selector: '.consensus-badge' })).toBeInTheDocument();
     expect(screen.queryByText('▲ -')).not.toBeInTheDocument();
   });
 
   it('renders a downward badge for negative one month consensus change', () => {
-    render(<ConsensusTable rows={[makeRow({ oneMonthConsensusChangePercent: -2.1 })]} />);
+    render(<ConsensusTable rows={[makeRow({ oneMonthConsensusChangePercent: -2.1 })]} onSelect={() => undefined} />);
 
     expect(screen.getByText('▼ -2.1%', { selector: '.consensus-badge' })).toBeInTheDocument();
     expect(screen.queryByText('▲ -2.1%')).not.toBeInTheDocument();
   });
 
   it('renders a neutral badge for zero one month consensus change', () => {
-    render(<ConsensusTable rows={[makeRow({ oneMonthConsensusChangePercent: 0 })]} />);
+    render(<ConsensusTable rows={[makeRow({ oneMonthConsensusChangePercent: 0 })]} onSelect={() => undefined} />);
 
     expect(screen.getByText('0.0%', { selector: '.consensus-badge' })).toBeInTheDocument();
     expect(screen.queryByText('▲ +0.0%')).not.toBeInTheDocument();
   });
 
   it('uses positive styling for a positive price gap', () => {
-    render(<ConsensusTable rows={[makeRow({ gapPercent: 38.4 })]} />);
+    render(<ConsensusTable rows={[makeRow({ gapPercent: 38.4 })]} onSelect={() => undefined} />);
 
     const gapCell = screen.getByRole('cell', { name: '+38.4%' });
 
@@ -125,7 +122,7 @@ describe('ConsensusTable', () => {
   });
 
   it('uses negative styling for a negative price gap', () => {
-    render(<ConsensusTable rows={[makeRow({ gapPercent: -2 })]} />);
+    render(<ConsensusTable rows={[makeRow({ gapPercent: -2 })]} onSelect={() => undefined} />);
 
     const gapCell = screen.getByRole('cell', { name: '-2.0%' });
 
@@ -135,7 +132,7 @@ describe('ConsensusTable', () => {
   });
 
   it('uses neutral styling for a zero price gap', () => {
-    render(<ConsensusTable rows={[makeRow({ gapPercent: 0 })]} />);
+    render(<ConsensusTable rows={[makeRow({ gapPercent: 0 })]} onSelect={() => undefined} />);
 
     const gapCell = screen.getByRole('cell', { name: '+0.0%' });
 
@@ -144,32 +141,9 @@ describe('ConsensusTable', () => {
     expect(gapCell).not.toHaveClass('gap-negative');
   });
 
-  it('uses the same directional badge in the expanded detail', async () => {
-    const user = userEvent.setup();
-    render(<ConsensusTable rows={[makeRow({ oneMonthConsensusChangePercent: -2.1 })]} />);
+  it('does not render price gap descriptions because detail content is external', () => {
+    render(<ConsensusTable rows={[makeRow({ currentPrice: 102200, fairPrice: 100200, gapAmount: -2000, gapPercent: -2 })]} onSelect={() => undefined} />);
 
-    await user.click(screen.getByRole('row', { name: /삼성전자/ }));
-
-    expect(screen.getAllByText('▼ -2.1%', { selector: '.consensus-badge' })).toHaveLength(2);
-    expect(screen.queryByText('-2.1%', { selector: '.detail-card .consensus-badge' })).not.toBeInTheDocument();
-  });
-
-  it('describes a negative price gap as current price being higher than fair price', async () => {
-    const user = userEvent.setup();
-    render(<ConsensusTable rows={[makeRow({ currentPrice: 102200, fairPrice: 100200, gapAmount: -2000, gapPercent: -2 })]} />);
-
-    await user.click(screen.getByRole('row', { name: /삼성전자/ }));
-
-    expect(screen.getByText('현재가가 적정주가 대비 2,000원 높습니다.')).toBeInTheDocument();
-    expect(screen.queryByText(/-2,000원 낮습니다/)).not.toBeInTheDocument();
-  });
-
-  it('describes a zero price gap as equal prices', async () => {
-    const user = userEvent.setup();
-    render(<ConsensusTable rows={[makeRow({ currentPrice: 100200, fairPrice: 100200, gapAmount: 0, gapPercent: 0 })]} />);
-
-    await user.click(screen.getByRole('row', { name: /삼성전자/ }));
-
-    expect(screen.getByText('현재가와 적정주가가 같습니다.')).toBeInTheDocument();
+    expect(screen.queryByText('현재가가 적정주가 대비 2,000원 높습니다.')).not.toBeInTheDocument();
   });
 });
