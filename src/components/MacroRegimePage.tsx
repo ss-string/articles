@@ -12,18 +12,7 @@ const detailSections = [
   { id: 'macro-key-indicators', label: '핵심 지표' },
   { id: 'macro-asset-implications', label: '자산 영향' },
   { id: 'macro-risk-factors', label: '리스크' },
-  { id: 'macro-full-content', label: '전문' },
 ] as const;
-
-function renderMarkdownText(markdown: string | null) {
-  return (markdown ?? '')
-    .split(/\n+/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => line.replace(/^#{1,6}\s*/, '').replace(/^\|\s*/, '').replace(/\s*\|$/g, ''))
-    .filter((line) => !/^as\s+of\b/i.test(line) && !/updated_at\s*최신/i.test(line))
-    .filter((line) => !/^\d{4}-\d{2}-\d{2}\s+(KR|US)\s+매크로\s+레짐/.test(line));
-}
 
 function IndicatorRow({ indicator }: { indicator: MacroKeyIndicator }) {
   return (
@@ -230,12 +219,6 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
                   <li>표시할 리스크가 없습니다.</li>
                 )}
               </ul>
-            </section>
-            <section className="macro-popup-panel" id="macro-full-content" ref={setSectionRef('macro-full-content')}>
-              <h4>전문</h4>
-              {renderMarkdownText(decision.contentMarkdown).map((line, index) => (
-                <p key={`${index}-${line}`}>{line}</p>
-              ))}
             </section>
           </div>
         </div>

@@ -83,9 +83,6 @@ describe('MacroRegimePage', () => {
 
     const dialog = screen.getByRole('dialog', { name: '리플레이션(reflation)' });
     expect(within(dialog).getByText('2026.05.04')).toBeInTheDocument();
-    expect(within(dialog).queryByText(/as of/i)).not.toBeInTheDocument();
-    expect(within(dialog).queryByText(/updated_at 최신/)).not.toBeInTheDocument();
-    expect(within(dialog).queryByText(/2026-05-04 US 매크로 레짐/)).not.toBeInTheDocument();
     expect(within(dialog).queryByRole('main')).not.toBeInTheDocument();
     expect(within(dialog).getByRole('heading', { name: '요약' })).toBeInTheDocument();
     expect(within(dialog).getByText(rows[1].summary as string)).toBeInTheDocument();
@@ -97,7 +94,9 @@ describe('MacroRegimePage', () => {
     expect(within(dialog).getByText('↓ 하락')).toBeInTheDocument();
     expect(within(dialog).getByText(/유동성 ample은 위험자산을 보조/)).toBeInTheDocument();
     expect(within(dialog).getByText(/Core CPI는 하락 추세/)).toBeInTheDocument();
-    expect(within(dialog).getByText(/미국 전문입니다/)).toBeInTheDocument();
+    expect(within(dialog).queryByRole('heading', { name: '전문' })).not.toBeInTheDocument();
+    expect(within(dialog).queryByRole('button', { name: '전문' })).not.toBeInTheDocument();
+    expect(within(dialog).queryByText(/미국 전문입니다/)).not.toBeInTheDocument();
     expect(
       Array.from(dialog.querySelectorAll('.macro-axis-row')).map((row) => row.textContent),
     ).toEqual([
@@ -122,7 +121,7 @@ describe('MacroRegimePage', () => {
     expect(within(dialog).getByRole('button', { name: '상세 팝업 닫기' })).toHaveFocus();
 
     await user.tab({ shift: true });
-    expect(within(dialog).getByRole('button', { name: '전문' })).toHaveFocus();
+    expect(within(dialog).getByRole('button', { name: '리스크' })).toHaveFocus();
 
     await user.keyboard('{Escape}');
     expect(usCard).toHaveFocus();

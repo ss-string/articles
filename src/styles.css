@@ -1012,8 +1012,9 @@ h3 {
 
 .macro-axis-row {
   display: grid;
-  grid-template-columns: minmax(90px, 0.8fr) minmax(130px, 1fr) minmax(120px, 0.9fr);
-  gap: 12px;
+  grid-template-columns: max-content max-content minmax(120px, 1fr);
+  column-gap: 6px;
+  row-gap: 4px;
   align-items: baseline;
   margin-bottom: 10px;
 }
