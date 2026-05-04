@@ -2,9 +2,9 @@
 
 > **에이전트 작업자 필수 지침:** 이 계획을 작업 단위로 구현할 때는 `superpowers:subagent-driven-development` 또는 `superpowers:executing-plans`를 사용한다. 단계 추적은 체크박스(`- [ ]`)로 관리한다.
 
-**목표:** 컨센서스 페이지를 기존 포트폴리오 대시보드의 앱 셸과 어두운 디자인 시스템으로 마이그레이션한다.
+**목표:** 기존 포트폴리오 페이지를 유지하면서 `컨센서스 괴리율 랭킹` 탭으로 컨센서스 지면에 접근하게 한다.
 
-**아키텍처:** `ConsensusRankingPage`가 기존 앱의 셸, 내비게이션, 섹션 구조를 렌더링한다. `SummaryCards`와 `ConsensusTable`의 기능은 유지하고, CSS에서 기존 디자인 토큰에 맞춰 요약 카드, 테이블, 확장 row, 선 그래프를 재정의한다.
+**아키텍처:** `App`은 기존 포트폴리오 앱 셸과 섹션을 렌더링한다. `ConsensusRankingPage`는 별도 앱 셸 없이 `dashboard-section` 기반의 컨센서스 섹션만 렌더링하며, `SummaryCards`와 `ConsensusTable`의 기능은 유지한다.
 
 **기술 스택:** React 19, TypeScript, Vite, Vitest, Testing Library, CSS.
 
@@ -19,17 +19,17 @@
 
 - [x] **1단계: 실패 테스트 작성**
 
-`src/App.test.tsx`에 컨센서스 페이지가 `.app-shell`, `.sidebar`, `.top-nav`, `.dashboard`, `.hero-section`, `.dashboard-section` 안에서 렌더링되는지 확인하는 단언을 추가한다.
+`src/App.test.tsx`에 기존 `Portfolio Dashboard`가 유지되고, `컨센서스 괴리율 랭킹` 내비게이션 링크가 `#consensus`로 연결되며, 컨센서스 섹션 안에 `.status-panel`이 없는지 확인하는 단언을 추가한다.
 
 - [x] **2단계: 실패 확인**
 
 실행: `rtk npm test -- src/App.test.tsx`
 
-기대 결과: 기존 페이지가 `.page-shell`만 렌더링하므로 실패한다.
+기대 결과: 기존 구현이 포트폴리오 페이지를 대체하므로 실패한다.
 
 - [x] **3단계: 최소 구현**
 
-`ConsensusRankingPage`를 기존 앱 셸 구조로 바꾸고, 상태/요약/테이블 콘텐츠를 기존 섹션 컨테이너 안으로 이동한다.
+`App`에 기존 포트폴리오 페이지를 복원하고, `ConsensusRankingPage`는 별도 앱 셸 없이 컨센서스 섹션만 렌더링하도록 변경한다.
 
 - [x] **4단계: 통과 확인**
 

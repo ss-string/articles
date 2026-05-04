@@ -7,13 +7,6 @@ type ConsensusRankingPageProps = {
   queryRows?: () => Promise<RawConsensusRow[]>;
 };
 
-const navItems = [
-  { label: 'Overview', href: '#overview' },
-  { label: 'Ranking', href: '#ranking' },
-  { label: 'Method', href: '#method' },
-  { label: 'Status', href: '#status' },
-];
-
 export function ConsensusRankingPage({ queryRows }: ConsensusRankingPageProps) {
   const state = useConsensusRanking({ queryRows });
   const statusContent =
@@ -26,86 +19,43 @@ export function ConsensusRankingPage({ queryRows }: ConsensusRankingPageProps) {
     ) : null;
 
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <a className="brand" href="#overview" aria-label="Consensus dashboard home">
-          <span className="brand-mark">S</span>
-          <span>
-            <strong>Sunghyun</strong>
-            <small>Portfolio</small>
-          </span>
-        </a>
+    <>
+      <section className="dashboard-section consensus-section" id="consensus" aria-labelledby="consensus-title">
+        <div className="section-heading consensus-heading">
+          <span className="consensus-source">KRX FNGUIDE</span>
+          <h2 className="consensus-title" id="consensus-title">
+            컨센서스 괴리율 랭킹
+          </h2>
+        </div>
+        <p className="consensus-copy">
+          <strong>TL;DR</strong> 컨센서스 대비 현재 주가가 낮게 반영된 종목의 갭을 큰 순서로 확인합니다.
+          확장 row에서 가격 차이와 컨센서스 흐름을 함께 봅니다.
+        </p>
 
-        <nav className="nav-list" aria-label="Primary">
-          {navItems.map((item) => (
-            <a href={item.href} key={item.href}>
-              {item.label}
-            </a>
-          ))}
-        </nav>
-      </aside>
+        {statusContent}
+        {state.status === 'success' && state.rows.length > 0 ? <SummaryCards rows={state.rows} /> : null}
+      </section>
 
-      <header className="top-nav">
-        <a className="brand" href="#overview" aria-label="Consensus dashboard home">
-          <span className="brand-mark">S</span>
-          <span>
-            <strong>Sunghyun</strong>
-            <small>Portfolio</small>
-          </span>
-        </a>
-        <nav className="mobile-links" aria-label="Mobile">
-          {navItems.map((item) => (
-            <a href={item.href} key={item.href}>
-              {item.label}
-            </a>
-          ))}
-        </nav>
-      </header>
-
-      <main className="dashboard">
-        <section className="hero-section consensus-hero" id="overview" aria-labelledby="overview-title">
-          <div className="eyebrow consensus-source">KRX FNGUIDE</div>
-          <div className="hero-grid">
-            <div>
-              <h1 id="overview-title">컨센서스 괴리율 랭킹</h1>
-              <p className="hero-copy">
-                컨센서스 대비 현재 주가가 낮게 반영된 종목을 갭이 큰 순서로 정렬해 확인합니다.
-              </p>
-            </div>
-            <div className="status-panel" aria-label="지면 요약">
-              <span>TL;DR</span>
-              <strong>컨센서스 대비 현재 주가가 낮게 반영된 종목의 갭을 빠르게 확인합니다.</strong>
-              <p>괴리율이 큰 순서로 종목을 훑고, 확장 row에서 가격 차이와 컨센서스 흐름을 확인합니다.</p>
-            </div>
-          </div>
-        </section>
-
-        <section className="dashboard-section" id="status" aria-live="polite">
-          {statusContent}
-          {state.status === 'success' && state.rows.length > 0 ? <SummaryCards rows={state.rows} /> : null}
-        </section>
-
-        {state.status === 'success' && state.rows.length > 0 ? (
-          <section className="dashboard-section ranking-section" id="ranking" aria-labelledby="ranking-title">
-            <div className="section-heading">
-              <span>Ranking</span>
-              <h2 id="ranking-title">괴리율 순위</h2>
-            </div>
-            <ConsensusTable rows={state.rows} />
-          </section>
-        ) : null}
-
-        <section className="dashboard-section method-section" id="method" aria-labelledby="method-title">
+      {state.status === 'success' && state.rows.length > 0 ? (
+        <section className="dashboard-section ranking-section" id="ranking" aria-labelledby="ranking-title">
           <div className="section-heading">
-            <span>Method</span>
-            <h2 id="method-title">표기 기준</h2>
+            <span>Ranking</span>
+            <h2 id="ranking-title">괴리율 순위</h2>
           </div>
-          <p>
-            괴리율은 현재가 대비 적정주가 차이로 계산하며, 컨센서스 증감은 현재 컨센서스를 지난 1개월
-            컨센서스와 비교해 표시합니다.
-          </p>
+          <ConsensusTable rows={state.rows} />
         </section>
-      </main>
-    </div>
+      ) : null}
+
+      <section className="dashboard-section method-section" id="method" aria-labelledby="method-title">
+        <div className="section-heading">
+          <span>Method</span>
+          <h2 id="method-title">표기 기준</h2>
+        </div>
+        <p>
+          괴리율은 현재가 대비 적정주가 차이로 계산하며, 컨센서스 증감은 현재 컨센서스를 지난 1개월
+          컨센서스와 비교해 표시합니다.
+        </p>
+      </section>
+    </>
   );
 }

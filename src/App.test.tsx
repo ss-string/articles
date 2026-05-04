@@ -27,6 +27,10 @@ describe('App', () => {
   it('renders ranked consensus rows with required fields', async () => {
     const { container } = render(<App queryRows={async () => rows} />);
 
+    expect(screen.getByRole('heading', { name: 'Portfolio Dashboard' })).toBeInTheDocument();
+    const consensusLinks = screen.getAllByRole('link', { name: '컨센서스 괴리율 랭킹' });
+    expect(consensusLinks).toHaveLength(2);
+    consensusLinks.forEach((link) => expect(link).toHaveAttribute('href', '#consensus'));
     expect(await screen.findByRole('heading', { name: '컨센서스 괴리율 랭킹' })).toBeInTheDocument();
     expect(screen.getByText('삼성전자')).toBeInTheDocument();
     expect(screen.getByText('72,400원')).toBeInTheDocument();
@@ -38,6 +42,7 @@ describe('App', () => {
     expect(screen.queryByText('Data source')).not.toBeInTheDocument();
     expect(screen.queryByText(/Supabase/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/FnGuide Consensus/i)).not.toBeInTheDocument();
+    expect(container.querySelector('#consensus .status-panel')).not.toBeInTheDocument();
     expect(container.querySelector('.app-shell')).toBeInTheDocument();
     expect(container.querySelector('.sidebar')).toBeInTheDocument();
     expect(container.querySelector('.top-nav')).toBeInTheDocument();

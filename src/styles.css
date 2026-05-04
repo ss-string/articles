@@ -180,12 +180,66 @@ h3 {
   font-size: 1.08rem;
 }
 
+.hero-actions,
+.contact-links,
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.primary-action,
+.secondary-action,
+.project-card > a,
+.article-side a,
+.contact-links a {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.primary-action {
+  background: #2dd4bf;
+  color: #08251f;
+  padding: 0 16px;
+}
+
+.secondary-action,
+.contact-links a {
+  border: 1px solid rgba(185, 177, 164, 0.28);
+  color: #f3efe6;
+  padding: 0 16px;
+}
+
 .consensus-source {
   font-size: 0.66rem;
   line-height: 1.2;
 }
 
+.consensus-title {
+  max-width: none;
+  font-size: clamp(0.85rem, 2vw, 1.8rem);
+  line-height: 1.08;
+}
+
+.consensus-copy {
+  max-width: 760px;
+  margin-bottom: 18px;
+  color: #d7d0c5;
+}
+
+.consensus-copy strong {
+  color: #2dd4bf;
+}
+
 .status-panel,
+.metric-card,
+.project-card,
+.article-item,
+.stack-card,
 .summary-card,
 .detail-card,
 .price-tile,
@@ -201,6 +255,7 @@ h3 {
 }
 
 .status-panel span,
+.metric-card span,
 .summary-card span,
 .price-tile span,
 .checkpoint span,
@@ -221,8 +276,108 @@ h3 {
 }
 
 .status-panel p,
+.metric-card p,
+.project-card p,
+.article-item p,
+.contact-section p,
 .method-section p {
   color: #b9b1a4;
+}
+
+.metrics-grid,
+.project-grid,
+.stack-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.metrics-grid {
+  margin-top: 26px;
+}
+
+.metric-card,
+.project-card,
+.stack-card {
+  padding: 18px;
+}
+
+.metric-card strong {
+  display: block;
+  margin: 10px 0 8px;
+  font-size: 2rem;
+}
+
+.project-card {
+  display: flex;
+  min-height: 260px;
+  flex-direction: column;
+}
+
+.tag-row {
+  margin: 12px 0 18px;
+}
+
+.tag-row span,
+.stack-card li {
+  border-radius: 999px;
+  background: rgba(246, 196, 83, 0.12);
+  color: #f9dfa0;
+  font-size: 0.78rem;
+}
+
+.tag-row span {
+  padding: 4px 9px;
+}
+
+.project-card > a {
+  margin-top: auto;
+  border: 1px solid rgba(45, 212, 191, 0.32);
+  color: #99f6e4;
+}
+
+.article-list {
+  display: grid;
+  gap: 12px;
+}
+
+.article-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px;
+  gap: 16px;
+  padding: 18px;
+}
+
+.article-side {
+  display: grid;
+  align-content: space-between;
+  justify-items: end;
+  color: #b9b1a4;
+  font-size: 0.86rem;
+}
+
+.article-side a {
+  min-height: 34px;
+  padding: 0 12px;
+  background: rgba(45, 212, 191, 0.12);
+  color: #99f6e4;
+}
+
+.stack-card ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stack-card li {
+  padding: 6px 10px;
+}
+
+.contact-section {
+  margin-bottom: 32px;
 }
 
 .state-panel {
@@ -660,8 +815,18 @@ h3 {
   }
 
   .hero-grid,
+  .metrics-grid,
+  .project-grid,
+  .stack-grid,
+  .article-item,
   .expanded-cell {
     grid-template-columns: 1fr;
+  }
+
+  .article-side {
+    align-content: start;
+    justify-items: start;
+    gap: 10px;
   }
 
   .summary-grid,
@@ -682,6 +847,12 @@ h3 {
 
   h1 {
     font-size: 2.35rem;
+  }
+
+  .primary-action,
+  .secondary-action,
+  .contact-links a {
+    width: 100%;
   }
 
   .summary-grid {
