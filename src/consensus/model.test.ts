@@ -24,8 +24,8 @@ describe('consensus model', () => {
       fairPrice: 100200,
       gapAmount: 27800,
     });
-    expect(row?.gapPercent).toBe(((100200 - 72400) / 72400) * 100);
-    expect(row?.oneMonthConsensusChangePercent).toBe(((100200 - 93800) / 93800) * 100);
+    expect(row?.gapPercent).toBeCloseTo(((100200 - 72400) / 72400) * 100);
+    expect(row?.oneMonthConsensusChangePercent).toBeCloseTo(((100200 - 93800) / 93800) * 100);
     expect(row?.checkpoints).toEqual([
       { label: '지난 6개월', price: 91300, changePercent: expect.any(Number) },
       { label: '지난 3개월', price: 96300, changePercent: expect.any(Number) },
@@ -52,6 +52,72 @@ describe('consensus model', () => {
     ]);
 
     expect(rows.map((row) => row.name)).toEqual(['정상']);
+  });
+
+  it('parses comma-formatted and percent-suffixed numeric strings', () => {
+    const row = normalizeConsensusRow({
+      stock_name: '삼성전자',
+      current_price: '72,400',
+      target_price: '100,200',
+      consensus_1m: '93,800%',
+    });
+
+    expect(row).toMatchObject({
+      currentPrice: 72400,
+      fairPrice: 100200,
+      oneMonthConsensusPrice: 93800,
+    });
+    expect(row?.gapPercent).toBeCloseTo(((100200 - 72400) / 72400) * 100);
+    expect(row?.oneMonthConsensusChangePercent).toBeCloseTo(((100200 - 93800) / 93800) * 100);
+  });
+
+  it('excludes rows when required prices are invalid numeric strings or blank text', () => {
+    const rows = buildRankingRows([
+      { stock_name: '정상', current_price: '10,000', target_price: '12,000' },
+      { stock_name: '문자현재가', current_price: 'abc', target_price: '12,000' },
+      { stock_name: '공백현재가', current_price: '   ', target_price: '12,000' },
+      { stock_name: '빈적정가', current_price: '10,000', target_price: '' },
+    ]);
+
+    expect(rows.map((row) => row.name)).toEqual(['정상']);
+  });
+
+  it('keeps missing checkpoint prices as null', () => {
+    const row = normalizeConsensusRow({
+      stock_name: '체크포인트없음',
+      current_price: 10000,
+      target_price: 12000,
+    });
+
+    expect(row?.oneMonthConsensusPrice).toBeNull();
+    expect(row?.threeMonthConsensusPrice).toBeNull();
+    expect(row?.sixMonthConsensusPrice).toBeNull();
+    expect(row?.checkpoints).toEqual([
+      { label: '지난 6개월', price: null, changePercent: null },
+      { label: '지난 3개월', price: null, changePercent: null },
+      { label: '지난 1개월', price: null, changePercent: null },
+      { label: '현재 컨센서스', price: 12000, changePercent: 0 },
+    ]);
+  });
+
+  it('returns null checkpoint change percentages for zero or negative denominators', () => {
+    const row = normalizeConsensusRow({
+      stock_name: '분모검증',
+      current_price: 10000,
+      target_price: 12000,
+      consensus_1m: 0,
+      consensus_3m: -1000,
+      consensus_6m: 11000,
+    });
+
+    expect(row?.oneMonthConsensusChangePercent).toBeNull();
+    expect(row?.checkpoints).toEqual([
+      { label: '지난 6개월', price: 11000, changePercent: expect.any(Number) },
+      { label: '지난 3개월', price: -1000, changePercent: null },
+      { label: '지난 1개월', price: 0, changePercent: null },
+      { label: '현재 컨센서스', price: 12000, changePercent: 0 },
+    ]);
+    expect(row?.checkpoints[0]?.changePercent).toBeCloseTo(((12000 - 11000) / 11000) * 100);
   });
 
   it('formats prices and percents for Korean financial display', () => {

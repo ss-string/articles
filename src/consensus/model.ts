@@ -46,7 +46,7 @@ function parseNumber(value: unknown): number | null {
   }
 
   if (typeof value === 'string') {
-    const normalized = value.replaceAll(',', '').replace('%', '').trim();
+    const normalized = value.replace(/,/g, '').replace(/%/g, '').trim();
     if (normalized.length === 0) {
       return null;
     }
