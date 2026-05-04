@@ -81,7 +81,7 @@ describe('MacroRegimePage', () => {
     expect(within(dialog).queryByText(/updated_at 최신/)).not.toBeInTheDocument();
     expect(within(dialog).getByText(rows[1].summary as string)).toBeInTheDocument();
     expect(within(dialog).getByText('성장')).toBeInTheDocument();
-    expect(within(dialog).getByText('판단 neutral')).toBeInTheDocument();
+    expect(within(dialog).getAllByText('판단 neutral')).toHaveLength(2);
     expect(within(dialog).getByText('컨피던스 0.69')).toBeInTheDocument();
     expect(within(dialog).getByText('미국 CPI (YoY)')).toBeInTheDocument();
     expect(within(dialog).getByText('↑ 상승')).toBeInTheDocument();
@@ -89,6 +89,14 @@ describe('MacroRegimePage', () => {
     expect(within(dialog).getByText(/유동성 ample은 위험자산을 보조/)).toBeInTheDocument();
     expect(within(dialog).getByText(/Core CPI는 하락 추세/)).toBeInTheDocument();
     expect(within(dialog).getByText(/미국 전문입니다/)).toBeInTheDocument();
+    expect(
+      Array.from(dialog.querySelectorAll('.macro-axis-row')).map((row) => row.textContent),
+    ).toEqual([
+      '성장판단 neutral컨피던스 0.69',
+      '물가판단 elevated컨피던스 0.71',
+      '통화판단 neutral컨피던스 0.66',
+      '유동성판단 ample컨피던스 0.78',
+    ]);
 
     await user.click(within(dialog).getByRole('button', { name: '상세 팝업 닫기' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

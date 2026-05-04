@@ -96,11 +96,11 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
             <section className="macro-popup-panel">
               <h4>4개 축 판단</h4>
               <div className="macro-axis-list">
-                {decision.axisAssessments.map((axis, index) => (
+                {decision.axisAssessments.map((axis) => (
                   <article className="macro-axis-block" key={axis.key}>
                     <div className="macro-axis-row">
                       <h5>{axis.label}</h5>
-                      <span>{index === 0 ? `판단 ${axis.judgment}` : `${axis.label} 판단 ${axis.judgment}`}</span>
+                      <span>판단 {axis.judgment}</span>
                       <span>{axis.confidenceLabel}</span>
                     </div>
                     <p>{axis.rationale || '-'}</p>
