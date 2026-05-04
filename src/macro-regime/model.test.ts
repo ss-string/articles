@@ -102,6 +102,16 @@ describe('macro regime model', () => {
     expect(normalizeMacroRegimeRow({ market: 'US', run_date: '2026-05-04' })).toBeNull();
     expect(normalizeMacroRegimeRow({ market: 'US', run_date: 'not-a-date', regime: 'x' })).toBeNull();
     expect(normalizeMacroRegimeRow({ market: 'US', run_date: 20260504, regime: 'x' })).toBeNull();
+    expect(normalizeMacroRegimeRow({ market: 'US', run_date: '2026-05-04-not-iso', regime: 'x' })).toBeNull();
+    expect(normalizeMacroRegimeRow({ market: 'US', run_date: '2026-05-04Tbad', regime: 'x' })).toBeNull();
+    expect(normalizeMacroRegimeRow({ market: 'US', run_date: '2026-02-30', regime: 'x' })).toBeNull();
+    expect(
+      normalizeMacroRegimeRow({
+        market: 'US',
+        run_date: '2026-05-04T07:53:42.522269+00:00',
+        regime: 'x',
+      })?.dateLabel,
+    ).toBe('2026.05.04');
   });
 
   it('formats dates and trend labels', () => {

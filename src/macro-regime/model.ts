@@ -132,14 +132,17 @@ function parseRunDate(value: unknown): string | null {
 }
 
 export function formatDecisionDate(value: string | null): string {
-  const text = parseText(value);
+  const text = typeof value === 'string' ? value.trim() : null;
   if (!text) {
     return '-';
   }
 
-  const datePart = text.slice(0, 10);
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(datePart);
+  const match = /^(\d{4})-(\d{2})-(\d{2})(?:$|T.+$)/.exec(text);
   if (!match || !isValidDateParts(match[1], match[2], match[3])) {
+    return '-';
+  }
+
+  if (text.includes('T') && Number.isNaN(Date.parse(text))) {
     return '-';
   }
 
