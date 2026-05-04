@@ -49,6 +49,18 @@ function getGapClassName(gapPercent: number) {
 export function ConsensusTable({ rows }: ConsensusTableProps) {
   const [openRowKeys, setOpenRowKeys] = useState<Set<string>>(() => new Set());
 
+  function toggleRow(rowKey: string) {
+    setOpenRowKeys((previous) => {
+      const next = new Set(previous);
+      if (next.has(rowKey)) {
+        next.delete(rowKey);
+      } else {
+        next.add(rowKey);
+      }
+      return next;
+    });
+  }
+
   return (
     <section className="table-shell" role="table" aria-label="컨센서스 랭킹 테이블">
       <div className="table-head" role="row">
@@ -57,7 +69,6 @@ export function ConsensusTable({ rows }: ConsensusTableProps) {
         <div role="columnheader">적정주가</div>
         <div role="columnheader">갭</div>
         <div role="columnheader">지난 1개월 대비 컨센서스 증가</div>
-        <div role="columnheader">상세</div>
       </div>
       {rows.map((row, index) => {
         const rowKey = `${row.id}-${index}`;
@@ -66,7 +77,20 @@ export function ConsensusTable({ rows }: ConsensusTableProps) {
 
         return (
           <div className="rank-detail" key={rowKey} role="rowgroup">
-            <div className="summary-row" role="row">
+            <div
+              className="summary-row"
+              role="row"
+              tabIndex={0}
+              aria-controls={detailId}
+              aria-expanded={isOpen}
+              onClick={() => toggleRow(rowKey)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  toggleRow(rowKey);
+                }
+              }}
+            >
               <div role="cell">
                 <div className="stock-name">{row.name}</div>
                 {row.code ? <div className="stock-code">{row.code}</div> : null}
@@ -86,28 +110,6 @@ export function ConsensusTable({ rows }: ConsensusTableProps) {
                   <span style={{ width: `${Math.min(Math.max(row.gapPercent, 0), 100)}%` }} />
                 </div>
                 <span className="consensus-badge">{formatOneMonthBadge(row.oneMonthConsensusChangePercent)}</span>
-              </div>
-              <div role="cell">
-                <button
-                  className="chevron"
-                  type="button"
-                  aria-controls={detailId}
-                  aria-expanded={isOpen}
-                  aria-label={`${row.name} 상세 ${isOpen ? '닫기' : '열기'}`}
-                  onClick={() => {
-                    setOpenRowKeys((previous) => {
-                      const next = new Set(previous);
-                      if (isOpen) {
-                        next.delete(rowKey);
-                      } else {
-                        next.add(rowKey);
-                      }
-                      return next;
-                    });
-                  }}
-                >
-                  ⌄
-                </button>
               </div>
             </div>
             {isOpen ? (

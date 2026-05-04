@@ -441,8 +441,7 @@ h3 {
     minmax(112px, 0.75fr)
     minmax(142px, 0.95fr)
     minmax(82px, 0.55fr)
-    minmax(220px, 1.25fr)
-    56px;
+    minmax(220px, 1.25fr);
   align-items: center;
   min-width: 860px;
 }
@@ -478,6 +477,7 @@ h3 {
   min-height: 70px;
   padding: 0 16px;
   color: #f3efe6;
+  cursor: pointer;
   transition:
     background-color 160ms ease,
     box-shadow 160ms ease;
@@ -485,6 +485,11 @@ h3 {
 
 .summary-row:hover {
   background: rgba(45, 212, 191, 0.08);
+}
+
+.summary-row:focus-visible {
+  outline: 2px solid #2dd4bf;
+  outline-offset: -2px;
 }
 
 .summary-row [role="cell"] {
@@ -569,34 +574,6 @@ h3 {
   font-weight: 800;
   line-height: 1.2;
   white-space: nowrap;
-}
-
-.chevron {
-  display: inline-grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  color: #99f6e4;
-  background: rgba(45, 212, 191, 0.12);
-  border: 1px solid rgba(45, 212, 191, 0.32);
-  border-radius: 8px;
-  cursor: pointer;
-  transition:
-    background-color 160ms ease,
-    border-color 160ms ease,
-    color 160ms ease,
-    transform 160ms ease;
-}
-
-.chevron:hover,
-.chevron[aria-expanded="true"] {
-  color: #08251f;
-  background: #2dd4bf;
-  border-color: #2dd4bf;
-}
-
-.chevron[aria-expanded="true"] {
-  transform: rotate(180deg);
 }
 
 .expanded-row {
@@ -899,8 +876,8 @@ h3 {
   }
 
   .summary-row {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0 10px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
     min-width: 0;
     min-height: 0;
     padding: 12px;
@@ -968,12 +945,6 @@ h3 {
   .summary-row [role="cell"]:nth-child(5) {
     grid-column: 1 / -1;
     grid-row: 5;
-  }
-
-  .summary-row [role="cell"]:nth-child(6) {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    align-self: center;
   }
 
   .expanded-row {

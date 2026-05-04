@@ -22,14 +22,13 @@ export function ConsensusRankingPage({ queryRows }: ConsensusRankingPageProps) {
     <>
       <section className="dashboard-section consensus-section" id="consensus" aria-labelledby="consensus-title">
         <div className="section-heading consensus-heading">
-          <span className="consensus-source">KRX FNGUIDE</span>
+          <span className="consensus-source">KRX 컨센서스 괴리율 랭킹</span>
           <h2 className="consensus-title" id="consensus-title">
             컨센서스 괴리율 랭킹
           </h2>
         </div>
         <p className="consensus-copy">
           <strong>TL;DR</strong> 컨센서스 대비 현재 주가가 낮게 반영된 종목의 갭을 큰 순서로 확인합니다.
-          확장 row에서 가격 차이와 컨센서스 흐름을 함께 봅니다.
         </p>
 
         {statusContent}

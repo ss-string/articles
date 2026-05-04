@@ -39,6 +39,8 @@ describe('App', () => {
     expect(screen.getByText('지난 1개월 대비 컨센서스 증가')).toBeInTheDocument();
     expect(screen.getByText('TL;DR')).toBeInTheDocument();
     expect(screen.getAllByText(/컨센서스 대비 현재 주가가 낮게 반영된 종목/)).not.toHaveLength(0);
+    expect(screen.getByText('KRX 컨센서스 괴리율 랭킹')).toBeInTheDocument();
+    expect(screen.queryByText(/확장 row에서 가격 차이와 컨센서스 흐름을 함께 봅니다/)).not.toBeInTheDocument();
     expect(screen.queryByText('Data source')).not.toBeInTheDocument();
     expect(screen.queryByText(/Supabase/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/FnGuide Consensus/i)).not.toBeInTheDocument();
@@ -55,8 +57,8 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App queryRows={async () => rows} />);
 
-    const samsungSummary = await screen.findByRole('button', { name: /삼성전자 상세 열기/i });
-    await user.click(samsungSummary);
+    await screen.findByText('삼성전자');
+    await user.click(screen.getByRole('row', { name: /삼성전자/ }));
 
     expect(screen.getByText('컨센서스 가격 변화')).toBeInTheDocument();
     expect(screen.getAllByText('91,300원')).not.toHaveLength(0);

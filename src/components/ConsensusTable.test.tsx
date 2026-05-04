@@ -41,8 +41,10 @@ describe('ConsensusTable', () => {
     const table = screen.getByRole('table', { name: '컨센서스 랭킹 테이블' });
     expect(within(table).getByRole('columnheader', { name: '종목' })).toBeInTheDocument();
     expect(within(table).getByRole('columnheader', { name: '현재가' })).toBeInTheDocument();
+    expect(within(table).queryByRole('columnheader', { name: '상세' })).not.toBeInTheDocument();
     expect(within(table).getByRole('cell', { name: '삼성전자 005930' })).toBeInTheDocument();
     expect(within(table).getByRole('cell', { name: '72,400원' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /삼성전자 상세/ })).not.toBeInTheDocument();
   });
 
   it('keeps detail content hidden until the row is expanded', async () => {
@@ -51,12 +53,13 @@ describe('ConsensusTable', () => {
 
     expect(screen.queryByText('컨센서스 가격 변화')).not.toBeInTheDocument();
 
-    const expandButton = screen.getByRole('button', { name: '삼성전자 상세 열기' });
-    expect(expandButton).toHaveAttribute('aria-expanded', 'false');
+    const row = screen.getByRole('row', { name: /삼성전자/ });
+    expect(row).toHaveAttribute('aria-expanded', 'false');
+    expect(row).toHaveAttribute('aria-controls', 'consensus-detail-0');
 
-    await user.click(expandButton);
+    await user.click(row);
 
-    expect(screen.getByRole('button', { name: '삼성전자 상세 닫기' })).toHaveAttribute('aria-expanded', 'true');
+    expect(row).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText('컨센서스 가격 변화')).toBeInTheDocument();
   });
 
@@ -64,7 +67,7 @@ describe('ConsensusTable', () => {
     const user = userEvent.setup();
     render(<ConsensusTable rows={[makeRow()]} />);
 
-    await user.click(screen.getByRole('button', { name: '삼성전자 상세 열기' }));
+    await user.click(screen.getByRole('row', { name: /삼성전자/ }));
 
     const table = screen.getByRole('table', { name: '컨센서스 랭킹 테이블' });
     const expandedCell = within(table).getByRole('cell', { name: /가격 비교/ });
@@ -79,13 +82,13 @@ describe('ConsensusTable', () => {
     const user = userEvent.setup();
     render(<ConsensusTable rows={[makeRow({ id: '테스트 종목', name: '테스트 종목', code: null })]} />);
 
-    const expandButton = screen.getByRole('button', { name: '테스트 종목 상세 열기' });
-    const controls = expandButton.getAttribute('aria-controls');
+    const row = screen.getByRole('row', { name: /테스트 종목/ });
+    const controls = row.getAttribute('aria-controls');
 
     expect(controls).toBeTruthy();
     expect(controls).not.toMatch(/\s/);
 
-    await user.click(expandButton);
+    await user.click(row);
 
     expect(document.getElementById(controls ?? '')).toBeInTheDocument();
   });
@@ -145,7 +148,7 @@ describe('ConsensusTable', () => {
     const user = userEvent.setup();
     render(<ConsensusTable rows={[makeRow({ oneMonthConsensusChangePercent: -2.1 })]} />);
 
-    await user.click(screen.getByRole('button', { name: '삼성전자 상세 열기' }));
+    await user.click(screen.getByRole('row', { name: /삼성전자/ }));
 
     expect(screen.getAllByText('▼ -2.1%', { selector: '.consensus-badge' })).toHaveLength(2);
     expect(screen.queryByText('-2.1%', { selector: '.detail-card .consensus-badge' })).not.toBeInTheDocument();
@@ -155,7 +158,7 @@ describe('ConsensusTable', () => {
     const user = userEvent.setup();
     render(<ConsensusTable rows={[makeRow({ currentPrice: 102200, fairPrice: 100200, gapAmount: -2000, gapPercent: -2 })]} />);
 
-    await user.click(screen.getByRole('button', { name: '삼성전자 상세 열기' }));
+    await user.click(screen.getByRole('row', { name: /삼성전자/ }));
 
     expect(screen.getByText('현재가가 적정주가 대비 2,000원 높습니다.')).toBeInTheDocument();
     expect(screen.queryByText(/-2,000원 낮습니다/)).not.toBeInTheDocument();
@@ -165,7 +168,7 @@ describe('ConsensusTable', () => {
     const user = userEvent.setup();
     render(<ConsensusTable rows={[makeRow({ currentPrice: 100200, fairPrice: 100200, gapAmount: 0, gapPercent: 0 })]} />);
 
-    await user.click(screen.getByRole('button', { name: '삼성전자 상세 열기' }));
+    await user.click(screen.getByRole('row', { name: /삼성전자/ }));
 
     expect(screen.getByText('현재가와 적정주가가 같습니다.')).toBeInTheDocument();
   });
