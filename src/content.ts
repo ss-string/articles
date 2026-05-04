@@ -33,6 +33,7 @@ export type ProfileLink = {
 export const navItems = [
   { label: 'Overview', href: '#overview' },
   { label: '핫뉴스 리포트', href: '#hot-news' },
+  { label: '매크로 레짐', href: '#macro-regime' },
   { label: '컨센서스 괴리율 랭킹', href: '#consensus' },
   { label: 'Work', href: '#work' },
   { label: 'Writing', href: '#writing' },
