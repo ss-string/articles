@@ -9,7 +9,17 @@ Vite 앱은 다음 환경변수를 사용합니다.
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
 
-GitHub Pages 배포 환경에서는 GitHub variables 또는 secrets를 통해 위 값을 제공해야 합니다.
+로컬에서는 `.env.local`에 Supabase 값을 넣고 Vite 환경변수에 바인딩합니다. `.env.local`은 Git에 커밋하지 않습니다.
+
+```env
+SUPABASE_URL=https://example.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx
+
+VITE_SUPABASE_URL=$SUPABASE_URL
+VITE_SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY
+```
+
+GitHub Pages 배포 환경에서는 GitHub secrets 또는 variables를 통해 `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` 값을 제공합니다.
 
 ## 개발
 
