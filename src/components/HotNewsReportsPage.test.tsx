@@ -39,6 +39,9 @@ describe('HotNewsReportsPage', () => {
     render(<HotNewsReportsPage queryRows={async () => rows} />);
 
     expect(await screen.findByRole('heading', { name: '핫뉴스 리포트' })).toBeInTheDocument();
+    expect(
+      screen.getByText('토스증권 주요 뉴스 묶음을 카드로 훑고, 선택한 이슈의 리포트를 팝업에서 확인합니다.'),
+    ).toBeInTheDocument();
     expect(screen.getByText('2026-05-04 조선 에너지 수주')).toBeInTheDocument();
     expect(screen.getByText('2026.05.04')).toBeInTheDocument();
     expect(screen.getByText('조선 에너지 수주')).toBeInTheDocument();
@@ -93,6 +96,41 @@ describe('HotNewsReportsPage', () => {
     expect(link).toHaveAttribute('href', expect.stringContaining('tossinvest.com/feed/news'));
     expect(screen.getByText('링크 없는 기사')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: '링크 없는 기사' })).not.toBeInTheDocument();
+  });
+
+  it('renders company evidence source links when present', async () => {
+    const user = userEvent.setup();
+    render(<HotNewsReportsPage queryRows={async () => rows} />);
+
+    await user.click(await screen.findByRole('button', { name: /2026-05-04 조선 에너지 수주/ }));
+
+    const dialog = screen.getByRole('dialog', { name: '2026-05-04 조선 에너지 수주' });
+    const evidenceLink = within(dialog).getByRole('link', { name: '근거 링크 1 열기' });
+    expect(evidenceLink).toHaveAttribute('target', '_blank');
+    expect(evidenceLink).toHaveAttribute('rel', 'noreferrer');
+    expect(evidenceLink).toHaveAttribute('href', expect.stringContaining('tossinvest.com/feed/news'));
+  });
+
+  it('moves focus into the modal, traps tab navigation, and restores focus to the opener', async () => {
+    const user = userEvent.setup();
+    render(<HotNewsReportsPage queryRows={async () => rows} />);
+
+    const opener = await screen.findByRole('button', { name: /2026-05-04 조선 에너지 수주/ });
+    await user.click(opener);
+
+    const dialog = screen.getByRole('dialog', { name: '2026-05-04 조선 에너지 수주' });
+    const closeButton = within(dialog).getByRole('button', { name: '리포트 닫기' });
+    expect(closeButton).toHaveFocus();
+    expect(dialog).toContainElement(document.activeElement as HTMLElement);
+
+    await user.tab({ shift: true });
+    expect(dialog).toContainElement(document.activeElement as HTMLElement);
+
+    await user.tab();
+    expect(dialog).toContainElement(document.activeElement as HTMLElement);
+
+    await user.click(closeButton);
+    expect(opener).toHaveFocus();
   });
 
   it('renders empty and error states', async () => {

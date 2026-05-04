@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { HotNewsReport } from '../hot-news/model';
 
 type HotNewsReportModalProps = {
@@ -7,12 +7,51 @@ type HotNewsReportModalProps = {
 };
 
 export function HotNewsReportModal({ report, onClose }: HotNewsReportModalProps) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+
   useEffect(() => {
+    const previouslyActiveElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
     document.body.classList.add('modal-open');
+    closeButtonRef.current?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         onClose();
+        return;
+      }
+
+      if (event.key !== 'Tab') {
+        return;
+      }
+
+      const dialog = dialogRef.current;
+      if (!dialog) {
+        return;
+      }
+
+      const focusableElements = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => !element.hasAttribute('disabled') && element.tabIndex >= 0);
+
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
       }
     }
 
@@ -21,6 +60,7 @@ export function HotNewsReportModal({ report, onClose }: HotNewsReportModalProps)
     return () => {
       document.body.classList.remove('modal-open');
       document.removeEventListener('keydown', handleKeyDown);
+      previouslyActiveElement?.focus();
     };
   }, [onClose]);
 
@@ -37,7 +77,9 @@ export function HotNewsReportModal({ report, onClose }: HotNewsReportModalProps)
         aria-labelledby="hot-news-modal-title"
         aria-modal="true"
         className="hot-news-modal"
+        ref={dialogRef}
         role="dialog"
+        tabIndex={-1}
       >
         <header className="hot-news-modal-header">
           <div>
@@ -48,7 +90,13 @@ export function HotNewsReportModal({ report, onClose }: HotNewsReportModalProps)
               {report.perspective ? ` · ${report.perspective}` : ''}
             </p>
           </div>
-          <button aria-label="리포트 닫기" className="modal-close-button" onClick={onClose} type="button">
+          <button
+            aria-label="리포트 닫기"
+            className="modal-close-button"
+            onClick={onClose}
+            ref={closeButtonRef}
+            type="button"
+          >
             ×
           </button>
         </header>
@@ -87,6 +135,18 @@ export function HotNewsReportModal({ report, onClose }: HotNewsReportModalProps)
                       <ul>
                         {item.evidence.map((evidence) => (
                           <li key={evidence}>{evidence}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    {item.links.length > 0 ? (
+                      <ul className="hot-news-evidence-link-list">
+                        {item.links.map((link, index) => (
+                          <li key={link}>
+                            <a aria-label={`근거 링크 ${index + 1} 열기`} href={link} rel="noreferrer" target="_blank">
+                              <span>근거 링크 {index + 1}</span>
+                              <span>열기</span>
+                            </a>
+                          </li>
                         ))}
                       </ul>
                     ) : null}

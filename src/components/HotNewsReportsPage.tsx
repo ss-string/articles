@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { HotNewsReport, RawHotNewsReportRow } from '../hot-news/model';
 import { useHotNewsReports } from '../hot-news/useHotNewsReports';
 import { HotNewsReportModal } from './HotNewsReportModal';
@@ -10,6 +10,7 @@ type HotNewsReportsPageProps = {
 export function HotNewsReportsPage({ queryRows }: HotNewsReportsPageProps) {
   const state = useHotNewsReports({ queryRows });
   const [selectedReport, setSelectedReport] = useState<HotNewsReport | null>(null);
+  const closeSelectedReport = useCallback(() => setSelectedReport(null), []);
 
   return (
     <>
@@ -18,7 +19,7 @@ export function HotNewsReportsPage({ queryRows }: HotNewsReportsPageProps) {
           <span>Toss WTS Hot News Reports</span>
           <h2 id="hot-news-title">핫뉴스 리포트</h2>
         </div>
-        <p className="hot-news-copy">시장 주요 뉴스를 리포트 단위로 묶어 관점, 요약, 근거를 확인합니다.</p>
+        <p className="hot-news-copy">토스증권 주요 뉴스 묶음을 카드로 훑고, 선택한 이슈의 리포트를 팝업에서 확인합니다.</p>
 
         {state.status === 'loading' ? <div className="state-panel">핫뉴스 리포트를 불러오는 중입니다.</div> : null}
         {state.status === 'error' ? <div className="state-panel error">{state.error}</div> : null}
@@ -45,7 +46,7 @@ export function HotNewsReportsPage({ queryRows }: HotNewsReportsPageProps) {
         ) : null}
       </section>
 
-      {selectedReport ? <HotNewsReportModal report={selectedReport} onClose={() => setSelectedReport(null)} /> : null}
+      {selectedReport ? <HotNewsReportModal report={selectedReport} onClose={closeSelectedReport} /> : null}
     </>
   );
 }
