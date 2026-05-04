@@ -58,6 +58,15 @@ function parseText(value: unknown): string | null {
   return text.length > 0 ? text : null;
 }
 
+function parseRequiredString(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const text = value.trim();
+  return text.length > 0 ? text : null;
+}
+
 function parseMarket(value: unknown): MacroRegimeMarket | null {
   return value === 'KR' || value === 'US' ? value : null;
 }
@@ -165,7 +174,7 @@ export function formatTrendLabel(value: unknown): { label: string; tone: TrendTo
 export function normalizeMacroRegimeRow(row: RawMacroRegimeRow): MacroRegimeDecision | null {
   const market = parseMarket(row.market);
   const runDate = parseRunDate(row.run_date);
-  const regime = parseText(row.regime);
+  const regime = parseRequiredString(row.regime);
 
   if (!market || !runDate || !regime) {
     return null;

@@ -105,6 +105,7 @@ describe('macro regime model', () => {
     expect(normalizeMacroRegimeRow({ market: 'US', run_date: '2026-05-04-not-iso', regime: 'x' })).toBeNull();
     expect(normalizeMacroRegimeRow({ market: 'US', run_date: '2026-05-04Tbad', regime: 'x' })).toBeNull();
     expect(normalizeMacroRegimeRow({ market: 'US', run_date: '2026-02-30', regime: 'x' })).toBeNull();
+    expect(normalizeMacroRegimeRow({ market: 'US', run_date: '2026-05-04', regime: 123 })).toBeNull();
     expect(
       normalizeMacroRegimeRow({
         market: 'US',
@@ -117,6 +118,7 @@ describe('macro regime model', () => {
   it('formats dates and trend labels', () => {
     expect(formatDecisionDate('2026-05-04')).toBe('2026.05.04');
     expect(formatDecisionDate('2026-05-04T07:53:42.522269+00:00')).toBe('2026.05.04');
+    expect(formatDecisionDate('2026-05-04-not-iso')).toBe('-');
     expect(formatDecisionDate(null)).toBe('-');
     expect(formatTrendLabel('up')).toEqual({ label: '↑ 상승', tone: 'up' });
     expect(formatTrendLabel('down')).toEqual({ label: '↓ 하락', tone: 'down' });
