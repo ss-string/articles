@@ -98,17 +98,24 @@ describe('HotNewsReportsPage', () => {
     expect(screen.queryByRole('link', { name: '링크 없는 기사' })).not.toBeInTheDocument();
   });
 
-  it('renders company evidence source links when present', async () => {
+  it('renders compact company evidence source links next to the evidence text', async () => {
     const user = userEvent.setup();
-    render(<HotNewsReportsPage queryRows={async () => rows} />);
+    const { container } = render(<HotNewsReportsPage queryRows={async () => rows} />);
 
     await user.click(await screen.findByRole('button', { name: /2026-05-04 조선 에너지 수주/ }));
 
     const dialog = screen.getByRole('dialog', { name: '2026-05-04 조선 에너지 수주' });
-    const evidenceLink = within(dialog).getByRole('link', { name: '근거 링크 1 열기' });
+    const evidenceItem = within(dialog)
+      .getByText('아시아 지역 선주로부터 LNG-FSRU 1척을 4848억원에 수주')
+      .closest('li');
+    expect(evidenceItem).toHaveClass('hot-news-evidence-item');
+
+    const evidenceLink = within(evidenceItem as HTMLElement).getByRole('link', { name: '기사 1 열기' });
+    expect(evidenceLink).toHaveClass('hot-news-evidence-source-button');
     expect(evidenceLink).toHaveAttribute('target', '_blank');
     expect(evidenceLink).toHaveAttribute('rel', 'noreferrer');
     expect(evidenceLink).toHaveAttribute('href', expect.stringContaining('tossinvest.com/feed/news'));
+    expect(container.querySelector('.hot-news-evidence-link-list')).not.toBeInTheDocument();
   });
 
   it('moves focus into the modal, traps tab navigation, and restores focus to the opener', async () => {

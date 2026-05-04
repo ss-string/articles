@@ -133,19 +133,20 @@ export function HotNewsReportModal({ report, onClose }: HotNewsReportModalProps)
                     </header>
                     {item.evidence.length > 0 ? (
                       <ul>
-                        {item.evidence.map((evidence) => (
-                          <li key={evidence}>{evidence}</li>
-                        ))}
-                      </ul>
-                    ) : null}
-                    {item.links.length > 0 ? (
-                      <ul className="hot-news-evidence-link-list">
-                        {item.links.map((link, index) => (
-                          <li key={link}>
-                            <a aria-label={`근거 링크 ${index + 1} 열기`} href={link} rel="noreferrer" target="_blank">
-                              <span>근거 링크 {index + 1}</span>
-                              <span>열기</span>
-                            </a>
+                        {item.evidence.map((evidence, index) => (
+                          <li className="hot-news-evidence-item" key={evidence}>
+                            <span>{evidence}</span>
+                            {item.links[index] ? (
+                              <a
+                                aria-label={`기사 ${index + 1} 열기`}
+                                className="hot-news-evidence-source-button"
+                                href={item.links[index]}
+                                rel="noreferrer"
+                                target="_blank"
+                              >
+                                기사 {index + 1}
+                              </a>
+                            ) : null}
                           </li>
                         ))}
                       </ul>
