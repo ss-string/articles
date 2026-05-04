@@ -25,7 +25,7 @@ const rows = [
 
 describe('App', () => {
   it('renders ranked consensus rows with required fields', async () => {
-    render(<App queryRows={async () => rows} />);
+    const { container } = render(<App queryRows={async () => rows} />);
 
     expect(await screen.findByRole('heading', { name: '컨센서스 괴리율 랭킹' })).toBeInTheDocument();
     expect(screen.getByText('삼성전자')).toBeInTheDocument();
@@ -33,6 +33,12 @@ describe('App', () => {
     expect(screen.getByText('100,200원')).toBeInTheDocument();
     expect(screen.getAllByText('+38.4%')).not.toHaveLength(0);
     expect(screen.getByText('지난 1개월 대비 컨센서스 증가')).toBeInTheDocument();
+    expect(container.querySelector('.app-shell')).toBeInTheDocument();
+    expect(container.querySelector('.sidebar')).toBeInTheDocument();
+    expect(container.querySelector('.top-nav')).toBeInTheDocument();
+    expect(container.querySelector('.dashboard')).toBeInTheDocument();
+    expect(container.querySelector('.hero-section')).toBeInTheDocument();
+    expect(container.querySelector('.dashboard-section')).toBeInTheDocument();
   });
 
   it('expands a row and shows checkpoint prices on the line chart', async () => {
