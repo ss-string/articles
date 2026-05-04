@@ -1,140 +1,142 @@
-# KRX FnGuide Consensus Ranking Design
+# KRX FnGuide 컨센서스 랭킹 설계서
 
-## Goal
+## 목표
 
-Build a Supabase-backed page that ranks stocks by the gap between current price and consensus fair price. The primary scan path is from the largest gap to the smallest gap. Each stock appears as a compact row, and selecting a row expands an inline detail panel with price comparison and consensus price trend.
+Supabase의 `krx_fnguide_consensus` 테이블을 기반으로 현재가와 적정주가의 괴리율이 큰 종목부터 낮은 종목까지 보여주는 지면을 만든다. 사용자는 압축된 랭킹 row를 먼저 훑고, 관심 종목을 선택해 row 아래에 펼쳐지는 상세 패널에서 가격 비교와 컨센서스 가격 흐름을 확인한다.
 
-## Data Source
+## 데이터 소스
 
-The page reads from the `krx_fnguide_consensus` table through Supabase.
+지면은 Supabase의 `krx_fnguide_consensus` 테이블을 조회한다.
 
-Supabase credentials are provided by GitHub variables and exposed to Vite as:
+Supabase 접속 정보는 GitHub variables를 통해 제공되며 Vite 환경변수로 사용한다.
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
 
-The frontend will create a Supabase client with these variables. The publishable key is acceptable for browser use as long as table access is controlled by Supabase policies.
+프론트엔드는 위 환경변수로 Supabase client를 생성한다. publishable key는 브라우저에서 사용할 수 있으므로, 테이블 접근 제어는 Supabase 정책으로 관리되어야 한다.
 
-The implementation should normalize the table rows into this logical shape:
+구현에서는 테이블 row를 다음 논리 구조로 정규화한다.
 
-- stock name
-- stock code, if available
-- current price
-- fair price or target consensus price
-- consensus price from 1 month ago
-- consensus price from 3 months ago
-- consensus price from 6 months ago
+- 종목명
+- 종목 코드, 테이블에 존재하는 경우
+- 현재가
+- 적정주가 또는 목표 컨센서스 가격
+- 지난 1개월 컨센서스 가격
+- 지난 3개월 컨센서스 가격
+- 지난 6개월 컨센서스 가격
 
-Fields not present in the table must not be invented. In particular, daily price movement such as `전일 +1.2%`, market filters, manual sort controls, and refresh controls are out of scope for this page.
+테이블에 없는 필드는 임의로 만들지 않는다. 특히 `전일 +1.2%` 같은 일간 등락 정보, 시장 필터, 수동 정렬 컨트롤, 컨센서스 기간 선택 컨트롤, 새로고침 버튼은 이 지면 범위에서 제외한다.
 
-## Ranking And Calculations
+## 정렬과 계산
 
-Rows are sorted descending by fair-price gap percentage:
-
-```text
-gapPercent = ((fairPrice - currentPrice) / currentPrice) * 100
-```
-
-The row also shows the absolute gap:
+row는 적정주가 괴리율이 큰 순서로 정렬한다.
 
 ```text
-gapAmount = fairPrice - currentPrice
+괴리율 = ((적정주가 - 현재가) / 현재가) * 100
 ```
 
-Consensus change is shown as `지난 1개월 대비 컨센서스 증가`:
+row에는 절대 가격 차이도 함께 보여준다.
 
 ```text
-oneMonthConsensusChangePercent =
-  ((fairPrice - consensusPrice1MonthAgo) / consensusPrice1MonthAgo) * 100
+가격 차이 = 적정주가 - 현재가
 ```
 
-The expanded panel can additionally show 3-month and 6-month changes using the same formula against the 3-month and 6-month consensus prices.
+컨센서스 증감은 `지난 1개월 대비 컨센서스 증가`로 표기한다.
 
-Rows with missing current price, fair price, or invalid denominator values should be excluded from the ranking list. Missing 1/3/6-month consensus checkpoints should render as unavailable in the expanded panel rather than producing misleading zeros.
+```text
+지난 1개월 대비 컨센서스 증가율 =
+  ((현재 적정주가 - 지난 1개월 컨센서스 가격) / 지난 1개월 컨센서스 가격) * 100
+```
 
-## Layout
+상세 패널에서는 같은 방식으로 지난 3개월, 지난 6개월 대비 증가율도 보여줄 수 있다.
 
-The first screen contains:
+현재가, 적정주가가 없거나 분모가 0 이하인 row는 랭킹에서 제외한다. 지난 1개월, 3개월, 6개월 컨센서스 체크포인트가 누락된 경우에는 0으로 대체하지 않고 `-` 또는 `데이터 없음`으로 표시한다.
 
-- Dark header with the page title `컨센서스 괴리율 랭킹`
-- Compact summary cards for maximum gap, average gap, 1-month upward consensus count, and displayed stock count
-- A ranking table ordered by gap percentage
+## 화면 구조
 
-The table columns are:
+첫 화면은 다음 요소로 구성한다.
 
-- stock name and optional code
-- current price
-- fair price with absolute gap amount
-- gap percentage
+- 어두운 헤더와 제목 `컨센서스 괴리율 랭킹`
+- 최대 상승 여력, 평균 괴리율, 1개월 상향 종목 수, 표시 종목 수를 보여주는 요약 카드
+- 괴리율 기준으로 정렬된 랭킹 테이블
+
+테이블 컬럼은 다음과 같다.
+
+- 종목명과 종목 코드
+- 현재가
+- 적정주가와 절대 가격 차이
+- 괴리율
 - `지난 1개월 대비 컨센서스 증가`
-- expand control
+- 확장 컨트롤
 
-The page does not include the removed control row: market, sort, consensus-period selector, or refresh button.
+사용자 피드백에 따라 시장, 정렬, 컨센서스 기간, 새로고침 컨트롤 row는 넣지 않는다.
 
-## Expanded Row
+## 확장 Row
 
-Selecting a row opens an inline detail panel under that row. Multiple rows may remain open if the native `details` pattern is used, but the implementation can choose single-open behavior if it improves usability.
+사용자가 row를 선택하면 해당 row 아래에 상세 패널이 열린다. 기본 구현은 HTML `details` 패턴을 사용할 수 있으며, 여러 row가 동시에 열려도 된다. 사용성이 더 좋다고 판단되면 하나의 row만 열리는 방식으로 바꿀 수 있다.
 
-The expanded panel has two main sections:
+상세 패널은 두 영역으로 나눈다.
 
-- Price comparison: current price, fair price, visual gap bar, and absolute price gap
-- Consensus price trend: a line chart with checkpoints for 6 months ago, 3 months ago, 1 month ago, and current consensus
+- 가격 비교: 현재가, 적정주가, 시각적 괴리율 bar, 절대 가격 차이
+- 컨센서스 가격 흐름: 6개월 전, 3개월 전, 1개월 전, 현재 컨센서스 체크포인트를 가진 선 그래프
 
-Each line-chart checkpoint must show the corresponding consensus price. The chart also includes a compact checkpoint strip below the graph with:
+선 그래프의 각 체크포인트에는 해당 시점의 컨센서스 가격을 함께 노출한다. 그래프 아래에는 동일한 정보를 체크포인트 strip으로 한 번 더 제공한다.
 
-- period label
-- consensus price
-- change percentage to the current fair price
+체크포인트 strip에는 다음 정보를 표시한다.
 
-The row-level consensus badge uses the 1-month change because it is the primary comparison requested for the ranking view.
+- 기간 라벨
+- 해당 시점의 컨센서스 가격
+- 현재 적정주가 대비 증가율
 
-## Visual Direction
+row에 표시되는 컨센서스 badge는 랭킹 화면에서 가장 중요한 비교 기준인 지난 1개월 대비 증가율을 사용한다.
 
-Use a restrained financial dashboard style:
+## 시각 방향
 
-- Light workspace background
-- Dark header band
-- White table and detail panels
-- Red/orange accent for positive price gap
-- Blue line for consensus price trend
-- Green badge for positive 1-month consensus increase
-- Card and panel radius no larger than 8px
+반복적으로 훑기 쉬운 금융 대시보드 톤을 사용한다.
 
-The design should be dense enough for repeated scanning while keeping expanded details readable.
+- 밝은 작업 영역 배경
+- 어두운 헤더 band
+- 흰색 테이블과 상세 패널
+- 양수 괴리율은 red/orange 계열 accent
+- 컨센서스 가격 흐름은 blue 선 그래프
+- 지난 1개월 대비 컨센서스 증가 badge는 green 계열
+- 카드와 패널 radius는 8px 이하
 
-## Responsive Behavior
+디자인은 정보 밀도가 높아야 하지만, 확장 상세 영역은 가격과 컨센서스 흐름을 명확히 읽을 수 있어야 한다.
 
-Desktop keeps the full table structure. Mobile hides the table header and turns each row into a two-column summary block with the consensus badge and expand control still visible. Expanded detail sections stack vertically on narrow screens.
+## 반응형 동작
 
-Text must not overlap or rely on viewport-scaled font sizes. Long stock names should wrap within their cell.
+desktop에서는 전체 테이블 구조를 유지한다. mobile에서는 테이블 header를 숨기고 각 row를 2열 요약 block으로 바꾼다. 컨센서스 badge와 확장 컨트롤은 mobile에서도 보여야 한다. 확장 상세 영역은 좁은 화면에서 세로로 쌓인다.
 
-## Loading, Empty, And Error States
+텍스트는 서로 겹치지 않아야 하며 viewport 너비에 비례해 font size를 키우거나 줄이지 않는다. 긴 종목명은 cell 내부에서 줄바꿈한다.
 
-The page should render:
+## 로딩, 빈 상태, 오류 상태
 
-- loading state while querying Supabase
-- empty state when no valid ranking rows are available
-- error state when environment variables are missing or the Supabase query fails
+다음 상태를 화면에 표시한다.
 
-The error state should be visible and concise, without exposing secrets.
+- Supabase 조회 중 로딩 상태
+- 유효한 랭킹 row가 없을 때 빈 상태
+- 환경변수가 없거나 Supabase query가 실패했을 때 오류 상태
 
-## Testing
+오류 상태는 간결하게 보여주며 비밀값을 노출하지 않는다.
 
-Focused test coverage should verify:
+## 테스트
 
-- Supabase row normalization and gap calculations
-- ranking order from highest gap to lowest gap
-- rows with invalid price denominators are excluded
-- main table renders stock name, current price, fair price, gap percentage, and 1-month consensus change
-- expanding a row reveals the line chart checkpoint prices for 1/3/6-month consensus data
-- loading, empty, and error states render
+다음 항목을 중심으로 테스트한다.
 
-## Acceptance Criteria
+- Supabase row 정규화와 괴리율 계산
+- 괴리율이 큰 순서의 랭킹 정렬
+- 가격 분모가 유효하지 않은 row 제외
+- 메인 테이블에 종목명, 현재가, 적정주가, 괴리율, 지난 1개월 대비 컨센서스 증가율 표시
+- row 확장 시 1개월, 3개월, 6개월 컨센서스 체크포인트 가격 노출
+- 로딩, 빈 상태, 오류 상태 표시
 
-- The page reads `krx_fnguide_consensus` through Supabase using Vite environment variables.
-- Stocks are sorted by current-price-to-fair-price gap from largest to smallest.
-- The row surface shows stock name, current price, fair price, gap percentage, and 1-month consensus increase.
-- Selecting a row expands inline details.
-- Expanded details show price comparison and a line chart with checkpoint prices.
-- UI does not show data that is not available from the table.
-- Tests and production build pass.
+## 수용 기준
+
+- Vite 환경변수로 Supabase에 연결하고 `krx_fnguide_consensus`를 조회한다.
+- 종목은 현재가 대비 적정주가 괴리율이 큰 순서로 정렬된다.
+- row에는 종목명, 현재가, 적정주가, 괴리율, 지난 1개월 대비 컨센서스 증가율이 표시된다.
+- row 선택 시 상세 패널이 inline으로 열린다.
+- 상세 패널에는 가격 비교와 체크포인트 가격이 붙은 선 그래프가 표시된다.
+- 테이블에 없는 데이터는 UI에 임의로 표시하지 않는다.
+- 테스트와 production build가 통과한다.
