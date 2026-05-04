@@ -95,4 +95,14 @@ describe('ConsensusTable', () => {
     expect(screen.getByText('0.0%', { selector: '.consensus-badge' })).toBeInTheDocument();
     expect(screen.queryByText('▲ +0.0%')).not.toBeInTheDocument();
   });
+
+  it('uses the same directional badge in the expanded detail', async () => {
+    const user = userEvent.setup();
+    render(<ConsensusTable rows={[makeRow({ oneMonthConsensusChangePercent: -2.1 })]} />);
+
+    await user.click(screen.getByRole('button', { name: '삼성전자 상세 열기' }));
+
+    expect(screen.getAllByText('▼ -2.1%', { selector: '.consensus-badge' })).toHaveLength(2);
+    expect(screen.queryByText('-2.1%', { selector: '.detail-card .consensus-badge' })).not.toBeInTheDocument();
+  });
 });

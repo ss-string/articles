@@ -108,7 +108,7 @@ export function ConsensusTable({ rows }: ConsensusTableProps) {
                 <article className="detail-card">
                   <h3>
                     컨센서스 가격 변화
-                    <span className="consensus-badge">{formatPercent(row.oneMonthConsensusChangePercent)}</span>
+                    <span className="consensus-badge">{formatOneMonthBadge(row.oneMonthConsensusChangePercent)}</span>
                   </h3>
                   <ConsensusTrendLine checkpoints={row.checkpoints} />
                 </article>
