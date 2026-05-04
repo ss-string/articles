@@ -113,8 +113,11 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
               <h4>핵심 지표</h4>
               <div className="macro-indicator-table">
                 {decision.keyIndicators.length > 0 ? (
-                  decision.keyIndicators.map((indicator) => (
-                    <IndicatorRow indicator={indicator} key={`${indicator.label}-${indicator.source ?? 'unknown'}`} />
+                  decision.keyIndicators.map((indicator, index) => (
+                    <IndicatorRow
+                      indicator={indicator}
+                      key={`${indicator.label}-${indicator.source ?? 'unknown'}-${index}`}
+                    />
                   ))
                 ) : (
                   <p>표시할 핵심 지표가 없습니다.</p>

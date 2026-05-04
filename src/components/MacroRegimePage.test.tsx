@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { vi } from 'vitest';
 import { MacroRegimePage } from './MacroRegimePage';
 import type { RawMacroRegimeRow } from '../macro-regime/model';
 
@@ -130,5 +131,51 @@ describe('MacroRegimePage', () => {
     await user.keyboard('{Escape}');
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('renders duplicate label/source indicators without duplicate key warnings', async () => {
+    const user = userEvent.setup();
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const duplicateIndicatorRows: RawMacroRegimeRow[] = [
+      {
+        ...rows[1],
+        key_indicators: [
+          {
+            label: '미국 CPI (YoY)',
+            value: 3.32,
+            unit: '%',
+            source: 'FRED',
+            trend_3m: 'up',
+            interpretation: '첫 번째 동일 출처 지표',
+          },
+          {
+            label: '미국 CPI (YoY)',
+            value: 3.33,
+            unit: '%',
+            source: 'FRED',
+            trend_3m: 'down',
+            interpretation: '두 번째 동일 출처 지표',
+          },
+        ],
+      },
+    ];
+
+    try {
+      render(<MacroRegimePage queryRows={async () => duplicateIndicatorRows} />);
+
+      await user.click(await screen.findByRole('button', { name: /US/ }));
+      const dialog = screen.getByRole('dialog', { name: '리플레이션(reflation)' });
+
+      expect(within(dialog).getAllByText('미국 CPI (YoY)')).toHaveLength(2);
+      expect(within(dialog).getByText('첫 번째 동일 출처 지표')).toBeInTheDocument();
+      expect(within(dialog).getByText('두 번째 동일 출처 지표')).toBeInTheDocument();
+      expect(
+        consoleError.mock.calls.some((call) =>
+          call.some((item) => String(item).includes('Encountered two children with the same key')),
+        ),
+      ).toBe(false);
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 });
