@@ -68,7 +68,7 @@ describe('ConsensusDetailModal', () => {
     expect(screen.getAllByText('BUY · 1건')).not.toHaveLength(0);
   });
 
-  it('calls onClose from the close button and backdrop', async () => {
+  it('calls onClose from the close button, backdrop, and Escape key', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
 
@@ -79,6 +79,9 @@ describe('ConsensusDetailModal', () => {
 
     await user.click(screen.getByTestId('detail-modal-backdrop'));
     expect(onClose).toHaveBeenCalledTimes(2);
+
+    await user.keyboard('{Escape}');
+    expect(onClose).toHaveBeenCalledTimes(3);
   });
 
   it('shows an empty AI report state when no report is matched', () => {
