@@ -1,4 +1,5 @@
 import type { RawConsensusRow } from './consensus/model';
+import type { RawMacroRegimeRow } from './macro-regime/model';
 import {
   articles,
   metrics,
@@ -8,10 +9,12 @@ import {
   stackGroups,
 } from './content';
 import { ConsensusRankingPage } from './components/ConsensusRankingPage';
+import { MacroRegimePage } from './components/MacroRegimePage';
 import './styles.css';
 
 type AppProps = {
   queryRows?: () => Promise<RawConsensusRow[]>;
+  queryMacroRows?: () => Promise<RawMacroRegimeRow[]>;
 };
 
 function externalLinkProps(href: string) {
@@ -25,7 +28,7 @@ function externalLinkProps(href: string) {
   };
 }
 
-export default function App({ queryRows }: AppProps) {
+export default function App({ queryRows, queryMacroRows }: AppProps) {
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -99,6 +102,8 @@ export default function App({ queryRows }: AppProps) {
             ))}
           </div>
         </section>
+
+        <MacroRegimePage queryRows={queryMacroRows} />
 
         <ConsensusRankingPage queryRows={queryRows} />
 
