@@ -111,6 +111,33 @@ describe('App', () => {
     expect(await screen.findByRole('dialog', { name: '삼성전자 상세 분석' })).toBeInTheDocument();
   });
 
+  it('opens a popup without URL state for a row that has no gicode', async () => {
+    const user = userEvent.setup();
+    render(
+      <App
+        queryRows={async () => [
+          {
+            stock_name: '코드없는종목',
+            stock_code: '000001',
+            current_price: 10000,
+            target_price: 12000,
+          },
+        ]}
+        queryReports={async () => []}
+      />,
+    );
+
+    await screen.findByText('코드없는종목');
+    expect(screen.queryByRole('dialog', { name: '코드없는종목 상세 분석' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('row', { name: /코드없는종목/ }));
+
+    expect(screen.getByRole('dialog', { name: '코드없는종목 상세 분석' })).toBeInTheDocument();
+    expect(screen.getByText('AI 분석 리포트가 없습니다.')).toBeInTheDocument();
+    expect(window.location.search).not.toContain('contentType');
+    expect(window.location.search).not.toContain('contentParams');
+  });
+
   it('renders an empty state when there are no valid rows', async () => {
     render(<App queryRows={async () => []} queryReports={async () => []} />);
 

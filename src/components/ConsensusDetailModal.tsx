@@ -29,10 +29,15 @@ function formatUpdatedAt(value: string | null) {
     return '-';
   }
 
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) {
+    return '-';
+  }
+
   return new Intl.DateTimeFormat('ko-KR', {
     dateStyle: 'medium',
     timeStyle: 'short',
-  }).format(new Date(value));
+  }).format(date);
 }
 
 export function ConsensusDetailModal({ row, onClose }: ConsensusDetailModalProps) {

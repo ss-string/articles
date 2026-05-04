@@ -89,4 +89,17 @@ describe('ConsensusDetailModal', () => {
 
     expect(screen.getByText('AI 분석 리포트가 없습니다.')).toBeInTheDocument();
   });
+
+  it('falls back when the report updated date is invalid', () => {
+    const row = makeRow({
+      summaryReport: {
+        ...makeRow().summaryReport!,
+        updatedAt: 'not-a-date',
+      },
+    });
+
+    render(<ConsensusDetailModal row={row} onClose={() => undefined} />);
+
+    expect(screen.getByText(/AI 리포트 업데이트 -/)).toBeInTheDocument();
+  });
 });

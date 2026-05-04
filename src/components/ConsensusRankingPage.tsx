@@ -43,12 +43,19 @@ function clearSelectedGicodeFromUrl() {
   window.history.replaceState({}, '', url);
 }
 
+function buildRowSelectionKey(row: ConsensusRankingRow) {
+  return row.gicode ? `gicode:${row.gicode}` : `row:${row.id}`;
+}
+
 export function ConsensusRankingPage({ queryRows, queryReports }: ConsensusRankingPageProps) {
   const state = useConsensusRanking({ queryRows, queryReports });
-  const [selectedGicode, setSelectedGicode] = useState<string | null>(() => readSelectedGicodeFromUrl());
+  const [selectedRowKey, setSelectedRowKey] = useState<string | null>(() => {
+    const gicode = readSelectedGicodeFromUrl();
+    return gicode ? `gicode:${gicode}` : null;
+  });
   const selectedRow = useMemo(
-    () => state.rows.find((row) => row.gicode === selectedGicode) ?? null,
-    [state.rows, selectedGicode],
+    () => state.rows.find((row) => buildRowSelectionKey(row) === selectedRowKey) ?? null,
+    [state.rows, selectedRowKey],
   );
   const statusContent =
     state.status === 'loading' ? (
@@ -61,7 +68,8 @@ export function ConsensusRankingPage({ queryRows, queryReports }: ConsensusRanki
 
   useEffect(() => {
     function handlePopState() {
-      setSelectedGicode(readSelectedGicodeFromUrl());
+      const gicode = readSelectedGicodeFromUrl();
+      setSelectedRowKey(gicode ? `gicode:${gicode}` : null);
     }
 
     window.addEventListener('popstate', handlePopState);
@@ -69,17 +77,16 @@ export function ConsensusRankingPage({ queryRows, queryReports }: ConsensusRanki
   }, []);
 
   function handleSelect(row: ConsensusRankingRow) {
-    if (!row.gicode) {
-      setSelectedGicode(null);
-      return;
+    setSelectedRowKey(buildRowSelectionKey(row));
+    if (row.gicode) {
+      writeSelectedGicodeToUrl(row.gicode);
+    } else {
+      clearSelectedGicodeFromUrl();
     }
-
-    setSelectedGicode(row.gicode);
-    writeSelectedGicodeToUrl(row.gicode);
   }
 
   function handleCloseDetail() {
-    setSelectedGicode(null);
+    setSelectedRowKey(null);
     clearSelectedGicodeFromUrl();
   }
 
