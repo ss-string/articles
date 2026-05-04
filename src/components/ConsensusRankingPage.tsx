@@ -1,5 +1,7 @@
-import type { RawConsensusRow, RawSummaryReportRow } from '../consensus/model';
+import { useEffect, useMemo, useState } from 'react';
+import type { ConsensusRankingRow, RawConsensusRow, RawSummaryReportRow } from '../consensus/model';
 import { useConsensusRanking } from '../consensus/useConsensusRanking';
+import { ConsensusDetailModal } from './ConsensusDetailModal';
 import { ConsensusTable } from './ConsensusTable';
 import { SummaryCards } from './SummaryCards';
 
@@ -8,8 +10,46 @@ type ConsensusRankingPageProps = {
   queryReports?: () => Promise<RawSummaryReportRow[]>;
 };
 
+function readSelectedGicodeFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('contentType') !== 'consensus') {
+    return null;
+  }
+
+  const contentParams = params.get('contentParams');
+  if (!contentParams) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(contentParams) as { gicode?: unknown };
+    return typeof parsed.gicode === 'string' ? parsed.gicode : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeSelectedGicodeToUrl(gicode: string) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('contentType', 'consensus');
+  url.searchParams.set('contentParams', JSON.stringify({ gicode }));
+  window.history.pushState({}, '', url);
+}
+
+function clearSelectedGicodeFromUrl() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete('contentType');
+  url.searchParams.delete('contentParams');
+  window.history.replaceState({}, '', url);
+}
+
 export function ConsensusRankingPage({ queryRows, queryReports }: ConsensusRankingPageProps) {
   const state = useConsensusRanking({ queryRows, queryReports });
+  const [selectedGicode, setSelectedGicode] = useState<string | null>(() => readSelectedGicodeFromUrl());
+  const selectedRow = useMemo(
+    () => state.rows.find((row) => row.gicode === selectedGicode) ?? null,
+    [state.rows, selectedGicode],
+  );
   const statusContent =
     state.status === 'loading' ? (
       <div className="state-panel">컨센서스 데이터를 불러오는 중입니다.</div>
@@ -18,6 +58,30 @@ export function ConsensusRankingPage({ queryRows, queryReports }: ConsensusRanki
     ) : state.rows.length === 0 ? (
       <div className="state-panel">표시할 컨센서스 데이터가 없습니다.</div>
     ) : null;
+
+  useEffect(() => {
+    function handlePopState() {
+      setSelectedGicode(readSelectedGicodeFromUrl());
+    }
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  function handleSelect(row: ConsensusRankingRow) {
+    if (!row.gicode) {
+      setSelectedGicode(null);
+      return;
+    }
+
+    setSelectedGicode(row.gicode);
+    writeSelectedGicodeToUrl(row.gicode);
+  }
+
+  function handleCloseDetail() {
+    setSelectedGicode(null);
+    clearSelectedGicodeFromUrl();
+  }
 
   return (
     <>
@@ -42,9 +106,11 @@ export function ConsensusRankingPage({ queryRows, queryReports }: ConsensusRanki
             <span>Ranking</span>
             <h2 id="ranking-title">괴리율 순위</h2>
           </div>
-          <ConsensusTable rows={state.rows} onSelect={() => undefined} />
+          <ConsensusTable rows={state.rows} onSelect={handleSelect} />
         </section>
       ) : null}
+
+      {selectedRow ? <ConsensusDetailModal row={selectedRow} onClose={handleCloseDetail} /> : null}
 
       <section className="dashboard-section method-section" id="method" aria-labelledby="method-title">
         <div className="section-heading">
