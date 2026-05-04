@@ -7,15 +7,18 @@ function makeRow(overrides: Partial<ConsensusRankingRow>): ConsensusRankingRow {
     id: overrides.id ?? 'row',
     name: overrides.name ?? '종목',
     code: overrides.code ?? null,
+    gicode: overrides.gicode ?? null,
     currentPrice: overrides.currentPrice ?? 10000,
     fairPrice: overrides.fairPrice ?? 12000,
     gapAmount: overrides.gapAmount ?? 2000,
     gapPercent: overrides.gapPercent ?? 20,
+    reportCount: overrides.reportCount ?? null,
     oneMonthConsensusPrice: overrides.oneMonthConsensusPrice ?? 11000,
     oneMonthConsensusChangePercent: overrides.oneMonthConsensusChangePercent ?? 9.1,
     threeMonthConsensusPrice: overrides.threeMonthConsensusPrice ?? null,
     sixMonthConsensusPrice: overrides.sixMonthConsensusPrice ?? null,
     checkpoints: overrides.checkpoints ?? [],
+    summaryReport: overrides.summaryReport ?? null,
   };
 }
 

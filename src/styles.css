@@ -644,7 +644,7 @@ h3 {
 
 .line-chart {
   position: relative;
-  height: 212px;
+  height: 250px;
   overflow: hidden;
   padding-top: 4px;
   background: rgba(10, 10, 9, 0.24);
@@ -655,7 +655,7 @@ h3 {
 .line-chart svg {
   display: block;
   width: 100%;
-  height: 190px;
+  height: 232px;
 }
 
 .chart-grid {
@@ -682,6 +682,38 @@ h3 {
   fill: #151413;
   stroke: #2dd4bf;
   stroke-width: 3;
+}
+
+.current-line {
+  fill: none;
+  stroke: #f87171;
+  stroke-dasharray: 5 6;
+  stroke-linecap: round;
+  stroke-width: 2;
+}
+
+.current-point {
+  fill: #151413;
+  stroke: #f87171;
+  stroke-width: 3;
+}
+
+.range-stem {
+  stroke: #f9dfa0;
+  stroke-linecap: round;
+  stroke-width: 3;
+}
+
+.range-dot {
+  fill: #151413;
+  stroke: #f9dfa0;
+  stroke-width: 3;
+}
+
+.chart-label {
+  fill: #b9b1a4;
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .point-label {
@@ -720,7 +752,7 @@ h3 {
 
 .checkpoint-row {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
   margin-top: 10px;
 }
@@ -747,6 +779,201 @@ h3 {
   color: #fffaf0;
   font-size: 13px;
   line-height: 1.25;
+}
+
+.current-price-checkpoint {
+  border-color: rgba(248, 113, 113, 0.34);
+  background: rgba(127, 29, 29, 0.18);
+}
+
+.current-price-checkpoint strong,
+.current-price-checkpoint span,
+.current-price-checkpoint em {
+  color: #fecaca;
+}
+
+.modal-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: rgba(0, 0, 0, 0.54);
+  backdrop-filter: blur(10px);
+}
+
+.detail-modal {
+  width: min(980px, 100%);
+  max-height: calc(100vh - 56px);
+  overflow: auto;
+  border: 1px solid rgba(185, 177, 164, 0.22);
+  border-radius: 8px;
+  background: rgba(31, 29, 27, 0.98);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px;
+  border-bottom: 1px solid rgba(185, 177, 164, 0.16);
+  background: rgba(31, 29, 27, 0.96);
+}
+
+.modal-header h2 {
+  margin: 4px 0 8px;
+  color: #fffaf0;
+  font-size: 1.55rem;
+}
+
+.modal-header p {
+  margin: 0;
+  color: #b9b1a4;
+}
+
+.close-button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid rgba(185, 177, 164, 0.22);
+  border-radius: 8px;
+  background: rgba(10, 10, 9, 0.36);
+  color: #f3efe6;
+  cursor: pointer;
+}
+
+.modal-body,
+.ai-left,
+.firm-list {
+  display: grid;
+  gap: 12px;
+}
+
+.modal-body {
+  padding: 20px 24px 24px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.76fr) minmax(440px, 1.24fr);
+  gap: 12px;
+}
+
+.target-range-inline {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(185, 177, 164, 0.16);
+}
+
+.range-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.range-grid div,
+.firm-row {
+  padding: 10px;
+  border: 1px solid rgba(185, 177, 164, 0.18);
+  border-radius: 8px;
+  background: rgba(10, 10, 9, 0.24);
+}
+
+.range-grid span,
+.firm-row span,
+.firm-row em {
+  display: block;
+  color: #b9b1a4;
+  font-size: 11px;
+  font-style: normal;
+}
+
+.range-grid strong,
+.firm-row strong {
+  display: block;
+  color: #fffaf0;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.ai-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.52fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.ai-report {
+  border-color: rgba(45, 212, 191, 0.26);
+  background: rgba(45, 212, 191, 0.07);
+}
+
+.ai-report p {
+  color: #d7d0c5;
+}
+
+.keyword-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.keyword-row span {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(246, 196, 83, 0.12);
+  color: #f9dfa0;
+  font-size: 0.78rem;
+}
+
+.risk-card {
+  border-color: rgba(248, 113, 113, 0.34);
+  background: rgba(127, 29, 29, 0.18);
+}
+
+.risk-card h3,
+.risk-list {
+  color: #fecaca;
+}
+
+.risk-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.risk-list li + li {
+  margin-top: 6px;
+}
+
+.risk-list li::marker {
+  color: #f87171;
+}
+
+.firm-list {
+  max-height: 520px;
+  overflow: auto;
+  padding-right: 2px;
+  gap: 8px;
+}
+
+.firm-row {
+  display: grid;
+  grid-template-columns: minmax(82px, 0.9fr) minmax(92px, 0.9fr) minmax(68px, 0.62fr);
+  gap: 6px;
+  align-items: center;
+}
+
+.firm-row em {
+  text-align: right;
+  white-space: nowrap;
 }
 
 @media (max-width: 900px) {
@@ -796,6 +1023,9 @@ h3 {
   .project-grid,
   .stack-grid,
   .article-item,
+  .detail-grid,
+  .ai-grid,
+  .range-grid,
   .expanded-cell {
     grid-template-columns: 1fr;
   }
@@ -810,6 +1040,17 @@ h3 {
   .checkpoint-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .modal-layer {
+    align-items: end;
+    padding: 0;
+  }
+
+  .detail-modal {
+    max-height: 90vh;
+    border-radius: 8px 8px 0 0;
+  }
+
 }
 
 @media (max-width: 560px) {
@@ -969,11 +1210,11 @@ h3 {
   }
 
   .line-chart {
-    height: 198px;
+    height: 220px;
   }
 
   .line-chart svg {
-    height: 176px;
+    height: 204px;
   }
 
   .point-label {
