@@ -54,7 +54,8 @@ const rows: RawMacroRegimeRow[] = [
     ],
     asset_implications: ['유동성 ample은 위험자산을 보조하지만, 물가축 elevated가 할인율 부담을 남길 수 있다.'],
     risk_factors: ['Core CPI는 하락 추세라 물가축 elevated 판정의 확신을 낮춘다.'],
-    content_md: '# 2026-05-04 US 매크로 레짐: 리플레이션(reflation)\n\n## 요약 (TL;DR)\n미국 전문입니다.',
+    content_md:
+      '# 2026-05-04 US 매크로 레짐: 리플레이션(reflation)\n\nas of 2026.05.01 updated_at 최신\n\n## 요약 (TL;DR)\n미국 전문입니다.',
   },
 ];
 
@@ -84,6 +85,7 @@ describe('MacroRegimePage', () => {
     expect(within(dialog).getByText('2026.05.04')).toBeInTheDocument();
     expect(within(dialog).queryByText(/as of/i)).not.toBeInTheDocument();
     expect(within(dialog).queryByText(/updated_at 최신/)).not.toBeInTheDocument();
+    expect(within(dialog).queryByText(/2026-05-04 US 매크로 레짐/)).not.toBeInTheDocument();
     expect(within(dialog).queryByRole('main')).not.toBeInTheDocument();
     expect(within(dialog).getByRole('heading', { name: '요약' })).toBeInTheDocument();
     expect(within(dialog).getByText(rows[1].summary as string)).toBeInTheDocument();

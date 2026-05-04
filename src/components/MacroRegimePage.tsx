@@ -20,7 +20,9 @@ function renderMarkdownText(markdown: string | null) {
     .split(/\n+/)
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line) => line.replace(/^#{1,6}\s*/, '').replace(/^\|\s*/, '').replace(/\s*\|$/g, ''));
+    .map((line) => line.replace(/^#{1,6}\s*/, '').replace(/^\|\s*/, '').replace(/\s*\|$/g, ''))
+    .filter((line) => !/^as\s+of\b/i.test(line) && !/updated_at\s*최신/i.test(line))
+    .filter((line) => !/^\d{4}-\d{2}-\d{2}\s+(KR|US)\s+매크로\s+레짐/.test(line));
 }
 
 function IndicatorRow({ indicator }: { indicator: MacroKeyIndicator }) {
