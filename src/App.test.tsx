@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
+import type { RawHotNewsReportRow } from './hot-news/model';
 
 const rows = [
   {
@@ -23,11 +24,26 @@ const rows = [
   },
 ];
 
+const hotNewsRows: RawHotNewsReportRow[] = [
+  {
+    id: 1,
+    issue_date: '2026-05-04',
+    title: '2026-05-04 조선 에너지 수주',
+    perspective: '조선 에너지 수주',
+    tldr: ['국내 조선·해양 에너지 인프라 기업의 수주 뉴스가 집중'],
+  },
+];
+
 describe('App', () => {
   it('renders ranked consensus rows with required fields', async () => {
-    const { container } = render(<App queryRows={async () => rows} />);
+    const { container } = render(<App queryRows={async () => rows} queryHotNewsRows={async () => hotNewsRows} />);
 
     expect(screen.getByRole('heading', { name: 'Portfolio Dashboard' })).toBeInTheDocument();
+    const hotNewsLinks = screen.getAllByRole('link', { name: '핫뉴스 리포트' });
+    expect(hotNewsLinks).toHaveLength(2);
+    hotNewsLinks.forEach((link) => expect(link).toHaveAttribute('href', '#hot-news'));
+    expect(await screen.findByRole('heading', { name: '핫뉴스 리포트' })).toBeInTheDocument();
+    expect(screen.getByText('2026-05-04 조선 에너지 수주')).toBeInTheDocument();
     const consensusLinks = screen.getAllByRole('link', { name: '컨센서스 괴리율 랭킹' });
     expect(consensusLinks).toHaveLength(2);
     consensusLinks.forEach((link) => expect(link).toHaveAttribute('href', '#consensus'));
@@ -55,7 +71,7 @@ describe('App', () => {
 
   it('expands a row and shows checkpoint prices on the line chart', async () => {
     const user = userEvent.setup();
-    render(<App queryRows={async () => rows} />);
+    render(<App queryRows={async () => rows} queryHotNewsRows={async () => hotNewsRows} />);
 
     await screen.findByText('삼성전자');
     await user.click(screen.getByRole('row', { name: /삼성전자/ }));
@@ -68,7 +84,7 @@ describe('App', () => {
   });
 
   it('renders an empty state when there are no valid rows', async () => {
-    render(<App queryRows={async () => []} />);
+    render(<App queryRows={async () => []} queryHotNewsRows={async () => hotNewsRows} />);
 
     expect(await screen.findByText('표시할 컨센서스 데이터가 없습니다.')).toBeInTheDocument();
   });
