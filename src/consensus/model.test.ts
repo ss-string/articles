@@ -106,6 +106,37 @@ describe('consensus model', () => {
     });
   });
 
+  it('accepts camelCase reportCount and uses the latest AI report for each gicode', () => {
+    const rows = buildRankingRowsWithReports(
+      [
+        {
+          stock_name: '최신리포트',
+          stock_code: '123456',
+          fnguide_code: 'A123456',
+          current_price: 10000,
+          target_price: 12000,
+          reportCount: 7,
+        },
+      ],
+      [
+        {
+          gicode: 'A123456',
+          updated_at: '2026-05-04T08:24:38.946123+00:00',
+          analysis: { 'tl;dr': '최신 리포트' },
+        },
+        {
+          gicode: 'A123456',
+          updated_at: '2026-05-03T08:24:38.946123+00:00',
+          analysis: { 'tl;dr': '이전 리포트' },
+        },
+      ],
+    );
+
+    expect(rows[0]?.reportCount).toBe(7);
+    expect(rows[0]?.summaryReport?.tlDr).toBe('최신 리포트');
+    expect(rows[0]?.summaryReport?.updatedAt).toBe('2026-05-04T08:24:38.946123+00:00');
+  });
+
   it('normalizes raw Supabase rows and calculates gap metrics', () => {
     const row = normalizeConsensusRow({
       stock_name: '삼성전자',

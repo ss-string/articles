@@ -54,7 +54,7 @@ const columnCandidates = {
   name: ['stock_name', 'name', 'isu_nm', 'isu_abbrv', 'corp_name', '종목명'],
   code: ['stock_code', 'code', 'isu_srt_cd', 'ticker', '종목코드'],
   gicode: ['gicode', 'gi_code', 'fnguide_code', 'fn_guide_code'],
-  reportCount: ['report_count', 'securities_firm_count', 'broker_count', '리포트수'],
+  reportCount: ['reportCount', 'report_count', 'securities_firm_count', 'broker_count', '리포트수'],
   currentPrice: ['current_price_value', 'current_price', 'close_price', 'price', 'now_price', '현재가'],
   fairPrice: ['target_price_value', 'target_price', 'fair_price', 'consensus_price', '목표주가', '적정주가'],
   consensus1m: ['consensus_1m', 'target_price_1m', 'consensus_price_1m', '1개월컨센서스'],
@@ -280,12 +280,17 @@ export function buildRankingRowsWithReports(
   rows: RawConsensusRow[],
   reportRows: RawSummaryReportRow[],
 ): ConsensusRankingRow[] {
-  const reportsByGicode = new Map(
-    reportRows
-      .map(normalizeSummaryReport)
-      .filter((report): report is ConsensusSummaryReport => report !== null)
-      .map((report) => [report.gicode, report]),
-  );
+  const reportsByGicode = reportRows
+    .map(normalizeSummaryReport)
+    .filter((report): report is ConsensusSummaryReport => report !== null)
+    .reduce((reports, report) => {
+      const previous = reports.get(report.gicode);
+      if (!previous || isNewerReport(report, previous)) {
+        reports.set(report.gicode, report);
+      }
+
+      return reports;
+    }, new Map<string, ConsensusSummaryReport>());
 
   return rows
     .map(normalizeConsensusRow)
@@ -295,6 +300,26 @@ export function buildRankingRowsWithReports(
       summaryReport: row.gicode ? reportsByGicode.get(row.gicode) ?? null : null,
     }))
     .sort((a, b) => b.gapPercent - a.gapPercent);
+}
+
+function isNewerReport(report: ConsensusSummaryReport, previous: ConsensusSummaryReport) {
+  const reportTime = parseDateTime(report.updatedAt);
+  const previousTime = parseDateTime(previous.updatedAt);
+
+  if (reportTime === null || previousTime === null) {
+    return reportTime !== null;
+  }
+
+  return reportTime > previousTime;
+}
+
+function parseDateTime(value: string | null): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : null;
 }
 
 export function buildRankingRows(rows: RawConsensusRow[]): ConsensusRankingRow[] {
