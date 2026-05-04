@@ -797,7 +797,7 @@ export function SummaryCards({ rows }: SummaryCardsProps) {
   return (
     <section className="summary-grid" aria-label="컨센서스 요약">
       <article className="summary-card">
-        <span>최대 상승 여력</span>
+        <span>최대 괴리율</span>
         <strong>{formatPercent(maxGap)}</strong>
       </article>
       <article className="summary-card">
