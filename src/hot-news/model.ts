@@ -46,19 +46,6 @@ function parseTextArray(value: unknown): string[] {
   return value.map(parseText).filter((text): text is string => text !== null);
 }
 
-function readPreferred(
-  payload: Record<string, unknown> | null,
-  row: RawHotNewsReportRow,
-  payloadKey: string,
-  rowKey: string,
-): unknown {
-  if (payload && Object.prototype.hasOwnProperty.call(payload, payloadKey)) {
-    return payload[payloadKey];
-  }
-
-  return row[rowKey];
-}
-
 function normalizeArticles(value: unknown): HotNewsArticle[] {
   if (!Array.isArray(value)) {
     return [];
@@ -66,10 +53,18 @@ function normalizeArticles(value: unknown): HotNewsArticle[] {
 
   return value
     .filter(isRecord)
-    .map((article) => ({
-      title: parseText(article.title) ?? '',
-      link: parseText(article.link),
-    }));
+    .map((article) => {
+      const title = parseText(article.title);
+      if (!title) {
+        return null;
+      }
+
+      return {
+        title,
+        link: parseText(article.link),
+      };
+    })
+    .filter((article): article is HotNewsArticle => article !== null);
 }
 
 function normalizeCompanyEvidence(value: unknown): HotNewsCompanyEvidence[] {
@@ -84,6 +79,25 @@ function normalizeCompanyEvidence(value: unknown): HotNewsCompanyEvidence[] {
     evidence: parseTextArray(item.detailedEvidence),
     links: parseTextArray(item.detailedNewsLinks),
   }));
+}
+
+function preferText(payload: Record<string, unknown> | null, row: RawHotNewsReportRow, payloadKey: string, rowKey: string) {
+  return parseText(payload?.[payloadKey]) ?? parseText(row[rowKey]);
+}
+
+function preferTextArray(payload: Record<string, unknown> | null, row: RawHotNewsReportRow, payloadKey: string, rowKey: string) {
+  const payloadValues = parseTextArray(payload?.[payloadKey]);
+  return payloadValues.length > 0 ? payloadValues : parseTextArray(row[rowKey]);
+}
+
+function preferArticles(payload: Record<string, unknown> | null, row: RawHotNewsReportRow) {
+  const payloadArticles = normalizeArticles(payload?.keyArticles);
+  return payloadArticles.length > 0 ? payloadArticles : normalizeArticles(row.key_articles);
+}
+
+function preferCompanyEvidence(payload: Record<string, unknown> | null, row: RawHotNewsReportRow) {
+  const payloadEvidence = normalizeCompanyEvidence(payload?.companyNewsEvidence);
+  return payloadEvidence.length > 0 ? payloadEvidence : normalizeCompanyEvidence(row.company_news_evidence);
 }
 
 export function formatIssueDate(value: unknown): string {
@@ -102,7 +116,7 @@ export function formatIssueDate(value: unknown): string {
 
 export function normalizeHotNewsReport(row: RawHotNewsReportRow): HotNewsReport | null {
   const payload = isRecord(row.report_payload) ? row.report_payload : null;
-  const title = parseText(readPreferred(payload, row, 'title', 'title'));
+  const title = preferText(payload, row, 'title', 'title');
 
   if (!title) {
     return null;
@@ -116,12 +130,10 @@ export function normalizeHotNewsReport(row: RawHotNewsReportRow): HotNewsReport 
     displayDate: formatIssueDate(row.issue_date),
     title,
     perspective: parseText(row.perspective),
-    interpretation: parseText(readPreferred(payload, row, 'interpretation', 'interpretation')),
-    tldr: parseTextArray(readPreferred(payload, row, 'tldr', 'tldr')),
-    keyArticles: normalizeArticles(readPreferred(payload, row, 'keyArticles', 'key_articles')),
-    companyEvidence: normalizeCompanyEvidence(
-      readPreferred(payload, row, 'companyNewsEvidence', 'company_news_evidence'),
-    ),
+    interpretation: preferText(payload, row, 'interpretation', 'interpretation'),
+    tldr: preferTextArray(payload, row, 'tldr', 'tldr'),
+    keyArticles: preferArticles(payload, row),
+    companyEvidence: preferCompanyEvidence(payload, row),
   };
 }
 

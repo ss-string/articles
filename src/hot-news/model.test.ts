@@ -110,6 +110,41 @@ describe('hot-news model', () => {
     ]);
   });
 
+  it('falls back to top-level fields when report_payload values normalize empty', () => {
+    const report = normalizeHotNewsReport({
+      id: 3,
+      title: 'top title',
+      tldr: ['top'],
+      interpretation: 'top interp',
+      key_articles: [{ title: 'top article', link: 'https://example.com' }],
+      company_news_evidence: [{ company: 'top company', detailedEvidence: ['top evidence'] }],
+      report_payload: {
+        title: ' ',
+        tldr: [],
+        interpretation: '',
+        keyArticles: [],
+        companyNewsEvidence: [],
+      },
+    });
+
+    expect(report).toMatchObject({
+      id: '3',
+      title: 'top title',
+      tldr: ['top'],
+      interpretation: 'top interp',
+    });
+    expect(report?.keyArticles).toEqual([{ title: 'top article', link: 'https://example.com' }]);
+    expect(report?.companyEvidence).toEqual([
+      {
+        company: 'top company',
+        code: null,
+        position: null,
+        evidence: ['top evidence'],
+        links: [],
+      },
+    ]);
+  });
+
   it('excludes rows without a usable title', () => {
     expect(normalizeHotNewsReport({ id: 2, title: '', report_payload: { title: '   ' } })).toBeNull();
     expect(buildHotNewsReports([sampleRow, { id: 2, title: '' }]).map((report) => report.id)).toEqual(['1']);
@@ -136,6 +171,20 @@ describe('hot-news model', () => {
         { company: '회사', code: null, position: null, evidence: [], links: ['https://example.com/source'] },
       ],
     });
+  });
+
+  it('excludes article entries without a usable title', () => {
+    const report = normalizeHotNewsReport({
+      id: 'blank-article-title',
+      title: '기사 제목 검증',
+      key_articles: [
+        { title: '', link: 'https://example.com/blank' },
+        { link: 'https://example.com/missing' },
+        { title: '정상 기사', link: 'https://example.com/news' },
+      ],
+    });
+
+    expect(report?.keyArticles).toEqual([{ title: '정상 기사', link: 'https://example.com/news' }]);
   });
 
   it('formats valid issue dates in Korean financial display style', () => {
