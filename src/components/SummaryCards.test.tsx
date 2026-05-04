@@ -23,8 +23,6 @@ describe('SummaryCards', () => {
   it('calculates max gap from all rows without relying on sort order', () => {
     render(<SummaryCards rows={[makeRow({ gapPercent: 12 }), makeRow({ gapPercent: 55 })]} />);
 
-    expect(
-      screen.getByText((_, element) => element?.tagName === 'STRONG' && element.textContent === '+55.0%'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('+55.0%')).toBeInTheDocument();
   });
 });

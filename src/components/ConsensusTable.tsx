@@ -10,59 +10,68 @@ export function ConsensusTable({ rows }: ConsensusTableProps) {
   const [openRowKeys, setOpenRowKeys] = useState<Set<string>>(() => new Set());
 
   return (
-    <section className="table-shell" aria-label="컨센서스 랭킹 테이블">
-      <div className="table-head">
-        <div>종목</div>
-        <div>현재가</div>
-        <div>적정주가</div>
-        <div>갭</div>
-        <div>지난 1개월 대비 컨센서스 증가</div>
-        <div />
+    <section className="table-shell" role="table" aria-label="컨센서스 랭킹 테이블">
+      <div className="table-head" role="row">
+        <div role="columnheader">종목</div>
+        <div role="columnheader">현재가</div>
+        <div role="columnheader">적정주가</div>
+        <div role="columnheader">갭</div>
+        <div role="columnheader">지난 1개월 대비 컨센서스 증가</div>
+        <div role="columnheader">상세</div>
       </div>
       {rows.map((row, index) => {
         const rowKey = `${row.id}-${index}`;
         const isOpen = openRowKeys.has(rowKey);
+        const detailId = `consensus-detail-${rowKey}`;
 
         return (
-          <details
-            className="rank-detail"
-            key={rowKey}
-            onToggle={(event) => {
-              const nextIsOpen = event.currentTarget.open;
-              setOpenRowKeys((previous) => {
-                const next = new Set(previous);
-                if (nextIsOpen) {
-                  next.add(rowKey);
-                } else {
-                  next.delete(rowKey);
-                }
-                return next;
-              });
-            }}
-          >
-            <summary className="summary-row" role="button" aria-label={`${row.name} 상세 열기`}>
-              <div>
+          <div className="rank-detail" key={rowKey}>
+            <div className="summary-row" role="row">
+              <div role="cell">
                 <div className="stock-name">{row.name}</div>
                 {row.code ? <div className="stock-code">{row.code}</div> : null}
               </div>
-              <div className="price">{formatWon(row.currentPrice)}</div>
-              <div>
+              <div className="price" role="cell">
+                {formatWon(row.currentPrice)}
+              </div>
+              <div role="cell">
                 <div className="price">{formatWon(row.fairPrice)}</div>
                 <div className="muted">갭 {formatWon(row.gapAmount)}</div>
               </div>
-              <div className="gap-positive">{formatPercent(row.gapPercent)}</div>
-              <div>
+              <div className="gap-positive" role="cell">
+                {formatPercent(row.gapPercent)}
+              </div>
+              <div role="cell">
                 <div className="gap-bar">
                   <span style={{ width: `${Math.min(Math.max(row.gapPercent, 0), 100)}%` }} />
                 </div>
                 <span className="consensus-badge">▲ {formatPercent(row.oneMonthConsensusChangePercent)}</span>
               </div>
-              <div className="chevron" aria-hidden="true">
-                ⌄
+              <div role="cell">
+                <button
+                  className="chevron"
+                  type="button"
+                  aria-controls={detailId}
+                  aria-expanded={isOpen}
+                  aria-label={`${row.name} 상세 ${isOpen ? '닫기' : '열기'}`}
+                  onClick={() => {
+                    setOpenRowKeys((previous) => {
+                      const next = new Set(previous);
+                      if (isOpen) {
+                        next.delete(rowKey);
+                      } else {
+                        next.add(rowKey);
+                      }
+                      return next;
+                    });
+                  }}
+                >
+                  ⌄
+                </button>
               </div>
-            </summary>
+            </div>
             {isOpen ? (
-              <div className="expanded-row">
+              <div className="expanded-row" id={detailId} role="region" aria-label={`${row.name} 상세 정보`}>
                 <article className="detail-card">
                   <h3>가격 비교</h3>
                   <div className="price-compare">
@@ -89,7 +98,7 @@ export function ConsensusTable({ rows }: ConsensusTableProps) {
                 </article>
               </div>
             ) : null}
-          </details>
+          </div>
         );
       })}
     </section>

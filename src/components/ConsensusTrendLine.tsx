@@ -4,17 +4,6 @@ type ConsensusTrendLineProps = {
   checkpoints: ConsensusCheckpoint[];
 };
 
-function InlinePieces({ value }: { value: string }) {
-  const splitIndex = Math.max(value.length - 1, 0);
-
-  return (
-    <>
-      <span>{value.slice(0, splitIndex)}</span>
-      <span>{value.slice(splitIndex)}</span>
-    </>
-  );
-}
-
 function buildPoints(checkpoints: ConsensusCheckpoint[]) {
   const validPrices = checkpoints
     .map((checkpoint) => checkpoint.price)
@@ -23,11 +12,14 @@ function buildPoints(checkpoints: ConsensusCheckpoint[]) {
   const max = Math.max(...validPrices);
   const range = max - min || 1;
 
-  return checkpoints.map((checkpoint, index) => {
+  return checkpoints.flatMap((checkpoint, index) => {
+    if (checkpoint.price === null) {
+      return [];
+    }
+
     const x = 36 + index * 168;
-    const price = checkpoint.price ?? min;
-    const y = 154 - ((price - min) / range) * 106;
-    return { ...checkpoint, x, y };
+    const y = 154 - ((checkpoint.price - min) / range) * 106;
+    return [{ ...checkpoint, x, y }];
   });
 }
 
@@ -39,12 +31,12 @@ export function ConsensusTrendLine({ checkpoints }: ConsensusTrendLineProps) {
 
   return (
     <div className="trend-card">
-      <div className="line-chart" aria-label="컨센서스 가격 선 그래프">
-        <svg viewBox="0 0 560 190" role="img" aria-hidden="true">
+      <div className="line-chart" role="img" aria-label="컨센서스 가격 선 그래프">
+        <svg viewBox="0 0 560 190" aria-hidden="true">
           <path d="M0 154 L560 154" className="chart-grid" />
           <path d="M0 104 L560 104" className="chart-grid" />
           <path d="M0 54 L560 54" className="chart-grid" />
-          <path d={path} className="chart-line" />
+          {points.length >= 2 ? <path d={path} className="chart-line" /> : null}
           {points.map((point) => (
             <g key={point.label}>
               <line x1={point.x} x2={point.x} y1={point.y} y2="174" className="chart-guide" />
@@ -66,12 +58,8 @@ export function ConsensusTrendLine({ checkpoints }: ConsensusTrendLineProps) {
       <div className="checkpoint-row">
         {checkpoints.map((checkpoint) => (
           <div className="checkpoint" key={checkpoint.label}>
-            <span>
-              <InlinePieces value={checkpoint.label} />
-            </span>
-            <strong>
-              <InlinePieces value={formatWon(checkpoint.price)} />
-            </strong>
+            <span>{checkpoint.label}</span>
+            <strong>{formatWon(checkpoint.price)}</strong>
             <em>{checkpoint.label === '현재 컨센서스' ? '기준값' : formatPercent(checkpoint.changePercent)}</em>
           </div>
         ))}

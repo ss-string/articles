@@ -4,17 +4,6 @@ type SummaryCardsProps = {
   rows: ConsensusRankingRow[];
 };
 
-function InlinePieces({ value }: { value: string }) {
-  const splitIndex = Math.max(value.length - 1, 0);
-
-  return (
-    <>
-      <span>{value.slice(0, splitIndex)}</span>
-      <span>{value.slice(splitIndex)}</span>
-    </>
-  );
-}
-
 export function SummaryCards({ rows }: SummaryCardsProps) {
   const maxGap = rows.length === 0 ? null : Math.max(...rows.map((row) => row.gapPercent));
   const averageGap =
@@ -27,15 +16,11 @@ export function SummaryCards({ rows }: SummaryCardsProps) {
     <section className="summary-grid" aria-label="컨센서스 요약">
       <article className="summary-card">
         <span>최대 상승 여력</span>
-        <strong>
-          <InlinePieces value={formatPercent(maxGap)} />
-        </strong>
+        <strong>{formatPercent(maxGap)}</strong>
       </article>
       <article className="summary-card">
         <span>평균 괴리율</span>
-        <strong>
-          <InlinePieces value={formatPercent(averageGap)} />
-        </strong>
+        <strong>{formatPercent(averageGap)}</strong>
       </article>
       <article className="summary-card">
         <span>1개월 상향 종목</span>

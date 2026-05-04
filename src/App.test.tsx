@@ -31,7 +31,7 @@ describe('App', () => {
     expect(screen.getByText('삼성전자')).toBeInTheDocument();
     expect(screen.getByText('72,400원')).toBeInTheDocument();
     expect(screen.getByText('100,200원')).toBeInTheDocument();
-    expect(screen.getByText('+38.4%')).toBeInTheDocument();
+    expect(screen.getAllByText('+38.4%')).not.toHaveLength(0);
     expect(screen.getByText('지난 1개월 대비 컨센서스 증가')).toBeInTheDocument();
   });
 
@@ -43,10 +43,10 @@ describe('App', () => {
     await user.click(samsungSummary);
 
     expect(screen.getByText('컨센서스 가격 변화')).toBeInTheDocument();
-    expect(screen.getByText('91,300원')).toBeInTheDocument();
-    expect(screen.getByText('96,300원')).toBeInTheDocument();
-    expect(screen.getByText('93,800원')).toBeInTheDocument();
-    expect(screen.getByText('현재 컨센서스')).toBeInTheDocument();
+    expect(screen.getAllByText('91,300원')).not.toHaveLength(0);
+    expect(screen.getAllByText('96,300원')).not.toHaveLength(0);
+    expect(screen.getAllByText('93,800원')).not.toHaveLength(0);
+    expect(screen.getAllByText('현재 컨센서스')).not.toHaveLength(0);
   });
 
   it('renders an empty state when there are no valid rows', async () => {
