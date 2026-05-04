@@ -128,22 +128,49 @@ describe('MacroRegimePage', () => {
     expect(usCard).toHaveFocus();
   });
 
+  it('keeps tab focus inside the popup when focus starts outside', async () => {
+    const user = userEvent.setup();
+    render(<MacroRegimePage queryRows={async () => rows} />);
+
+    const krCard = await screen.findByRole('button', { name: /KR/ });
+    await user.click(await screen.findByRole('button', { name: /US/ }));
+    const dialog = screen.getByRole('dialog', { name: '리플레이션(reflation)' });
+
+    krCard.focus();
+    await user.tab();
+
+    expect(within(dialog).getByRole('button', { name: '상세 팝업 닫기' })).toHaveFocus();
+  });
+
   it('uses popup navigation buttons to move to detail sections', async () => {
     const user = userEvent.setup();
+    const externalScrollIntoView = vi.fn();
     const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
-    const scrollIntoView = vi.fn();
+    const scrollIntoView = vi.fn(function scrollIntoView(this: HTMLElement) {
+      return this.dataset.sectionId;
+    });
     window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
 
     try {
       render(<MacroRegimePage queryRows={async () => rows} />);
+      const externalSection = document.createElement('section');
+      externalSection.id = 'macro-key-indicators';
+      externalSection.scrollIntoView = externalScrollIntoView;
+      document.body.prepend(externalSection);
 
       await user.click(await screen.findByRole('button', { name: /US/ }));
       const dialog = screen.getByRole('dialog', { name: '리플레이션(reflation)' });
+      const targetSection = within(dialog).getByRole('heading', { name: '핵심 지표' }).closest('section');
+      expect(targetSection).not.toBeNull();
+      (targetSection as HTMLElement).dataset.sectionId = 'inside-key-indicators';
 
       await user.click(within(dialog).getByRole('button', { name: '핵심 지표' }));
 
+      expect(scrollIntoView.mock.contexts[0]).toBe(targetSection);
       expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
+      expect(externalScrollIntoView).not.toHaveBeenCalled();
     } finally {
+      document.getElementById('macro-key-indicators')?.remove();
       window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     }
   });

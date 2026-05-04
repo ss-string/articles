@@ -62,6 +62,7 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
   const titleId = useId();
   const dialogRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   useEffect(() => {
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -88,25 +89,38 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
 
       const firstElement = focusableElements[0];
       const lastElement = focusableElements[focusableElements.length - 1];
+      const activeElement = document.activeElement;
 
-      if (event.shiftKey && document.activeElement === firstElement) {
+      if (!(activeElement instanceof Node) || !dialogRef.current.contains(activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? lastElement : firstElement).focus();
+        return;
+      }
+
+      if (event.shiftKey && activeElement === firstElement) {
         event.preventDefault();
         lastElement.focus();
-      } else if (!event.shiftKey && document.activeElement === lastElement) {
+      } else if (!event.shiftKey && activeElement === lastElement) {
         event.preventDefault();
         firstElement.focus();
       }
     }
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, true);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown, true);
       previousFocus?.focus();
     };
   }, [onClose]);
 
   function moveToSection(sectionId: string) {
-    document.getElementById(sectionId)?.scrollIntoView({ block: 'start' });
+    sectionRefs.current[sectionId]?.scrollIntoView({ block: 'start' });
+  }
+
+  function setSectionRef(sectionId: string) {
+    return (element: HTMLElement | null) => {
+      sectionRefs.current[sectionId] = element;
+    };
   }
 
   return (
@@ -146,12 +160,16 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
             ))}
           </aside>
           <div className="macro-modal-content">
-            <section className="macro-popup-panel" id="macro-summary">
+            <section className="macro-popup-panel" id="macro-summary" ref={setSectionRef('macro-summary')}>
               <h4>요약</h4>
               <span className="macro-panel-kicker">TL;DR</span>
               <p>{decision.summary ?? '-'}</p>
             </section>
-            <section className="macro-popup-panel" id="macro-axis-assessments">
+            <section
+              className="macro-popup-panel"
+              id="macro-axis-assessments"
+              ref={setSectionRef('macro-axis-assessments')}
+            >
               <h4>4개 축 판단</h4>
               <div className="macro-axis-list">
                 {decision.axisAssessments.map((axis) => (
@@ -166,7 +184,11 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
                 ))}
               </div>
             </section>
-            <section className="macro-popup-panel" id="macro-key-indicators">
+            <section
+              className="macro-popup-panel"
+              id="macro-key-indicators"
+              ref={setSectionRef('macro-key-indicators')}
+            >
               <h4>핵심 지표</h4>
               <div className="macro-indicator-table">
                 {decision.keyIndicators.length > 0 ? (
@@ -181,7 +203,11 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
                 )}
               </div>
             </section>
-            <section className="macro-popup-panel" id="macro-asset-implications">
+            <section
+              className="macro-popup-panel"
+              id="macro-asset-implications"
+              ref={setSectionRef('macro-asset-implications')}
+            >
               <h4>자산 영향</h4>
               <ul>
                 {decision.assetImplications.length > 0 ? (
@@ -191,7 +217,11 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
                 )}
               </ul>
             </section>
-            <section className="macro-popup-panel" id="macro-risk-factors">
+            <section
+              className="macro-popup-panel"
+              id="macro-risk-factors"
+              ref={setSectionRef('macro-risk-factors')}
+            >
               <h4>리스크</h4>
               <ul>
                 {decision.riskFactors.length > 0 ? (
@@ -201,7 +231,7 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
                 )}
               </ul>
             </section>
-            <section className="macro-popup-panel" id="macro-full-content">
+            <section className="macro-popup-panel" id="macro-full-content" ref={setSectionRef('macro-full-content')}>
               <h4>전문</h4>
               {renderMarkdownText(decision.contentMarkdown).map((line, index) => (
                 <p key={`${index}-${line}`}>{line}</p>
