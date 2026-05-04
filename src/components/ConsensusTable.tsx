@@ -34,6 +34,18 @@ function formatGapDescription(gapAmount: number) {
   return '현재가와 적정주가가 같습니다.';
 }
 
+function getGapClassName(gapPercent: number) {
+  if (gapPercent > 0) {
+    return 'gap-positive';
+  }
+
+  if (gapPercent < 0) {
+    return 'gap-negative';
+  }
+
+  return 'gap-neutral';
+}
+
 export function ConsensusTable({ rows }: ConsensusTableProps) {
   const [openRowKeys, setOpenRowKeys] = useState<Set<string>>(() => new Set());
 
@@ -66,7 +78,7 @@ export function ConsensusTable({ rows }: ConsensusTableProps) {
                 <div className="price">{formatWon(row.fairPrice)}</div>
                 <div className="muted">갭 {formatWon(row.gapAmount)}</div>
               </div>
-              <div className="gap-positive" role="cell">
+              <div className={getGapClassName(row.gapPercent)} role="cell">
                 {formatPercent(row.gapPercent)}
               </div>
               <div role="cell">

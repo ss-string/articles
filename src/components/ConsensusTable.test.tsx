@@ -111,6 +111,36 @@ describe('ConsensusTable', () => {
     expect(screen.queryByText('▲ +0.0%')).not.toBeInTheDocument();
   });
 
+  it('uses positive styling for a positive price gap', () => {
+    render(<ConsensusTable rows={[makeRow({ gapPercent: 38.4 })]} />);
+
+    const gapCell = screen.getByRole('cell', { name: '+38.4%' });
+
+    expect(gapCell).toHaveClass('gap-positive');
+    expect(gapCell).not.toHaveClass('gap-negative');
+    expect(gapCell).not.toHaveClass('gap-neutral');
+  });
+
+  it('uses negative styling for a negative price gap', () => {
+    render(<ConsensusTable rows={[makeRow({ gapPercent: -2 })]} />);
+
+    const gapCell = screen.getByRole('cell', { name: '-2.0%' });
+
+    expect(gapCell).toHaveClass('gap-negative');
+    expect(gapCell).not.toHaveClass('gap-positive');
+    expect(gapCell).not.toHaveClass('gap-neutral');
+  });
+
+  it('uses neutral styling for a zero price gap', () => {
+    render(<ConsensusTable rows={[makeRow({ gapPercent: 0 })]} />);
+
+    const gapCell = screen.getByRole('cell', { name: '+0.0%' });
+
+    expect(gapCell).toHaveClass('gap-neutral');
+    expect(gapCell).not.toHaveClass('gap-positive');
+    expect(gapCell).not.toHaveClass('gap-negative');
+  });
+
   it('uses the same directional badge in the expanded detail', async () => {
     const user = userEvent.setup();
     render(<ConsensusTable rows={[makeRow({ oneMonthConsensusChangePercent: -2.1 })]} />);

@@ -25,4 +25,12 @@ describe('SummaryCards', () => {
 
     expect(screen.getByText('+55.0%')).toBeInTheDocument();
   });
+
+  it('uses a neutral max gap label even when every gap is negative', () => {
+    render(<SummaryCards rows={[makeRow({ gapPercent: -12 }), makeRow({ gapPercent: -4.5 })]} />);
+
+    expect(screen.getByText('최대 괴리율')).toBeInTheDocument();
+    expect(screen.getByText('-4.5%')).toBeInTheDocument();
+    expect(screen.queryByText('최대 상승 여력')).not.toBeInTheDocument();
+  });
 });
