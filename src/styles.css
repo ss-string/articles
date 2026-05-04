@@ -180,6 +180,11 @@ h3 {
   font-size: 1.08rem;
 }
 
+.consensus-source {
+  font-size: 0.66rem;
+  line-height: 1.2;
+}
+
 .status-panel,
 .summary-card,
 .detail-card,

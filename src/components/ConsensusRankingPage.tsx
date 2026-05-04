@@ -64,18 +64,18 @@ export function ConsensusRankingPage({ queryRows }: ConsensusRankingPageProps) {
 
       <main className="dashboard">
         <section className="hero-section consensus-hero" id="overview" aria-labelledby="overview-title">
-          <div className="eyebrow">KRX FnGuide</div>
+          <div className="eyebrow consensus-source">KRX FNGUIDE</div>
           <div className="hero-grid">
             <div>
               <h1 id="overview-title">컨센서스 괴리율 랭킹</h1>
               <p className="hero-copy">
-                현재가와 적정주가의 갭이 큰 종목부터 정렬하고, row 확장으로 컨센서스 가격 흐름을 확인합니다.
+                컨센서스 대비 현재 주가가 낮게 반영된 종목을 갭이 큰 순서로 정렬해 확인합니다.
               </p>
             </div>
-            <div className="status-panel" aria-label="데이터 출처">
-              <span>Data source</span>
-              <strong>KRX FnGuide Consensus</strong>
-              <p>Supabase `krx_fnguide_consensus` 테이블에서 조회한 공개 컨센서스 데이터입니다.</p>
+            <div className="status-panel" aria-label="지면 요약">
+              <span>TL;DR</span>
+              <strong>컨센서스 대비 현재 주가가 낮게 반영된 종목의 갭을 빠르게 확인합니다.</strong>
+              <p>괴리율이 큰 순서로 종목을 훑고, 확장 row에서 가격 차이와 컨센서스 흐름을 확인합니다.</p>
             </div>
           </div>
         </section>

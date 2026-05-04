@@ -33,6 +33,11 @@ describe('App', () => {
     expect(screen.getByText('100,200원')).toBeInTheDocument();
     expect(screen.getAllByText('+38.4%')).not.toHaveLength(0);
     expect(screen.getByText('지난 1개월 대비 컨센서스 증가')).toBeInTheDocument();
+    expect(screen.getByText('TL;DR')).toBeInTheDocument();
+    expect(screen.getAllByText(/컨센서스 대비 현재 주가가 낮게 반영된 종목/)).not.toHaveLength(0);
+    expect(screen.queryByText('Data source')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Supabase/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/FnGuide Consensus/i)).not.toBeInTheDocument();
     expect(container.querySelector('.app-shell')).toBeInTheDocument();
     expect(container.querySelector('.sidebar')).toBeInTheDocument();
     expect(container.querySelector('.top-nav')).toBeInTheDocument();
