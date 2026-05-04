@@ -109,6 +109,43 @@ describe('MacroRegimePage', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('moves focus into the popup and restores focus to the selected card when closed', async () => {
+    const user = userEvent.setup();
+    render(<MacroRegimePage queryRows={async () => rows} />);
+
+    const usCard = await screen.findByRole('button', { name: /US/ });
+    await user.click(usCard);
+
+    const dialog = screen.getByRole('dialog', { name: '리플레이션(reflation)' });
+    expect(within(dialog).getByRole('button', { name: '상세 팝업 닫기' })).toHaveFocus();
+
+    await user.tab({ shift: true });
+    expect(within(dialog).getByRole('button', { name: '전문' })).toHaveFocus();
+
+    await user.keyboard('{Escape}');
+    expect(usCard).toHaveFocus();
+  });
+
+  it('uses popup navigation buttons to move to detail sections', async () => {
+    const user = userEvent.setup();
+    const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
+    const scrollIntoView = vi.fn();
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+    try {
+      render(<MacroRegimePage queryRows={async () => rows} />);
+
+      await user.click(await screen.findByRole('button', { name: /US/ }));
+      const dialog = screen.getByRole('dialog', { name: '리플레이션(reflation)' });
+
+      await user.click(within(dialog).getByRole('button', { name: '핵심 지표' }));
+
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
+    } finally {
+      window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
+  });
+
   it('closes the popup when the backdrop is clicked', async () => {
     const user = userEvent.setup();
     render(<MacroRegimePage queryRows={async () => rows} />);

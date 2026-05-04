@@ -1,10 +1,19 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { RawMacroRegimeRow, MacroRegimeDecision, MacroKeyIndicator } from '../macro-regime/model';
 import { useMacroRegimeDecisions } from '../macro-regime/useMacroRegimeDecisions';
 
 type MacroRegimePageProps = {
   queryRows?: () => Promise<RawMacroRegimeRow[]>;
 };
+
+const detailSections = [
+  { id: 'macro-summary', label: '요약' },
+  { id: 'macro-axis-assessments', label: '4개 축 판단' },
+  { id: 'macro-key-indicators', label: '핵심 지표' },
+  { id: 'macro-asset-implications', label: '자산 영향' },
+  { id: 'macro-risk-factors', label: '리스크' },
+  { id: 'macro-full-content', label: '전문' },
+] as const;
 
 function renderMarkdownText(markdown: string | null) {
   return (markdown ?? '')
@@ -49,17 +58,54 @@ function DecisionCard({ decision, onOpen }: { decision: MacroRegimeDecision; onO
 
 function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; onClose: () => void }) {
   const titleId = useId();
+  const dialogRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    closeButtonRef.current?.focus();
+
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         onClose();
+        return;
+      }
+
+      if (event.key !== 'Tab' || !dialogRef.current) {
+        return;
+      }
+
+      const focusableElements = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'),
+      ).filter((element) => !element.hasAttribute('disabled'));
+
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
       }
     }
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      previousFocus?.focus();
+    };
   }, [onClose]);
+
+  function moveToSection(sectionId: string) {
+    document.getElementById(sectionId)?.scrollIntoView({ block: 'start' });
+  }
 
   return (
     <div className="macro-modal-backdrop" onClick={onClose}>
@@ -67,6 +113,7 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
         aria-labelledby={titleId}
         aria-modal="true"
         className="macro-modal"
+        ref={dialogRef}
         role="dialog"
         onClick={(event) => event.stopPropagation()}
       >
@@ -78,23 +125,31 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
             </div>
             <h3 id={titleId}>{decision.regime}</h3>
           </div>
-          <button className="macro-modal-close" type="button" aria-label="상세 팝업 닫기" onClick={onClose}>
+          <button
+            className="macro-modal-close"
+            type="button"
+            aria-label="상세 팝업 닫기"
+            ref={closeButtonRef}
+            onClick={onClose}
+          >
             x
           </button>
         </header>
         <div className="macro-modal-body">
           <aside className="macro-modal-nav" aria-label="매크로 레짐 상세 목차">
-            {['요약', '4개 축 판단', '핵심 지표', '자산 영향', '리스크', '전문'].map((item) => (
-              <span key={item}>{item}</span>
+            {detailSections.map((item) => (
+              <button type="button" key={item.id} onClick={() => moveToSection(item.id)}>
+                {item.label}
+              </button>
             ))}
           </aside>
           <div className="macro-modal-content">
-            <section className="macro-popup-panel">
+            <section className="macro-popup-panel" id="macro-summary">
               <h4>요약</h4>
               <span className="macro-panel-kicker">TL;DR</span>
               <p>{decision.summary ?? '-'}</p>
             </section>
-            <section className="macro-popup-panel">
+            <section className="macro-popup-panel" id="macro-axis-assessments">
               <h4>4개 축 판단</h4>
               <div className="macro-axis-list">
                 {decision.axisAssessments.map((axis) => (
@@ -109,7 +164,7 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
                 ))}
               </div>
             </section>
-            <section className="macro-popup-panel">
+            <section className="macro-popup-panel" id="macro-key-indicators">
               <h4>핵심 지표</h4>
               <div className="macro-indicator-table">
                 {decision.keyIndicators.length > 0 ? (
@@ -124,7 +179,7 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
                 )}
               </div>
             </section>
-            <section className="macro-popup-panel">
+            <section className="macro-popup-panel" id="macro-asset-implications">
               <h4>자산 영향</h4>
               <ul>
                 {decision.assetImplications.length > 0 ? (
@@ -134,7 +189,7 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
                 )}
               </ul>
             </section>
-            <section className="macro-popup-panel">
+            <section className="macro-popup-panel" id="macro-risk-factors">
               <h4>리스크</h4>
               <ul>
                 {decision.riskFactors.length > 0 ? (
@@ -144,7 +199,7 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
                 )}
               </ul>
             </section>
-            <section className="macro-popup-panel">
+            <section className="macro-popup-panel" id="macro-full-content">
               <h4>전문</h4>
               {renderMarkdownText(decision.contentMarkdown).map((line, index) => (
                 <p key={`${index}-${line}`}>{line}</p>
