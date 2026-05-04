@@ -1,4 +1,5 @@
 import {
+  buildRankingRowsWithReports,
   buildRankingRows,
   formatPercent,
   formatWon,
@@ -6,6 +7,136 @@ import {
 } from './model';
 
 describe('consensus model', () => {
+  it('normalizes gicode from fnguide_code and merges the matching AI summary report', () => {
+    const rows = buildRankingRowsWithReports(
+      [
+        {
+          stock_code: '128940',
+          stock_name: '한미약품',
+          current_price_value: 445000,
+          fnguide_code: 'A128940',
+          report_count: 11,
+          consensus_trend_values: {
+            six_month_ago: 477500,
+            three_month_ago: 538333,
+            month_ago: 620000,
+            now: 657857,
+          },
+          target_price_value: 657857,
+        },
+      ],
+      [
+        {
+          gicode: 'A128940',
+          co_nm: '한미약품',
+          updated_at: '2026-05-04T08:24:38.946123+00:00',
+          analysis: {
+            'tl;dr': '한미약품 컨센서스는 우호적이다.',
+            keyKeywords: ['R&D 모멘텀', 'MASH'],
+            risks: ['1Q26 실적이 시장 기대치를 하회할 가능성'],
+            targetPriceRange: { min: 560000, median: 660000, max: 720000 },
+            securitiesFirmCount: 10,
+            securitiesFirms: [
+              {
+                name: '메리츠증권',
+                reportCount: 1,
+                targetPrices: [620000],
+                recommendations: ['BUY'],
+              },
+            ],
+          },
+        },
+      ],
+    );
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      id: 'A128940',
+      code: '128940',
+      gicode: 'A128940',
+      reportCount: 11,
+      summaryReport: {
+        gicode: 'A128940',
+        companyName: '한미약품',
+        updatedAt: '2026-05-04T08:24:38.946123+00:00',
+        tlDr: '한미약품 컨센서스는 우호적이다.',
+        keyKeywords: ['R&D 모멘텀', 'MASH'],
+        risks: ['1Q26 실적이 시장 기대치를 하회할 가능성'],
+        targetPriceRange: { min: 560000, median: 660000, max: 720000 },
+        securitiesFirmCount: 10,
+        securitiesFirms: [
+          {
+            name: '메리츠증권',
+            reportCount: 1,
+            targetPrices: [620000],
+            recommendations: ['BUY'],
+          },
+        ],
+      },
+    });
+  });
+
+  it('keeps rows without matching AI reports and adds the current price checkpoint', () => {
+    const rows = buildRankingRowsWithReports(
+      [
+        {
+          stock_name: '리포트없음',
+          current_price: 10000,
+          target_price: 12000,
+          consensus_1m: 11000,
+        },
+      ],
+      [],
+    );
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.gicode).toBeNull();
+    expect(rows[0]?.summaryReport).toBeNull();
+    expect(rows[0]?.checkpoints.map((checkpoint) => checkpoint.label)).toEqual([
+      '현재 가격',
+      '지난 6개월',
+      '지난 3개월',
+      '지난 1개월',
+      '현재 컨센서스',
+    ]);
+    expect(rows[0]?.checkpoints[0]).toEqual({
+      label: '현재 가격',
+      price: 10000,
+      changePercent: null,
+    });
+  });
+
+  it('accepts camelCase reportCount and uses the latest AI report for each gicode', () => {
+    const rows = buildRankingRowsWithReports(
+      [
+        {
+          stock_name: '최신리포트',
+          stock_code: '123456',
+          fnguide_code: 'A123456',
+          current_price: 10000,
+          target_price: 12000,
+          reportCount: 7,
+        },
+      ],
+      [
+        {
+          gicode: 'A123456',
+          updated_at: '2026-05-04T08:24:38.946123+00:00',
+          analysis: { 'tl;dr': '최신 리포트' },
+        },
+        {
+          gicode: 'A123456',
+          updated_at: '2026-05-03T08:24:38.946123+00:00',
+          analysis: { 'tl;dr': '이전 리포트' },
+        },
+      ],
+    );
+
+    expect(rows[0]?.reportCount).toBe(7);
+    expect(rows[0]?.summaryReport?.tlDr).toBe('최신 리포트');
+    expect(rows[0]?.summaryReport?.updatedAt).toBe('2026-05-04T08:24:38.946123+00:00');
+  });
+
   it('normalizes raw Supabase rows and calculates gap metrics', () => {
     const row = normalizeConsensusRow({
       stock_name: '삼성전자',
@@ -27,6 +158,7 @@ describe('consensus model', () => {
     expect(row?.gapPercent).toBeCloseTo(((100200 - 72400) / 72400) * 100);
     expect(row?.oneMonthConsensusChangePercent).toBeCloseTo(((100200 - 93800) / 93800) * 100);
     expect(row?.checkpoints).toEqual([
+      { label: '현재 가격', price: 72400, changePercent: null },
       { label: '지난 6개월', price: 91300, changePercent: expect.any(Number) },
       { label: '지난 3개월', price: 96300, changePercent: expect.any(Number) },
       { label: '지난 1개월', price: 93800, changePercent: expect.any(Number) },
@@ -63,6 +195,7 @@ describe('consensus model', () => {
     expect(row?.gapPercent).toBeCloseTo(((313350 - 209000) / 209000) * 100);
     expect(row?.oneMonthConsensusChangePercent).toBeCloseTo(((313350 - 300000) / 300000) * 100);
     expect(row?.checkpoints).toEqual([
+      { label: '현재 가격', price: 209000, changePercent: null },
       { label: '지난 6개월', price: 260000, changePercent: expect.any(Number) },
       { label: '지난 3개월', price: 280000, changePercent: expect.any(Number) },
       { label: '지난 1개월', price: 300000, changePercent: expect.any(Number) },
@@ -129,6 +262,7 @@ describe('consensus model', () => {
     expect(row?.threeMonthConsensusPrice).toBeNull();
     expect(row?.sixMonthConsensusPrice).toBeNull();
     expect(row?.checkpoints).toEqual([
+      { label: '현재 가격', price: 10000, changePercent: null },
       { label: '지난 6개월', price: null, changePercent: null },
       { label: '지난 3개월', price: null, changePercent: null },
       { label: '지난 1개월', price: null, changePercent: null },
@@ -148,12 +282,13 @@ describe('consensus model', () => {
 
     expect(row?.oneMonthConsensusChangePercent).toBeNull();
     expect(row?.checkpoints).toEqual([
+      { label: '현재 가격', price: 10000, changePercent: null },
       { label: '지난 6개월', price: 11000, changePercent: expect.any(Number) },
       { label: '지난 3개월', price: -1000, changePercent: null },
       { label: '지난 1개월', price: 0, changePercent: null },
       { label: '현재 컨센서스', price: 12000, changePercent: 0 },
     ]);
-    expect(row?.checkpoints[0]?.changePercent).toBeCloseTo(((12000 - 11000) / 11000) * 100);
+    expect(row?.checkpoints[1]?.changePercent).toBeCloseTo(((12000 - 11000) / 11000) * 100);
   });
 
   it('formats prices and percents for Korean financial display', () => {

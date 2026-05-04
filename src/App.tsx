@@ -1,4 +1,4 @@
-import type { RawConsensusRow } from './consensus/model';
+import type { RawConsensusRow, RawSummaryReportRow } from './consensus/model';
 import type { RawHotNewsReportRow } from './hot-news/model';
 import {
   articles,
@@ -15,6 +15,7 @@ import './styles.css';
 type AppProps = {
   queryRows?: () => Promise<RawConsensusRow[]>;
   queryHotNewsRows?: () => Promise<RawHotNewsReportRow[]>;
+  queryReports?: () => Promise<RawSummaryReportRow[]>;
 };
 
 function externalLinkProps(href: string) {
@@ -28,7 +29,7 @@ function externalLinkProps(href: string) {
   };
 }
 
-export default function App({ queryRows, queryHotNewsRows }: AppProps) {
+export default function App({ queryRows, queryHotNewsRows, queryReports }: AppProps) {
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -105,7 +106,7 @@ export default function App({ queryRows, queryHotNewsRows }: AppProps) {
 
         <HotNewsReportsPage queryRows={queryHotNewsRows} />
 
-        <ConsensusRankingPage queryRows={queryRows} />
+        <ConsensusRankingPage queryRows={queryRows} queryReports={queryReports} />
 
         <section className="dashboard-section" id="work" aria-labelledby="work-title">
           <div className="section-heading">

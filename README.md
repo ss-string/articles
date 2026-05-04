@@ -2,6 +2,8 @@
 
 KRX FnGuide 컨센서스 데이터를 Supabase에서 조회해 현재가 대비 적정주가 괴리율 랭킹을 보여주는 Vite React 앱입니다.
 
+랭킹 상세 팝업은 `krx_fnguide_consensus.fnguide_code`와 `ai_consensus_summary_reports.gicode`를 매칭해 AI 컨센서스 요약, 주요 리스크, 목표주가 범위, 증권사별 목표가를 함께 표시합니다.
+
 ## 환경변수
 
 Vite 앱은 다음 환경변수를 사용합니다.

@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
-import type { RawConsensusRow } from './model';
+import type { RawConsensusRow, RawSummaryReportRow } from './model';
 
-const tableName = 'krx_fnguide_consensus';
+const consensusTableName = 'krx_fnguide_consensus';
+const summaryReportsTableName = 'ai_consensus_summary_reports';
 
 export function getSupabaseConfig() {
   const url = import.meta.env.VITE_SUPABASE_URL;
@@ -17,7 +18,19 @@ export function getSupabaseConfig() {
 export async function queryConsensusRows(): Promise<RawConsensusRow[]> {
   const { url, publishableKey } = getSupabaseConfig();
   const supabase = createClient(url, publishableKey);
-  const { data, error } = await supabase.from(tableName).select('*');
+  const { data, error } = await supabase.from(consensusTableName).select('*');
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ?? [];
+}
+
+export async function querySummaryReportRows(): Promise<RawSummaryReportRow[]> {
+  const { url, publishableKey } = getSupabaseConfig();
+  const supabase = createClient(url, publishableKey);
+  const { data, error } = await supabase.from(summaryReportsTableName).select('*');
 
   if (error) {
     throw new Error(error.message);
