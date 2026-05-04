@@ -1,14 +1,15 @@
-import type { RawConsensusRow } from '../consensus/model';
+import type { RawConsensusRow, RawSummaryReportRow } from '../consensus/model';
 import { useConsensusRanking } from '../consensus/useConsensusRanking';
 import { ConsensusTable } from './ConsensusTable';
 import { SummaryCards } from './SummaryCards';
 
 type ConsensusRankingPageProps = {
   queryRows?: () => Promise<RawConsensusRow[]>;
+  queryReports?: () => Promise<RawSummaryReportRow[]>;
 };
 
-export function ConsensusRankingPage({ queryRows }: ConsensusRankingPageProps) {
-  const state = useConsensusRanking({ queryRows });
+export function ConsensusRankingPage({ queryRows, queryReports }: ConsensusRankingPageProps) {
+  const state = useConsensusRanking({ queryRows, queryReports });
   const statusContent =
     state.status === 'loading' ? (
       <div className="state-panel">컨센서스 데이터를 불러오는 중입니다.</div>
