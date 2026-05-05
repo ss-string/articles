@@ -24,6 +24,28 @@ const macroRoute: AppRoute = {
 
 describe('AppShell', () => {
   it('renders the library brand in the sidebar but not in the top row', () => {
+    const { container } = render(
+      <AppShell activeRoute={consensusRoute} onNavigate={vi.fn()}>
+        <p>본문</p>
+      </AppShell>,
+    );
+
+    const sidebar = screen.getByRole('complementary', { name: '분석자료실 메뉴' });
+    const mobileSidebar = container.querySelector('.mobile-sidebar');
+    const topRow = screen.getByRole('banner');
+
+    expect(sidebar).toHaveClass('sidebar');
+    expect(within(sidebar).getByText('분석자료실').closest('.brand')).toBeInTheDocument();
+    expect(within(sidebar).getByText('Research Library').closest('.brand')).toBeInTheDocument();
+    expect(within(sidebar).getByText('분석자료실')).toHaveClass('brand-mark');
+    expect(mobileSidebar).toHaveTextContent('분석자료실');
+    expect(mobileSidebar).toHaveTextContent('Research Library');
+    expect(topRow).not.toHaveTextContent('분석자료실');
+    expect(topRow).not.toHaveTextContent('Research Library');
+    expect(screen.getByRole('button', { name: '사이드바 열기 또는 닫기' })).toBeInTheDocument();
+  });
+
+  it('uses planned layout and navigation class names', () => {
     render(
       <AppShell activeRoute={consensusRoute} onNavigate={vi.fn()}>
         <p>본문</p>
@@ -31,17 +53,18 @@ describe('AppShell', () => {
     );
 
     const sidebar = screen.getByRole('complementary', { name: '분석자료실 메뉴' });
-    const mobileSidebar = screen.getByRole('complementary', { name: '모바일 분석자료실 메뉴' });
-    const topRow = screen.getByRole('banner');
 
-    expect(sidebar).toHaveClass('sidebar');
-    expect(sidebar).toHaveTextContent('분석자료실');
-    expect(sidebar).toHaveTextContent('Research Library');
-    expect(mobileSidebar).toHaveTextContent('분석자료실');
-    expect(mobileSidebar).toHaveTextContent('Research Library');
-    expect(topRow).not.toHaveTextContent('분석자료실');
-    expect(topRow).not.toHaveTextContent('Research Library');
-    expect(screen.getByRole('button', { name: '사이드바 열기 또는 닫기' })).toBeInTheDocument();
+    expect(sidebar.querySelector('.brand')).toBeInTheDocument();
+    expect(sidebar.querySelector('.brand-mark')).toBeInTheDocument();
+    expect(sidebar.querySelector('.nav-list')).toBeInTheDocument();
+    expect(within(sidebar).getByRole('button', { name: /◆ 금융/ })).toHaveClass('nav-item');
+    expect(within(sidebar).getByRole('button', { name: /↗ 컨센서스 괴리율 랭킹/ })).toHaveClass('sub-item');
+    expect(screen.getByRole('button', { name: '사이드바 열기 또는 닫기' })).toHaveClass(
+      'sidebar-toggle desktop-toggle',
+    );
+    expect(screen.getByRole('button', { name: '모바일 사이드바 열기' })).toHaveClass('sidebar-toggle mobile-toggle');
+    expect(document.querySelector('.workspace')).toBeInTheDocument();
+    expect(document.querySelector('.dashboard')).toBeInTheDocument();
   });
 
   it('renders top row account and settings placeholders', () => {
@@ -70,6 +93,23 @@ describe('AppShell', () => {
     expect(within(sidebar).getByRole('button', { name: /≡ 핫 뉴스 분석 리포트/ })).toBeInTheDocument();
     expect(within(sidebar).getByRole('button', { name: /↗ 컨센서스 괴리율 랭킹/ })).toHaveClass('active');
     expect(within(sidebar).getByRole('button', { name: /⌁ AI 분석 리포트/ })).toBeInTheDocument();
+  });
+
+  it('navigates from top-level sidebar items', async () => {
+    const user = userEvent.setup();
+    const onNavigate = vi.fn();
+    render(
+      <AppShell activeRoute={consensusRoute} onNavigate={onNavigate}>
+        <p>본문</p>
+      </AppShell>,
+    );
+
+    const sidebar = screen.getByRole('complementary', { name: '분석자료실 메뉴' });
+    await user.click(within(sidebar).getByRole('button', { name: /⌂ 메인/ }));
+    await user.click(within(sidebar).getByRole('button', { name: /◆ 금융/ }));
+
+    expect(onNavigate).toHaveBeenNthCalledWith(1, '/main/macro-regime');
+    expect(onNavigate).toHaveBeenNthCalledWith(2, '/finance/hot-news');
   });
 
   it('shows only main children when the main route is active', () => {
@@ -108,15 +148,26 @@ describe('AppShell', () => {
       </AppShell>,
     );
 
+    const mobileSidebar = container.querySelector('.mobile-sidebar');
+    const dim = screen.getByTestId('mobile-sidebar-dim');
+
+    expect(mobileSidebar).toHaveAttribute('aria-hidden', 'true');
+    expect(dim).toHaveAttribute('aria-hidden', 'true');
+    expect(dim).not.toHaveClass('visible');
+
     await user.click(screen.getByRole('button', { name: '모바일 사이드바 열기' }));
     expect(screen.getByRole('complementary', { name: '모바일 분석자료실 메뉴' })).toBeInTheDocument();
+    expect(mobileSidebar).toHaveAttribute('aria-hidden', 'false');
     expect(container.querySelector('.mobile-sidebar')).toHaveClass('open');
-    expect(screen.queryByRole('button', { name: /닫기/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'X' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '×' })).not.toBeInTheDocument();
+    expect(dim).toHaveClass('visible');
+    expect(within(mobileSidebar as HTMLElement).queryByRole('button', { name: /닫기/ })).not.toBeInTheDocument();
+    expect(within(mobileSidebar as HTMLElement).queryByRole('button', { name: 'X' })).not.toBeInTheDocument();
+    expect(within(mobileSidebar as HTMLElement).queryByRole('button', { name: '×' })).not.toBeInTheDocument();
 
     await user.click(screen.getByTestId('mobile-sidebar-dim'));
     expect(container.querySelector('.mobile-sidebar')).not.toHaveClass('open');
+    expect(mobileSidebar).toHaveAttribute('aria-hidden', 'true');
+    expect(dim).not.toHaveClass('visible');
   });
 
   it('uses underline tabs for finance routes and calls onNavigate', async () => {
