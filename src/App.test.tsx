@@ -97,13 +97,14 @@ describe('App routing', () => {
     expect(activeTab).toHaveClass('finance-tab active');
     expect(within(workspace).getAllByText('컨센서스 괴리율 랭킹')).toHaveLength(2);
     expect(within(workspace).queryByRole('heading', { level: 2, name: '컨센서스 괴리율 랭킹' })).not.toBeInTheDocument();
-    expect(within(workspace).getByRole('region', { name: '컨센서스 요약' })).toBeInTheDocument();
     expect(document.querySelector('.workspace')).toBeInTheDocument();
     expect(document.querySelector('.page-header')).toBeInTheDocument();
     expect(document.querySelector('.finance-tabs')).toBeInTheDocument();
     expect(document.querySelector('.dashboard')).toBeInTheDocument();
     expect(document.querySelector('.hero-section')).not.toBeInTheDocument();
     expect(await screen.findByText('삼성전자')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: '컨센서스 괴리율 개요' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: '컨센서스 요약' })).toBeInTheDocument();
   });
 
   it('renders the consensus route from a base-prefixed direct entry', async () => {

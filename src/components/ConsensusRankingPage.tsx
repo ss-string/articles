@@ -100,7 +100,7 @@ export function ConsensusRankingPage({ queryRows, queryReports }: ConsensusRanki
 
   return (
     <>
-      <section className="dashboard-section consensus-section" id="consensus" aria-label="컨센서스 요약">
+      <section className="dashboard-section consensus-section" id="consensus" aria-label="컨센서스 괴리율 개요">
         <div className="section-heading consensus-heading">
           <span className="consensus-source">KRX 컨센서스 괴리율 랭킹</span>
         </div>
