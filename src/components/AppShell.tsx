@@ -36,16 +36,16 @@ export function AppShell({ activeRoute, onNavigate, children }: AppShellProps) {
       </div>
       <nav className="nav-list">
         {visibleNavigation.map((item) => (
-          <div className="sidebar-section" key={item.key}>
+          <div className="nav-group" key={item.key}>
             <button
               className={['nav-item', item.active ? 'active' : ''].filter(Boolean).join(' ')}
               onClick={() => handleNavigate(sectionPaths[item.key])}
               type="button"
             >
-              {item.symbol} {item.label}
+              <span className="menu-symbol">{item.symbol}</span> {item.label}
             </button>
             {item.children.length > 0 ? (
-              <div className="sidebar-children">
+              <div className="sub-list">
                 {item.children.map((route) => (
                   <button
                     className={['sub-item', route.path === activeRoute.path ? 'active' : ''].filter(Boolean).join(' ')}
@@ -53,7 +53,7 @@ export function AppShell({ activeRoute, onNavigate, children }: AppShellProps) {
                     onClick={() => handleNavigate(route.path)}
                     type="button"
                   >
-                    {route.symbol} {route.label}
+                    <span className="sub-symbol">{route.symbol}</span> {route.label}
                   </button>
                 ))}
               </div>
@@ -81,7 +81,7 @@ export function AppShell({ activeRoute, onNavigate, children }: AppShellProps) {
         className={mobileSidebarClassName}
         aria-label="모바일 분석자료실 메뉴"
       >
-        {sidebarContent}
+        {isMobileSidebarOpen ? sidebarContent : null}
       </aside>
 
       <div className="workspace">
@@ -105,8 +105,8 @@ export function AppShell({ activeRoute, onNavigate, children }: AppShellProps) {
             </button>
           </div>
           <div className="top-nav-actions">
-            <button type="button">로그인</button>
-            <button type="button">설정</button>
+            <span>로그인</span>
+            <span>설정</span>
           </div>
         </header>
 

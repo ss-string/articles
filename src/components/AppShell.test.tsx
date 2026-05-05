@@ -23,7 +23,8 @@ const macroRoute: AppRoute = {
 };
 
 describe('AppShell', () => {
-  it('renders the library brand in the sidebar but not in the top row', () => {
+  it('renders the library brand in the sidebar but not in the top row', async () => {
+    const user = userEvent.setup();
     const { container } = render(
       <AppShell activeRoute={consensusRoute} onNavigate={vi.fn()}>
         <p>본문</p>
@@ -38,6 +39,8 @@ describe('AppShell', () => {
     expect(within(sidebar).getByText('분석자료실').closest('.brand')).toBeInTheDocument();
     expect(within(sidebar).getByText('Research Library').closest('.brand')).toBeInTheDocument();
     expect(within(sidebar).getByText('분석자료실')).toHaveClass('brand-mark');
+
+    await user.click(screen.getByRole('button', { name: '모바일 사이드바 열기' }));
     expect(mobileSidebar).toHaveTextContent('분석자료실');
     expect(mobileSidebar).toHaveTextContent('Research Library');
     expect(topRow).not.toHaveTextContent('분석자료실');
@@ -57,8 +60,12 @@ describe('AppShell', () => {
     expect(sidebar.querySelector('.brand')).toBeInTheDocument();
     expect(sidebar.querySelector('.brand-mark')).toBeInTheDocument();
     expect(sidebar.querySelector('.nav-list')).toBeInTheDocument();
+    expect(sidebar.querySelector('.nav-group')).toBeInTheDocument();
+    expect(sidebar.querySelector('.sub-list')).toBeInTheDocument();
     expect(within(sidebar).getByRole('button', { name: /◆ 금융/ })).toHaveClass('nav-item');
     expect(within(sidebar).getByRole('button', { name: /↗ 컨센서스 괴리율 랭킹/ })).toHaveClass('sub-item');
+    expect(within(sidebar).getByText('◆')).toHaveClass('menu-symbol');
+    expect(within(sidebar).getByText('↗')).toHaveClass('sub-symbol');
     expect(screen.getByRole('button', { name: '사이드바 열기 또는 닫기' })).toHaveClass(
       'sidebar-toggle desktop-toggle',
     );
@@ -76,8 +83,10 @@ describe('AppShell', () => {
 
     const topRow = screen.getByRole('banner');
     expect(topRow).toHaveClass('top-nav');
-    expect(within(topRow).getByRole('button', { name: '로그인' })).toBeInTheDocument();
-    expect(within(topRow).getByRole('button', { name: '설정' })).toBeInTheDocument();
+    expect(within(topRow).getByText('로그인')).toBeInTheDocument();
+    expect(within(topRow).getByText('설정')).toBeInTheDocument();
+    expect(within(topRow).queryByRole('button', { name: '로그인' })).not.toBeInTheDocument();
+    expect(within(topRow).queryByRole('button', { name: '설정' })).not.toBeInTheDocument();
   });
 
   it('shows only finance children when a finance route is active', () => {
@@ -168,6 +177,28 @@ describe('AppShell', () => {
     expect(container.querySelector('.mobile-sidebar')).not.toHaveClass('open');
     expect(mobileSidebar).toHaveAttribute('aria-hidden', 'true');
     expect(dim).not.toHaveClass('visible');
+  });
+
+  it('keeps focus out of the closed mobile sidebar and exposes controls when open', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <AppShell activeRoute={consensusRoute} onNavigate={vi.fn()}>
+        <p>본문</p>
+      </AppShell>,
+    );
+
+    const mobileSidebar = container.querySelector('.mobile-sidebar') as HTMLElement;
+
+    for (let index = 0; index < 8; index += 1) {
+      await user.tab();
+      expect(mobileSidebar.contains(document.activeElement)).toBe(false);
+    }
+
+    await user.click(screen.getByRole('button', { name: '모바일 사이드바 열기' }));
+    const openMobileSidebar = screen.getByRole('complementary', { name: '모바일 분석자료실 메뉴' });
+
+    expect(within(openMobileSidebar).getByRole('button', { name: /◆ 금융/ })).toBeInTheDocument();
+    expect(within(openMobileSidebar).getByRole('button', { name: /↗ 컨센서스 괴리율 랭킹/ })).toBeInTheDocument();
   });
 
   it('uses underline tabs for finance routes and calls onNavigate', async () => {
