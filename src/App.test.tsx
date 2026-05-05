@@ -94,6 +94,11 @@ describe('App routing', () => {
     expect(within(sidebar).queryByRole('button', { name: /◷ 매크로 레짐/ })).not.toBeInTheDocument();
     expect(activeTab).toHaveAttribute('aria-selected', 'true');
     expect(activeTab).toHaveClass('finance-tab active');
+    expect(document.querySelector('.workspace')).toBeInTheDocument();
+    expect(document.querySelector('.page-header')).toBeInTheDocument();
+    expect(document.querySelector('.finance-tabs')).toBeInTheDocument();
+    expect(document.querySelector('.dashboard')).toBeInTheDocument();
+    expect(document.querySelector('.hero-section')).not.toBeInTheDocument();
     expect(await screen.findByText('삼성전자')).toBeInTheDocument();
   });
 
