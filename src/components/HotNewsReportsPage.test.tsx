@@ -118,6 +118,48 @@ describe('HotNewsReportsPage', () => {
     expect(container.querySelector('.hot-news-evidence-link-list')).not.toBeInTheDocument();
   });
 
+  it('applies bull, neutral, and bear tone classes to company evidence cards', async () => {
+    const user = userEvent.setup();
+    render(
+      <HotNewsReportsPage
+        queryRows={async () => [
+          {
+            ...rows[0],
+            company_news_evidence: [
+              {
+                code: 'A000001',
+                company: '우호기업',
+                position: 'bull',
+                detailedEvidence: ['수주 증가'],
+                detailedNewsLinks: [],
+              },
+              {
+                code: 'A000002',
+                company: '중립기업',
+                position: 'neutral',
+                detailedEvidence: ['방향성 대기'],
+                detailedNewsLinks: [],
+              },
+              {
+                code: 'A000003',
+                company: '위험기업',
+                position: 'bear',
+                detailedEvidence: ['마진 훼손'],
+                detailedNewsLinks: [],
+              },
+            ],
+          },
+        ]}
+      />,
+    );
+
+    await user.click(await screen.findByRole('button', { name: /2026-05-04 조선 에너지 수주/ }));
+
+    expect(screen.getByText('우호기업').closest('article')).toHaveClass('hot-news-evidence-card tone-bull');
+    expect(screen.getByText('중립기업').closest('article')).toHaveClass('hot-news-evidence-card tone-neutral');
+    expect(screen.getByText('위험기업').closest('article')).toHaveClass('hot-news-evidence-card tone-bear');
+  });
+
   it('moves focus into the modal, traps tab navigation, and restores focus to the opener', async () => {
     const user = userEvent.setup();
     render(<HotNewsReportsPage queryRows={async () => rows} />);

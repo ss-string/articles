@@ -1393,6 +1393,39 @@ h3 {
   font-weight: 850;
 }
 
+.tone-bull {
+  border-color: #b9d6d2;
+  background: #f4fbfa;
+  color: #0f766e;
+}
+
+.tone-neutral {
+  border-color: #d8dee8;
+  background: #f8fafc;
+  color: #475569;
+}
+
+.tone-bear {
+  border-color: #fecdd3;
+  background: #fff7f7;
+  color: #b91c1c;
+}
+
+.hot-news-evidence-card.tone-bull header span {
+  background: #eef7f6;
+  color: #0f766e;
+}
+
+.hot-news-evidence-card.tone-neutral header span {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.hot-news-evidence-card.tone-bear header span {
+  background: #fff1f2;
+  color: #b91c1c;
+}
+
 .hot-news-article-list {
   padding-left: 0;
   list-style: none;
