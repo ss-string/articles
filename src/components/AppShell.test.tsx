@@ -69,7 +69,19 @@ describe('AppShell', () => {
     expect(screen.getByRole('button', { name: '사이드바 열기 또는 닫기' })).toHaveClass(
       'sidebar-toggle desktop-toggle',
     );
+    expect(screen.getByRole('button', { name: '사이드바 열기 또는 닫기' })).toHaveTextContent('≡');
+    expect(screen.getByRole('button', { name: '사이드바 열기 또는 닫기' })).toHaveAttribute(
+      'aria-controls',
+      'analysis-library-sidebar',
+    );
+    expect(screen.getByRole('button', { name: '사이드바 열기 또는 닫기' })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('button', { name: '모바일 사이드바 열기' })).toHaveClass('sidebar-toggle mobile-toggle');
+    expect(screen.getByRole('button', { name: '모바일 사이드바 열기' })).toHaveTextContent('≡');
+    expect(screen.getByRole('button', { name: '모바일 사이드바 열기' })).toHaveAttribute(
+      'aria-controls',
+      'mobile-analysis-library-sidebar',
+    );
+    expect(screen.getByRole('button', { name: '모바일 사이드바 열기' })).toHaveAttribute('aria-expanded', 'false');
     expect(document.querySelector('.workspace')).toBeInTheDocument();
     expect(document.querySelector('.dashboard')).toBeInTheDocument();
   });
@@ -145,8 +157,10 @@ describe('AppShell', () => {
     expect(container.querySelector('.app-shell')).not.toHaveClass('sidebar-collapsed');
     await user.click(screen.getByRole('button', { name: '사이드바 열기 또는 닫기' }));
     expect(container.querySelector('.app-shell')).toHaveClass('sidebar-collapsed');
+    expect(screen.getByRole('button', { name: '사이드바 열기 또는 닫기' })).toHaveAttribute('aria-expanded', 'false');
     await user.click(screen.getByRole('button', { name: '사이드바 열기 또는 닫기' }));
     expect(container.querySelector('.app-shell')).not.toHaveClass('sidebar-collapsed');
+    expect(screen.getByRole('button', { name: '사이드바 열기 또는 닫기' })).toHaveAttribute('aria-expanded', 'true');
   });
 
   it('opens the mobile drawer and closes it from the dimmed area without an X button', async () => {
@@ -166,6 +180,7 @@ describe('AppShell', () => {
 
     await user.click(screen.getByRole('button', { name: '모바일 사이드바 열기' }));
     expect(screen.getByRole('complementary', { name: '모바일 분석자료실 메뉴' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '모바일 사이드바 열기' })).toHaveAttribute('aria-expanded', 'true');
     expect(mobileSidebar).toHaveAttribute('aria-hidden', 'false');
     expect(container.querySelector('.mobile-sidebar')).toHaveClass('open');
     expect(dim).toHaveClass('visible');
@@ -175,6 +190,7 @@ describe('AppShell', () => {
 
     await user.click(screen.getByTestId('mobile-sidebar-dim'));
     expect(container.querySelector('.mobile-sidebar')).not.toHaveClass('open');
+    expect(screen.getByRole('button', { name: '모바일 사이드바 열기' })).toHaveAttribute('aria-expanded', 'false');
     expect(mobileSidebar).toHaveAttribute('aria-hidden', 'true');
     expect(dim).not.toHaveClass('visible');
   });

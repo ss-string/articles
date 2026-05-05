@@ -66,7 +66,7 @@ export function AppShell({ activeRoute, onNavigate, children }: AppShellProps) {
 
   return (
     <div className={shellClassName}>
-      <aside className="sidebar" aria-label="분석자료실 메뉴">
+      <aside className="sidebar" id="analysis-library-sidebar" aria-label="분석자료실 메뉴">
         {sidebarContent}
       </aside>
 
@@ -79,6 +79,7 @@ export function AppShell({ activeRoute, onNavigate, children }: AppShellProps) {
       <aside
         aria-hidden={!isMobileSidebarOpen}
         className={mobileSidebarClassName}
+        id="mobile-analysis-library-sidebar"
         aria-label="모바일 분석자료실 메뉴"
       >
         {isMobileSidebarOpen ? sidebarContent : null}
@@ -88,20 +89,24 @@ export function AppShell({ activeRoute, onNavigate, children }: AppShellProps) {
         <header className="top-nav">
           <div className="top-nav-left">
             <button
+              aria-controls="analysis-library-sidebar"
+              aria-expanded={!isSidebarCollapsed}
               aria-label="사이드바 열기 또는 닫기"
               className="sidebar-toggle desktop-toggle"
               onClick={() => setIsSidebarCollapsed((current) => !current)}
               type="button"
             >
-              ☰
+              ≡
             </button>
             <button
+              aria-controls="mobile-analysis-library-sidebar"
+              aria-expanded={isMobileSidebarOpen}
               aria-label="모바일 사이드바 열기"
               className="sidebar-toggle mobile-toggle"
               onClick={() => setIsMobileSidebarOpen(true)}
               type="button"
             >
-              ☰
+              ≡
             </button>
           </div>
           <div className="top-nav-actions">
