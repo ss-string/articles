@@ -34,6 +34,7 @@ describe('AppShell', () => {
     const mobileSidebar = screen.getByRole('complementary', { name: '모바일 분석자료실 메뉴' });
     const topRow = screen.getByRole('banner');
 
+    expect(sidebar).toHaveClass('sidebar');
     expect(sidebar).toHaveTextContent('분석자료실');
     expect(sidebar).toHaveTextContent('Research Library');
     expect(mobileSidebar).toHaveTextContent('분석자료실');
@@ -51,6 +52,7 @@ describe('AppShell', () => {
     );
 
     const topRow = screen.getByRole('banner');
+    expect(topRow).toHaveClass('top-nav');
     expect(within(topRow).getByRole('button', { name: '로그인' })).toBeInTheDocument();
     expect(within(topRow).getByRole('button', { name: '설정' })).toBeInTheDocument();
   });
@@ -110,6 +112,8 @@ describe('AppShell', () => {
     expect(screen.getByRole('complementary', { name: '모바일 분석자료실 메뉴' })).toBeInTheDocument();
     expect(container.querySelector('.mobile-sidebar')).toHaveClass('open');
     expect(screen.queryByRole('button', { name: /닫기/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'X' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '×' })).not.toBeInTheDocument();
 
     await user.click(screen.getByTestId('mobile-sidebar-dim'));
     expect(container.querySelector('.mobile-sidebar')).not.toHaveClass('open');
