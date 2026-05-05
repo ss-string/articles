@@ -14,6 +14,20 @@ const detailSections = [
   { id: 'macro-risk-factors', label: '리스크' },
 ] as const;
 
+function getMacroJudgmentToneClass(judgment: string) {
+  const normalized = judgment.trim().toLowerCase();
+
+  if (['elevated', 'contracting', 'tight', 'restrictive', 'scarce'].includes(normalized)) {
+    return 'tone-bear';
+  }
+
+  if (normalized === 'neutral' || normalized === '-') {
+    return 'tone-neutral';
+  }
+
+  return 'tone-bull';
+}
+
 function IndicatorRow({ indicator }: { indicator: MacroKeyIndicator }) {
   return (
     <div className="macro-indicator-row">
@@ -39,7 +53,7 @@ function DecisionCard({ decision, onOpen }: { decision: MacroRegimeDecision; onO
         {decision.axisAssessments.map((axis) => (
           <span className="macro-axis-mini" key={axis.key}>
             <small>{axis.label}</small>
-            <b>{axis.judgment}</b>
+            <b className={`macro-judgment-chip ${getMacroJudgmentToneClass(axis.judgment)}`}>{axis.judgment}</b>
           </span>
         ))}
       </div>
@@ -165,7 +179,7 @@ function DetailDialog({ decision, onClose }: { decision: MacroRegimeDecision; on
                   <article className="macro-axis-block" key={axis.key}>
                     <div className="macro-axis-row">
                       <h5>{axis.label}</h5>
-                      <span>판단 {axis.judgment}</span>
+                      <span className={`macro-judgment-chip ${getMacroJudgmentToneClass(axis.judgment)}`}>판단 {axis.judgment}</span>
                       <span>{axis.confidenceLabel}</span>
                     </div>
                     <p>{axis.rationale || '-'}</p>

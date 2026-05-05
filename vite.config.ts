@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
+import { appBasePath } from './src/appBasePath';
 
 export function resolveEnvDir(currentDirectory = process.cwd()) {
   const worktreeMarker = `${path.sep}.worktrees${path.sep}`;
@@ -14,7 +15,7 @@ export function resolveEnvDir(currentDirectory = process.cwd()) {
 }
 
 export default defineConfig({
-  base: '/articles/',
+  base: appBasePath,
   envDir: resolveEnvDir(),
   plugins: [react()],
   test: {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ConsensusRankingRow, RawConsensusRow, RawSummaryReportRow } from '../consensus/model';
 import { useConsensusRanking } from '../consensus/useConsensusRanking';
+import { hasConsensusContentQuery, stripBasePath, toBrowserPath } from '../navigation';
 import { ConsensusDetailModal } from './ConsensusDetailModal';
 import { ConsensusTable } from './ConsensusTable';
 import { SummaryCards } from './SummaryCards';
@@ -38,6 +39,13 @@ function writeSelectedGicodeToUrl(gicode: string) {
 
 function clearSelectedGicodeFromUrl() {
   const url = new URL(window.location.href);
+  const isLegacyRootConsensusQuery = stripBasePath(url.pathname) === '/' && hasConsensusContentQuery(url.search);
+
+  if (isLegacyRootConsensusQuery) {
+    window.history.replaceState({}, '', toBrowserPath('/finance/consensus'));
+    return;
+  }
+
   url.searchParams.delete('contentType');
   url.searchParams.delete('contentParams');
   window.history.replaceState({}, '', url);
@@ -92,12 +100,9 @@ export function ConsensusRankingPage({ queryRows, queryReports }: ConsensusRanki
 
   return (
     <>
-      <section className="dashboard-section consensus-section" id="consensus" aria-labelledby="consensus-title">
+      <section className="dashboard-section consensus-section" id="consensus" aria-label="컨센서스 괴리율 개요">
         <div className="section-heading consensus-heading">
           <span className="consensus-source">KRX 컨센서스 괴리율 랭킹</span>
-          <h2 className="consensus-title" id="consensus-title">
-            컨센서스 괴리율 랭킹
-          </h2>
         </div>
         <p className="consensus-copy">
           <strong>TL;DR</strong> 컨센서스 대비 현재 주가가 낮게 반영된 종목의 갭을 큰 순서로 확인합니다.

@@ -6,6 +6,19 @@ type HotNewsReportModalProps = {
   onClose: () => void;
 };
 
+function getEvidenceToneClass(position: string | null) {
+  switch (position) {
+    case 'bear':
+      return 'tone-bear';
+    case 'neutral':
+      return 'tone-neutral';
+    case 'bull':
+      return 'tone-bull';
+    default:
+      return '';
+  }
+}
+
 export function HotNewsReportModal({ report, onClose }: HotNewsReportModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
@@ -125,7 +138,12 @@ export function HotNewsReportModal({ report, onClose }: HotNewsReportModalProps)
               <h4>기업별 근거</h4>
               <div className="hot-news-evidence-list">
                 {report.companyEvidence.map((item) => (
-                  <article className="hot-news-evidence-card" key={`${item.company}-${item.code ?? ''}`}>
+                  <article
+                    className={['hot-news-evidence-card', getEvidenceToneClass(item.position)]
+                      .filter(Boolean)
+                      .join(' ')}
+                    key={`${item.company}-${item.code ?? ''}`}
+                  >
                     <header>
                       <strong>{item.company}</strong>
                       {item.code ? <span>{item.code}</span> : null}
