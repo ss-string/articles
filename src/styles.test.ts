@@ -28,8 +28,7 @@ describe('styles.css layout regressions', () => {
   });
 
   it('centers the dashboard after the available workspace width changes', () => {
-    expect(styles).toContain('.dashboard {');
-    expect(styles).toContain('margin-inline: auto;');
+    expectRuleDeclaration('.dashboard', 'margin-inline: auto;');
   });
 
   it('uses text-only branding instead of a square brand mark', () => {
