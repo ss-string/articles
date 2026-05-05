@@ -71,8 +71,14 @@ describe('MacroRegimePage', () => {
       '2026-05-04',
       '2026-05-04',
     ]);
+    const krCard = screen.getByRole('button', { name: /KR/ });
+    const usCard = screen.getByRole('button', { name: /US/ });
     expect(screen.getByText('expanding')).toBeInTheDocument();
     expect(screen.getByText('elevated')).toBeInTheDocument();
+    expect(within(krCard).getByText('expanding').closest('.macro-judgment-chip')).toHaveClass('tone-bull');
+    expect(within(krCard).getAllByText('neutral')[0].closest('.macro-judgment-chip')).toHaveClass('tone-neutral');
+    expect(within(usCard).getByText('elevated').closest('.macro-judgment-chip')).toHaveClass('tone-bear');
+    expect(within(usCard).getByText('ample').closest('.macro-judgment-chip')).toHaveClass('tone-bull');
   });
 
   it('opens a popup with actual US detail data and closes it', async () => {
@@ -105,6 +111,11 @@ describe('MacroRegimePage', () => {
       '통화판단 neutral컨피던스 0.66',
       '유동성판단 ample컨피던스 0.78',
     ]);
+    const axisRows = Array.from(dialog.querySelectorAll('.macro-axis-row'));
+    expect(axisRows[0].querySelector('.macro-judgment-chip')).toHaveClass('tone-neutral');
+    expect(axisRows[1].querySelector('.macro-judgment-chip')).toHaveClass('tone-bear');
+    expect(axisRows[2].querySelector('.macro-judgment-chip')).toHaveClass('tone-neutral');
+    expect(axisRows[3].querySelector('.macro-judgment-chip')).toHaveClass('tone-bull');
 
     await user.click(within(dialog).getByRole('button', { name: '상세 팝업 닫기' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
