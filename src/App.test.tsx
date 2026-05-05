@@ -189,16 +189,23 @@ describe('App routing', () => {
   });
 
   it('keeps consensus detail popup behavior with URL query parameters', async () => {
+    const user = userEvent.setup();
     window.history.pushState(
       {},
       '',
-      '/finance/consensus?contentType=consensus&contentParams=%7B%22gicode%22%3A%22A005930%22%7D',
+      '/articles/finance/consensus?contentType=consensus&contentParams=%7B%22gicode%22%3A%22A005930%22%7D',
     );
 
     render(<App queryRows={async () => rows} queryHotNewsRows={async () => hotNewsRows} queryReports={async () => []} />);
 
     const dialog = await screen.findByRole('dialog', { name: '삼성전자 상세 분석' });
     expect(within(dialog).getByText('AI 분석 리포트가 없습니다.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '닫기' }));
+
+    expect(window.location.pathname).toBe('/articles/finance/consensus');
+    expect(window.location.search).not.toContain('contentType');
+    expect(window.location.search).not.toContain('contentParams');
   });
 
   it('keeps root consensus query links working', async () => {
@@ -216,6 +223,26 @@ describe('App routing', () => {
     expect(within(sidebar).getByRole('button', { name: /◆ 금융/ })).toHaveClass('active');
     expect(within(sidebar).getByRole('button', { name: /↗ 컨센서스 괴리율 랭킹/ })).toHaveClass('active');
     expect(within(dialog).getByText('AI 분석 리포트가 없습니다.')).toBeInTheDocument();
+  });
+
+  it('moves legacy base-root consensus query links to the consensus route when closing the detail modal', async () => {
+    const user = userEvent.setup();
+    window.history.pushState(
+      {},
+      '',
+      '/articles/?contentType=consensus&contentParams=%7B%22gicode%22%3A%22A005930%22%7D',
+    );
+
+    render(<App queryRows={async () => rows} queryHotNewsRows={async () => hotNewsRows} queryReports={async () => []} />);
+
+    expect(await screen.findByRole('dialog', { name: '삼성전자 상세 분석' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '닫기' }));
+
+    expect(window.location.pathname).toBe('/articles/finance/consensus');
+    expect(window.location.search).not.toContain('contentType');
+    expect(window.location.search).not.toContain('contentParams');
+    expect(screen.getByRole('heading', { level: 1, name: '컨센서스 괴리율 랭킹' })).toBeInTheDocument();
   });
 
   it('writes consensus query params on row click and clears them on close', async () => {

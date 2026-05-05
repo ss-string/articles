@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ConsensusRankingRow, RawConsensusRow, RawSummaryReportRow } from '../consensus/model';
 import { useConsensusRanking } from '../consensus/useConsensusRanking';
+import { hasConsensusContentQuery, stripBasePath, toBrowserPath } from '../navigation';
 import { ConsensusDetailModal } from './ConsensusDetailModal';
 import { ConsensusTable } from './ConsensusTable';
 import { SummaryCards } from './SummaryCards';
@@ -38,6 +39,13 @@ function writeSelectedGicodeToUrl(gicode: string) {
 
 function clearSelectedGicodeFromUrl() {
   const url = new URL(window.location.href);
+  const isLegacyRootConsensusQuery = stripBasePath(url.pathname) === '/' && hasConsensusContentQuery(url.search);
+
+  if (isLegacyRootConsensusQuery) {
+    window.history.replaceState({}, '', toBrowserPath('/finance/consensus'));
+    return;
+  }
+
   url.searchParams.delete('contentType');
   url.searchParams.delete('contentParams');
   window.history.replaceState({}, '', url);
