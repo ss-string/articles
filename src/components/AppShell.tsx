@@ -31,8 +31,8 @@ export function AppShell({ activeRoute, onNavigate, children }: AppShellProps) {
   const sidebarContent = (
     <>
       <div className="brand">
-        <strong className="brand-mark">분석자료실</strong>
-        <span>Research Library</span>
+        <strong className="brand-title">분석자료실</strong>
+        <span className="brand-subtitle">Research Library</span>
       </div>
       <nav className="nav-list">
         {visibleNavigation.map((item) => (

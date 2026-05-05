@@ -38,7 +38,9 @@ describe('AppShell', () => {
     expect(sidebar).toHaveClass('sidebar');
     expect(within(sidebar).getByText('분석자료실').closest('.brand')).toBeInTheDocument();
     expect(within(sidebar).getByText('Research Library').closest('.brand')).toBeInTheDocument();
-    expect(within(sidebar).getByText('분석자료실')).toHaveClass('brand-mark');
+    expect(within(sidebar).getByText('분석자료실')).toHaveClass('brand-title');
+    expect(within(sidebar).getByText('Research Library')).toHaveClass('brand-subtitle');
+    expect(within(sidebar).queryByText('분석자료실')?.closest('.brand-mark')).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: '모바일 사이드바 열기' }));
     expect(mobileSidebar).toHaveTextContent('분석자료실');
@@ -58,7 +60,9 @@ describe('AppShell', () => {
     const sidebar = screen.getByRole('complementary', { name: '분석자료실 메뉴' });
 
     expect(sidebar.querySelector('.brand')).toBeInTheDocument();
-    expect(sidebar.querySelector('.brand-mark')).toBeInTheDocument();
+    expect(sidebar.querySelector('.brand-title')).toBeInTheDocument();
+    expect(sidebar.querySelector('.brand-subtitle')).toBeInTheDocument();
+    expect(sidebar.querySelector('.brand-mark')).not.toBeInTheDocument();
     expect(sidebar.querySelector('.nav-list')).toBeInTheDocument();
     expect(sidebar.querySelector('.nav-group')).toBeInTheDocument();
     expect(sidebar.querySelector('.sub-list')).toBeInTheDocument();
@@ -82,7 +86,7 @@ describe('AppShell', () => {
       'mobile-analysis-library-sidebar',
     );
     expect(screen.getByRole('button', { name: '모바일 사이드바 열기' })).toHaveAttribute('aria-expanded', 'false');
-    expect(document.querySelector('.workspace')).toBeInTheDocument();
+    expect(document.querySelector('.workspace')).toHaveClass('workspace');
     expect(document.querySelector('.dashboard')).toBeInTheDocument();
   });
 

@@ -76,6 +76,7 @@ h3 {
 }
 
 .sidebar {
+  grid-column: 1;
   position: sticky;
   top: 0;
   height: 100vh;
@@ -86,30 +87,25 @@ h3 {
 }
 
 .brand {
-  display: flex;
+  display: grid;
   min-width: 0;
-  align-items: center;
-  gap: 10px;
+  gap: 2px;
   padding: 0 6px 18px;
   border-bottom: 1px solid #edf0f4;
+}
+
+.brand-title {
+  color: #0f766e;
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.brand-subtitle {
   color: #64748b;
   font-size: 0.78rem;
   font-weight: 700;
-}
-
-.brand-mark {
-  display: inline-grid;
-  flex: 0 0 auto;
-  min-width: 42px;
-  height: 34px;
-  place-items: center;
-  padding: 0 9px;
-  border: 1px solid #d7e2ea;
-  border-radius: 8px;
-  background: #eef7f6;
-  color: #0f766e;
-  font-size: 0.82rem;
-  font-weight: 900;
+  line-height: 1.25;
   white-space: nowrap;
 }
 
@@ -196,9 +192,14 @@ h3 {
 }
 
 .workspace {
+  grid-column: 2;
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
   min-width: 0;
+}
+
+.app-shell.sidebar-collapsed .workspace {
+  grid-column: 2;
 }
 
 .top-nav {
@@ -297,6 +298,7 @@ h3 {
 
 .dashboard {
   width: min(1180px, 100%);
+  margin-inline: auto;
   padding: 30px 28px 44px;
 }
 
