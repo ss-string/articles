@@ -85,6 +85,7 @@ describe('App routing', () => {
     );
 
     const sidebar = screen.getByRole('complementary', { name: '분석자료실 메뉴' });
+    const workspace = document.querySelector('.workspace') as HTMLElement;
     const activeTab = screen.getByRole('tab', { name: '컨센서스 괴리율 랭킹' });
 
     expect(within(sidebar).getByRole('button', { name: /◆ 금융/ })).toHaveClass('active');
@@ -94,6 +95,9 @@ describe('App routing', () => {
     expect(within(sidebar).queryByRole('button', { name: /◷ 매크로 레짐/ })).not.toBeInTheDocument();
     expect(activeTab).toHaveAttribute('aria-selected', 'true');
     expect(activeTab).toHaveClass('finance-tab active');
+    expect(within(workspace).getAllByText('컨센서스 괴리율 랭킹')).toHaveLength(2);
+    expect(within(workspace).queryByRole('heading', { level: 2, name: '컨센서스 괴리율 랭킹' })).not.toBeInTheDocument();
+    expect(within(workspace).getByRole('region', { name: '컨센서스 요약' })).toBeInTheDocument();
     expect(document.querySelector('.workspace')).toBeInTheDocument();
     expect(document.querySelector('.page-header')).toBeInTheDocument();
     expect(document.querySelector('.finance-tabs')).toBeInTheDocument();
