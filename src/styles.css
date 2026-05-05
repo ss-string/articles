@@ -72,7 +72,7 @@ h3 {
 }
 
 .app-shell.sidebar-collapsed {
-  grid-template-columns: 88px minmax(0, 1fr);
+  grid-template-columns: 0 minmax(0, 1fr);
 }
 
 .sidebar {
@@ -113,22 +113,8 @@ h3 {
   white-space: nowrap;
 }
 
-.app-shell.sidebar-collapsed .brand span,
-.app-shell.sidebar-collapsed .nav-item,
-.app-shell.sidebar-collapsed .sub-list {
+.app-shell.sidebar-collapsed .sidebar {
   display: none;
-}
-
-.app-shell.sidebar-collapsed .brand {
-  justify-content: center;
-  padding-right: 0;
-  padding-left: 0;
-}
-
-.app-shell.sidebar-collapsed .brand-mark {
-  min-width: 46px;
-  padding: 0 6px;
-  font-size: 0.7rem;
 }
 
 .nav-list {
