@@ -7,7 +7,7 @@ import { AppShell } from './components/AppShell';
 import { ConsensusRankingPage } from './components/ConsensusRankingPage';
 import { HotNewsReportsPage } from './components/HotNewsReportsPage';
 import { MacroRegimePage } from './components/MacroRegimePage';
-import { getActiveRoute, navigateToPath } from './navigation';
+import { getActiveRouteForLocation, navigateToPath } from './navigation';
 import './styles.css';
 
 type AppProps = {
@@ -18,11 +18,13 @@ type AppProps = {
 };
 
 export default function App({ queryRows, queryHotNewsRows, queryMacroRows, queryReports }: AppProps) {
-  const [activeRoute, setActiveRoute] = useState(() => getActiveRoute(window.location.pathname));
+  const [activeRoute, setActiveRoute] = useState(() =>
+    getActiveRouteForLocation(window.location.pathname, window.location.search),
+  );
 
   useEffect(() => {
     function handlePopState() {
-      setActiveRoute(getActiveRoute(window.location.pathname));
+      setActiveRoute(getActiveRouteForLocation(window.location.pathname, window.location.search));
     }
 
     window.addEventListener('popstate', handlePopState);

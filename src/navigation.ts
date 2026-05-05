@@ -1,3 +1,5 @@
+import { appBasePath } from './appBasePath';
+
 export type AppSection = 'main' | 'finance';
 
 export type AppRoute = {
@@ -18,6 +20,7 @@ export type TopLevelNavigationItem = {
 };
 
 const defaultPath = '/main/macro-regime';
+const basePath = import.meta.env.BASE_URL && import.meta.env.BASE_URL !== '/' ? import.meta.env.BASE_URL : appBasePath;
 
 export const mainRoutes: AppRoute[] = [
   {
@@ -59,17 +62,74 @@ export const financeRoutes: AppRoute[] = [
 
 export const routes: AppRoute[] = [...mainRoutes, ...financeRoutes];
 
+function ensureLeadingSlash(path: string) {
+  return path.startsWith('/') ? path : `/${path}`;
+}
+
+function trimTrailingSlash(path: string) {
+  return path.length > 1 ? path.replace(/\/+$/, '') : path;
+}
+
+function splitPathAndSuffix(path: string) {
+  const suffixStart = path.search(/[?#]/);
+
+  if (suffixStart === -1) {
+    return { pathname: path, suffix: '' };
+  }
+
+  return {
+    pathname: path.slice(0, suffixStart),
+    suffix: path.slice(suffixStart),
+  };
+}
+
+export function stripBasePath(pathname: string) {
+  const normalizedPathname = ensureLeadingSlash(pathname || '/');
+  const normalizedBase = trimTrailingSlash(ensureLeadingSlash(basePath));
+
+  if (normalizedBase === '/') {
+    return normalizedPathname;
+  }
+
+  if (normalizedPathname === normalizedBase || normalizedPathname === `${normalizedBase}/`) {
+    return '/';
+  }
+
+  if (normalizedPathname.startsWith(`${normalizedBase}/`)) {
+    return ensureLeadingSlash(normalizedPathname.slice(normalizedBase.length));
+  }
+
+  return normalizedPathname;
+}
+
 export function normalizePathname(pathname: string) {
-  if (pathname === '/') {
+  const { pathname: pathnameOnly } = splitPathAndSuffix(pathname);
+  const appPathname = stripBasePath(pathnameOnly);
+
+  if (appPathname === '/') {
     return defaultPath;
   }
 
-  return routes.some((route) => route.path === pathname) ? pathname : defaultPath;
+  return routes.some((route) => route.path === appPathname) ? appPathname : defaultPath;
 }
 
 export function getActiveRoute(pathname: string) {
   const normalizedPathname = normalizePathname(pathname);
   return routes.find((route) => route.path === normalizedPathname) ?? routes[0];
+}
+
+export function hasConsensusContentQuery(search: string) {
+  return new URLSearchParams(search).get('contentType') === 'consensus';
+}
+
+export function getActiveRouteForLocation(pathname: string, search: string) {
+  const appPathname = stripBasePath(pathname);
+
+  if (appPathname === '/' && hasConsensusContentQuery(search)) {
+    return routes.find((route) => route.path === '/finance/consensus') ?? routes[0];
+  }
+
+  return getActiveRoute(pathname);
 }
 
 export function getVisibleNavigation(pathname: string): TopLevelNavigationItem[] {
@@ -93,8 +153,16 @@ export function getVisibleNavigation(pathname: string): TopLevelNavigationItem[]
   ];
 }
 
-export function navigateToPath(path: string) {
+export function toBrowserPath(path: string) {
+  const { suffix } = splitPathAndSuffix(path);
   const normalizedPath = normalizePathname(path);
-  window.history.pushState({}, '', normalizedPath);
+  const normalizedBase = trimTrailingSlash(ensureLeadingSlash(basePath));
+  const browserPath = normalizedBase === '/' ? normalizedPath : `${normalizedBase}${normalizedPath}`;
+
+  return `${browserPath}${suffix}`;
+}
+
+export function navigateToPath(path: string) {
+  window.history.pushState({}, '', toBrowserPath(path));
   window.dispatchEvent(new PopStateEvent('popstate'));
 }

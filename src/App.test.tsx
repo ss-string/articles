@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
 import type { RawHotNewsReportRow } from './hot-news/model';
@@ -97,6 +97,26 @@ describe('App routing', () => {
     expect(await screen.findByText('삼성전자')).toBeInTheDocument();
   });
 
+  it('renders the consensus route from a base-prefixed direct entry', async () => {
+    window.history.pushState({}, '', '/articles/finance/consensus');
+
+    render(
+      <App
+        queryRows={async () => rows}
+        queryHotNewsRows={async () => hotNewsRows}
+        queryMacroRows={async () => macroRows}
+        queryReports={async () => []}
+      />,
+    );
+
+    const sidebar = screen.getByRole('complementary', { name: '분석자료실 메뉴' });
+
+    expect(within(sidebar).getByRole('button', { name: /◆ 금융/ })).toHaveClass('active');
+    expect(within(sidebar).getByRole('button', { name: /↗ 컨센서스 괴리율 랭킹/ })).toHaveClass('active');
+    expect(screen.getByRole('tab', { name: '컨센서스 괴리율 랭킹' })).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByText('삼성전자')).toBeInTheDocument();
+  });
+
   it('navigates between finance pages from underline tabs', async () => {
     const user = userEvent.setup();
     window.history.pushState({}, '', '/finance/hot-news');
@@ -113,9 +133,28 @@ describe('App routing', () => {
     expect(screen.getByRole('heading', { level: 1, name: '핫 뉴스 분석 리포트' })).toBeInTheDocument();
     await user.click(screen.getByRole('tab', { name: 'AI 분석 리포트' }));
 
-    expect(window.location.pathname).toBe('/finance/ai-reports');
+    expect(window.location.pathname).toBe('/articles/finance/ai-reports');
     expect(screen.getByRole('heading', { level: 1, name: 'AI 분석 리포트' })).toBeInTheDocument();
     expect(screen.getByText('표시할 AI 분석 리포트가 없습니다.')).toBeInTheDocument();
+  });
+
+  it('keeps base-prefixed browser paths when navigating finance tabs', async () => {
+    const user = userEvent.setup();
+    window.history.pushState({}, '', '/articles/finance/hot-news');
+
+    render(
+      <App
+        queryRows={async () => rows}
+        queryHotNewsRows={async () => hotNewsRows}
+        queryMacroRows={async () => macroRows}
+        queryReports={async () => []}
+      />,
+    );
+
+    await user.click(screen.getByRole('tab', { name: 'AI 분석 리포트' }));
+
+    expect(window.location.pathname).toBe('/articles/finance/ai-reports');
+    expect(screen.getByRole('heading', { level: 1, name: 'AI 분석 리포트' })).toBeInTheDocument();
   });
 
   it('opens and closes the mobile sidebar from the dimmed area without a close button', async () => {
@@ -160,5 +199,70 @@ describe('App routing', () => {
 
     const dialog = await screen.findByRole('dialog', { name: '삼성전자 상세 분석' });
     expect(within(dialog).getByText('AI 분석 리포트가 없습니다.')).toBeInTheDocument();
+  });
+
+  it('keeps root consensus query links working', async () => {
+    window.history.pushState(
+      {},
+      '',
+      '/?contentType=consensus&contentParams=%7B%22gicode%22%3A%22A005930%22%7D',
+    );
+
+    render(<App queryRows={async () => rows} queryHotNewsRows={async () => hotNewsRows} queryReports={async () => []} />);
+
+    const sidebar = screen.getByRole('complementary', { name: '분석자료실 메뉴' });
+    const dialog = await screen.findByRole('dialog', { name: '삼성전자 상세 분석' });
+
+    expect(within(sidebar).getByRole('button', { name: /◆ 금융/ })).toHaveClass('active');
+    expect(within(sidebar).getByRole('button', { name: /↗ 컨센서스 괴리율 랭킹/ })).toHaveClass('active');
+    expect(within(dialog).getByText('AI 분석 리포트가 없습니다.')).toBeInTheDocument();
+  });
+
+  it('writes consensus query params on row click and clears them on close', async () => {
+    const user = userEvent.setup();
+    window.history.pushState({}, '', '/articles/finance/consensus');
+
+    render(<App queryRows={async () => rows} queryHotNewsRows={async () => hotNewsRows} queryReports={async () => []} />);
+
+    await user.click(await screen.findByRole('row', { name: /삼성전자/ }));
+
+    expect(window.location.pathname).toBe('/articles/finance/consensus');
+    expect(window.location.search).toContain('contentType=consensus');
+    expect(window.location.search).toContain('contentParams=');
+    expect(screen.getByRole('dialog', { name: '삼성전자 상세 분석' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '닫기' }));
+
+    expect(window.location.pathname).toBe('/articles/finance/consensus');
+    expect(window.location.search).not.toContain('contentType');
+    expect(window.location.search).not.toContain('contentParams');
+    expect(screen.queryByRole('dialog', { name: '삼성전자 상세 분석' })).not.toBeInTheDocument();
+  });
+
+  it('updates the rendered page and active navigation on popstate route changes', async () => {
+    window.history.pushState({}, '', '/articles/finance/hot-news');
+
+    render(
+      <App
+        queryRows={async () => rows}
+        queryHotNewsRows={async () => hotNewsRows}
+        queryMacroRows={async () => macroRows}
+        queryReports={async () => []}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { level: 1, name: '핫 뉴스 분석 리포트' })).toBeInTheDocument();
+
+    act(() => {
+      window.history.pushState({}, '', '/articles/finance/consensus');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    const sidebar = screen.getByRole('complementary', { name: '분석자료실 메뉴' });
+
+    expect(screen.getByRole('heading', { level: 1, name: '컨센서스 괴리율 랭킹' })).toBeInTheDocument();
+    expect(within(sidebar).getByRole('button', { name: /↗ 컨센서스 괴리율 랭킹/ })).toHaveClass('active');
+    expect(screen.getByRole('tab', { name: '컨센서스 괴리율 랭킹' })).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByText('삼성전자')).toBeInTheDocument();
   });
 });
