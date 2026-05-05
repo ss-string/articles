@@ -4,12 +4,27 @@ import { describe, expect, it } from 'vitest';
 
 const styles = readFileSync(resolve(process.cwd(), 'src/styles.css'), 'utf8');
 
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function getRuleBlock(selector: string) {
+  const match = styles.match(new RegExp(`${escapeRegExp(selector)}\\s*\\{(?<declarations>[^}]*)\\}`));
+
+  expect(match, `${selector} rule block`).not.toBeNull();
+
+  return match?.groups?.declarations ?? '';
+}
+
+function expectRuleDeclaration(selector: string, declaration: string) {
+  expect(getRuleBlock(selector)).toContain(declaration);
+}
+
 describe('styles.css layout regressions', () => {
-  it('keeps the workspace in the content column when the sidebar is collapsed', () => {
-    expect(styles).toContain('.workspace {');
-    expect(styles).toContain('grid-column: 2;');
-    expect(styles).toContain('.app-shell.sidebar-collapsed .workspace');
-    expect(styles).toContain('grid-column: 2;');
+  it('pins the sidebar and workspace to their grid columns', () => {
+    expectRuleDeclaration('.sidebar', 'grid-column: 1;');
+    expectRuleDeclaration('.workspace', 'grid-column: 2;');
+    expectRuleDeclaration('.app-shell.sidebar-collapsed .workspace', 'grid-column: 2;');
   });
 
   it('centers the dashboard after the available workspace width changes', () => {
