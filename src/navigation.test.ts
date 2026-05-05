@@ -4,6 +4,7 @@ import {
   getActiveRoute,
   getVisibleNavigation,
   mainRoutes,
+  navigateToPath,
   normalizePathname,
   routes,
 } from './navigation';
@@ -70,5 +71,28 @@ describe('navigation', () => {
         children: financeRoutes,
       },
     ]);
+  });
+
+  it('navigates to normalized paths and dispatches popstate events', () => {
+    let popstateCount = 0;
+    const handlePopstate = () => {
+      popstateCount += 1;
+    };
+
+    window.addEventListener('popstate', handlePopstate);
+
+    try {
+      navigateToPath('/unknown');
+
+      expect(window.location.pathname).toBe('/main/macro-regime');
+      expect(popstateCount).toBe(1);
+
+      navigateToPath('/finance/ai-reports');
+
+      expect(window.location.pathname).toBe('/finance/ai-reports');
+      expect(popstateCount).toBe(2);
+    } finally {
+      window.removeEventListener('popstate', handlePopstate);
+    }
   });
 });
