@@ -160,6 +160,48 @@ describe('HotNewsReportsPage', () => {
     expect(screen.getByText('위험기업').closest('article')).toHaveClass('hot-news-evidence-card tone-bear');
   });
 
+  it('does not apply tone classes to null or unknown company evidence positions', async () => {
+    const user = userEvent.setup();
+    render(
+      <HotNewsReportsPage
+        queryRows={async () => [
+          {
+            ...rows[0],
+            company_news_evidence: [
+              {
+                code: 'A000004',
+                company: '미정기업',
+                position: null,
+                detailedEvidence: ['입장 미정'],
+                detailedNewsLinks: [],
+              },
+              {
+                code: 'A000005',
+                company: '불명기업',
+                position: 'watch',
+                detailedEvidence: ['분류 대기'],
+                detailedNewsLinks: [],
+              },
+            ],
+          },
+        ]}
+      />,
+    );
+
+    await user.click(await screen.findByRole('button', { name: /2026-05-04 조선 에너지 수주/ }));
+
+    const pendingArticle = screen.getByText('미정기업').closest('article');
+    const unknownArticle = screen.getByText('불명기업').closest('article');
+    expect(pendingArticle).toHaveClass('hot-news-evidence-card');
+    expect(pendingArticle).not.toHaveClass('tone-bull');
+    expect(pendingArticle).not.toHaveClass('tone-neutral');
+    expect(pendingArticle).not.toHaveClass('tone-bear');
+    expect(unknownArticle).toHaveClass('hot-news-evidence-card');
+    expect(unknownArticle).not.toHaveClass('tone-bull');
+    expect(unknownArticle).not.toHaveClass('tone-neutral');
+    expect(unknownArticle).not.toHaveClass('tone-bear');
+  });
+
   it('moves focus into the modal, traps tab navigation, and restores focus to the opener', async () => {
     const user = userEvent.setup();
     render(<HotNewsReportsPage queryRows={async () => rows} />);

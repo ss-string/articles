@@ -13,8 +13,9 @@ function getEvidenceToneClass(position: string | null) {
     case 'neutral':
       return 'tone-neutral';
     case 'bull':
-    default:
       return 'tone-bull';
+    default:
+      return '';
   }
 }
 
@@ -138,7 +139,9 @@ export function HotNewsReportModal({ report, onClose }: HotNewsReportModalProps)
               <div className="hot-news-evidence-list">
                 {report.companyEvidence.map((item) => (
                   <article
-                    className={`hot-news-evidence-card ${getEvidenceToneClass(item.position)}`}
+                    className={['hot-news-evidence-card', getEvidenceToneClass(item.position)]
+                      .filter(Boolean)
+                      .join(' ')}
                     key={`${item.company}-${item.code ?? ''}`}
                   >
                     <header>
