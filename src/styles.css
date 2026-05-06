@@ -768,6 +768,56 @@ h3 {
   margin: 14px 0 10px;
 }
 
+.price-position {
+  display: grid;
+  grid-template-columns: minmax(74px, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.price-position-bar {
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  background: #e7edf3;
+  border-radius: 999px;
+}
+
+.price-position-bar span {
+  display: block;
+  width: 0;
+  height: 100%;
+  max-width: 100%;
+  background: #0f766e;
+  border-radius: inherit;
+}
+
+.price-position-bar.is-overflow span {
+  background: #dc2626;
+}
+
+.price-position-value,
+.price-position-overflow {
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.price-position-overflow {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 4px 8px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #dc2626;
+  font-weight: 900;
+}
+
 .consensus-badge,
 .macro-market-chip {
   display: inline-flex;

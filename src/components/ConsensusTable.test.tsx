@@ -141,6 +141,38 @@ describe('ConsensusTable', () => {
     expect(gapCell).not.toHaveClass('gap-negative');
   });
 
+  it('fills the price position bar by current price relative to fair price', () => {
+    render(
+      <ConsensusTable
+        rows={[makeRow({ currentPrice: 55000, fairPrice: 100000, gapAmount: 45000, gapPercent: 81.8 })]}
+        onSelect={() => undefined}
+      />,
+    );
+
+    const bar = screen.getByLabelText('현재가가 적정주가의 55.0% 수준입니다.');
+    const fill = bar.querySelector('span');
+
+    expect(fill).toHaveStyle({ width: '55%' });
+    expect(screen.getByText('55.0%', { selector: '.price-position-value' })).toBeInTheDocument();
+    expect(screen.queryByText(/초과/)).not.toBeInTheDocument();
+  });
+
+  it('caps the price position bar and marks prices above fair price as overflow', () => {
+    render(
+      <ConsensusTable
+        rows={[makeRow({ currentPrice: 130000, fairPrice: 100000, gapAmount: -30000, gapPercent: -23.1 })]}
+        onSelect={() => undefined}
+      />,
+    );
+
+    const bar = screen.getByLabelText('현재가가 적정주가의 130.0% 수준으로 초과했습니다.');
+    const fill = bar.querySelector('span');
+
+    expect(bar).toHaveClass('is-overflow');
+    expect(fill).toHaveStyle({ width: '100%' });
+    expect(screen.getByText('초과 130.0%', { selector: '.price-position-overflow' })).toBeInTheDocument();
+  });
+
   it('does not render price gap descriptions because detail content is external', () => {
     render(<ConsensusTable rows={[makeRow({ currentPrice: 102200, fairPrice: 100200, gapAmount: -2000, gapPercent: -2 })]} onSelect={() => undefined} />);
 
