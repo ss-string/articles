@@ -27,10 +27,6 @@ function formatPricePositionPercent(value: number) {
   return `${value.toFixed(1)}%`;
 }
 
-function formatSignedWon(value: number) {
-  return `${value >= 0 ? '+' : '-'}${formatWon(Math.abs(value))}`;
-}
-
 function formatRecommendation(firm: SecuritiesFirmSummary) {
   const recommendation = firm.recommendations.find((item) => item.length > 0) ?? '-';
   return `${recommendation} · ${firm.reportCount.toLocaleString('ko-KR')}건`;
@@ -104,11 +100,6 @@ export function ConsensusDetailModal({ row, onClose }: ConsensusDetailModalProps
                 <div className="detail-price-metric">
                   <span>적정가</span>
                   <strong>{formatWon(row.fairPrice)}</strong>
-                </div>
-                <div className={`detail-price-metric detail-gap-metric${row.gapPercent < 0 ? ' negative' : ''}`}>
-                  <span>갭</span>
-                  <strong className="detail-gap-amount">{formatSignedWon(row.gapAmount)}</strong>
-                  <em className="detail-gap-percent">{formatPercent(row.gapPercent)}</em>
                 </div>
               </div>
               <div className="detail-price-progress">

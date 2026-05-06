@@ -54,6 +54,7 @@ describe('ConsensusDetailModal', () => {
     expect(screen.getByText('가격 비교')).toBeInTheDocument();
     expect(screen.getAllByText('현재 가격')).not.toHaveLength(0);
     expect(screen.getByText('적정가', { selector: '.detail-price-metric span' })).toBeInTheDocument();
+    expect(screen.queryByText('갭', { selector: '.detail-price-metric span' })).not.toBeInTheDocument();
     expect(screen.getByText('목표주가 범위')).toBeInTheDocument();
     expect(screen.getByText('560,000원')).toBeInTheDocument();
     expect(screen.getByText('660,000원')).toBeInTheDocument();
@@ -81,9 +82,9 @@ describe('ConsensusDetailModal', () => {
     const fill = bar.querySelector('span');
 
     expect(screen.getByText('적정가', { selector: '.detail-price-metric span' })).toBeInTheDocument();
-    expect(screen.getByText('갭', { selector: '.detail-price-metric span' })).toBeInTheDocument();
-    expect(screen.getByText('+45,000원', { selector: '.detail-gap-amount' })).toBeInTheDocument();
-    expect(screen.getByText('+81.8%', { selector: '.detail-gap-percent' })).toBeInTheDocument();
+    expect(screen.queryByText('갭', { selector: '.detail-price-metric span' })).not.toBeInTheDocument();
+    expect(screen.queryByText('+45,000원', { selector: '.detail-gap-amount' })).not.toBeInTheDocument();
+    expect(screen.queryByText('+81.8%', { selector: '.detail-gap-percent' })).not.toBeInTheDocument();
     expect(fill).toHaveStyle({ width: '55%' });
     expect(screen.getByText('55.0%', { selector: '.detail-progress-value' })).toBeInTheDocument();
     expect(screen.getByText('적정가까지 45,000원 남았습니다.')).toBeInTheDocument();
