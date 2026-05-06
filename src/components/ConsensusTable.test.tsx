@@ -114,7 +114,12 @@ describe('ConsensusTable', () => {
   });
 
   it('uses negative styling for a negative price gap', () => {
-    render(<ConsensusTable rows={[makeRow({ gapAmount: -2000, gapPercent: -2 })]} onSelect={() => undefined} />);
+    render(
+      <ConsensusTable
+        rows={[makeRow({ currentPrice: 102000, fairPrice: 100000, gapAmount: -2000, gapPercent: -2 })]}
+        onSelect={() => undefined}
+      />,
+    );
 
     const gapCell = screen.getByRole('cell', { name: '-2,000원 -2.0%' });
 
@@ -124,9 +129,14 @@ describe('ConsensusTable', () => {
   });
 
   it('uses neutral styling for a zero price gap', () => {
-    render(<ConsensusTable rows={[makeRow({ gapPercent: 0 })]} onSelect={() => undefined} />);
+    render(
+      <ConsensusTable
+        rows={[makeRow({ currentPrice: 100000, fairPrice: 100000, gapAmount: 0, gapPercent: 0 })]}
+        onSelect={() => undefined}
+      />,
+    );
 
-    const gapCell = screen.getByRole('cell', { name: '+27,800원 +0.0%' });
+    const gapCell = screen.getByRole('cell', { name: '+0원 +0.0%' });
 
     expect(gapCell).toHaveClass('gap-neutral');
     expect(gapCell).not.toHaveClass('gap-positive');
