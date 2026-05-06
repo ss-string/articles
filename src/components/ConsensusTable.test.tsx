@@ -44,11 +44,17 @@ describe('ConsensusTable', () => {
     render(<ConsensusTable rows={[makeRow()]} onSelect={() => undefined} />);
 
     const table = screen.getByRole('table', { name: '컨센서스 랭킹 테이블' });
-    expect(within(table).getByRole('columnheader', { name: '종목' })).toBeInTheDocument();
-    expect(within(table).getByRole('columnheader', { name: '현재가' })).toBeInTheDocument();
+    expect(within(table).getAllByRole('columnheader').map((header) => header.textContent)).toEqual([
+      '종목',
+      '현재가',
+      '적정가',
+      '갭',
+      '적정가 대비 현재가',
+    ]);
     expect(within(table).queryByRole('columnheader', { name: '상세' })).not.toBeInTheDocument();
     expect(within(table).getByRole('cell', { name: '삼성전자 005930' })).toBeInTheDocument();
     expect(within(table).getByRole('cell', { name: '72,400원' })).toBeInTheDocument();
+    expect(within(table).getByRole('cell', { name: '+27,800원 +38.4%' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /삼성전자 상세/ })).not.toBeInTheDocument();
   });
 
@@ -90,31 +96,17 @@ describe('ConsensusTable', () => {
     expect(row).not.toHaveAttribute('aria-controls');
   });
 
-  it('renders a neutral badge when one month consensus change is missing', () => {
-    render(<ConsensusTable rows={[makeRow({ oneMonthConsensusChangePercent: null })]} onSelect={() => undefined} />);
+  it('does not render a one month consensus change badge', () => {
+    const { container } = render(<ConsensusTable rows={[makeRow()]} onSelect={() => undefined} />);
 
-    expect(screen.getByText('-', { selector: '.consensus-badge' })).toBeInTheDocument();
-    expect(screen.queryByText('▲ -')).not.toBeInTheDocument();
-  });
-
-  it('renders a downward badge for negative one month consensus change', () => {
-    render(<ConsensusTable rows={[makeRow({ oneMonthConsensusChangePercent: -2.1 })]} onSelect={() => undefined} />);
-
-    expect(screen.getByText('▼ -2.1%', { selector: '.consensus-badge' })).toBeInTheDocument();
-    expect(screen.queryByText('▲ -2.1%')).not.toBeInTheDocument();
-  });
-
-  it('renders a neutral badge for zero one month consensus change', () => {
-    render(<ConsensusTable rows={[makeRow({ oneMonthConsensusChangePercent: 0 })]} onSelect={() => undefined} />);
-
-    expect(screen.getByText('0.0%', { selector: '.consensus-badge' })).toBeInTheDocument();
-    expect(screen.queryByText('▲ +0.0%')).not.toBeInTheDocument();
+    expect(container.querySelector('.consensus-badge')).not.toBeInTheDocument();
+    expect(screen.queryByText('▲ +6.8%')).not.toBeInTheDocument();
   });
 
   it('uses positive styling for a positive price gap', () => {
     render(<ConsensusTable rows={[makeRow({ gapPercent: 38.4 })]} onSelect={() => undefined} />);
 
-    const gapCell = screen.getByRole('cell', { name: '+38.4%' });
+    const gapCell = screen.getByRole('cell', { name: '+27,800원 +38.4%' });
 
     expect(gapCell).toHaveClass('gap-positive');
     expect(gapCell).not.toHaveClass('gap-negative');
@@ -124,7 +116,7 @@ describe('ConsensusTable', () => {
   it('uses negative styling for a negative price gap', () => {
     render(<ConsensusTable rows={[makeRow({ gapPercent: -2 })]} onSelect={() => undefined} />);
 
-    const gapCell = screen.getByRole('cell', { name: '-2.0%' });
+    const gapCell = screen.getByRole('cell', { name: '+27,800원 -2.0%' });
 
     expect(gapCell).toHaveClass('gap-negative');
     expect(gapCell).not.toHaveClass('gap-positive');
@@ -134,7 +126,7 @@ describe('ConsensusTable', () => {
   it('uses neutral styling for a zero price gap', () => {
     render(<ConsensusTable rows={[makeRow({ gapPercent: 0 })]} onSelect={() => undefined} />);
 
-    const gapCell = screen.getByRole('cell', { name: '+0.0%' });
+    const gapCell = screen.getByRole('cell', { name: '+27,800원 +0.0%' });
 
     expect(gapCell).toHaveClass('gap-neutral');
     expect(gapCell).not.toHaveClass('gap-positive');
