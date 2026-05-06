@@ -53,6 +53,8 @@ describe('ConsensusDetailModal', () => {
     expect(screen.queryByText(/FnGuide 리포트/)).not.toBeInTheDocument();
     expect(screen.getByText('가격 비교')).toBeInTheDocument();
     expect(screen.getAllByText('현재 가격')).not.toHaveLength(0);
+    expect(screen.getByText('적정가', { selector: '.detail-price-metric span' })).toBeInTheDocument();
+    expect(screen.queryByText('갭', { selector: '.detail-price-metric span' })).not.toBeInTheDocument();
     expect(screen.getByText('목표주가 범위')).toBeInTheDocument();
     expect(screen.getByText('560,000원')).toBeInTheDocument();
     expect(screen.getByText('660,000원')).toBeInTheDocument();
@@ -66,6 +68,43 @@ describe('ConsensusDetailModal', () => {
     expect(screen.getByText('증권사별 목표가')).toBeInTheDocument();
     expect(screen.getByText('메리츠증권')).toBeInTheDocument();
     expect(screen.getAllByText('BUY · 1건')).not.toHaveLength(0);
+  });
+
+  it('renders price comparison progress by current price relative to fair price', () => {
+    render(
+      <ConsensusDetailModal
+        row={makeRow({ currentPrice: 55000, fairPrice: 100000, gapAmount: 45000, gapPercent: 81.8 })}
+        onClose={() => undefined}
+      />,
+    );
+
+    const bar = screen.getByLabelText('현재가가 적정가의 55.0% 수준입니다.');
+    const fill = bar.querySelector('span');
+
+    expect(screen.getByText('적정가', { selector: '.detail-price-metric span' })).toBeInTheDocument();
+    expect(screen.queryByText('갭', { selector: '.detail-price-metric span' })).not.toBeInTheDocument();
+    expect(screen.queryByText('+45,000원', { selector: '.detail-gap-amount' })).not.toBeInTheDocument();
+    expect(screen.queryByText('+81.8%', { selector: '.detail-gap-percent' })).not.toBeInTheDocument();
+    expect(fill).toHaveStyle({ width: '55%' });
+    expect(screen.getByText('55.0%', { selector: '.detail-progress-value' })).toBeInTheDocument();
+    expect(screen.getByText('적정가까지 45,000원 남았습니다.')).toBeInTheDocument();
+  });
+
+  it('caps detail price progress and marks prices above fair price as overflow', () => {
+    render(
+      <ConsensusDetailModal
+        row={makeRow({ currentPrice: 130000, fairPrice: 100000, gapAmount: -30000, gapPercent: -23.1 })}
+        onClose={() => undefined}
+      />,
+    );
+
+    const bar = screen.getByLabelText('현재가가 적정가의 130.0% 수준으로 초과했습니다.');
+    const fill = bar.querySelector('span');
+
+    expect(bar).toHaveClass('is-overflow');
+    expect(fill).toHaveStyle({ width: '100%' });
+    expect(screen.getByText('초과 130.0%', { selector: '.detail-progress-overflow' })).toBeInTheDocument();
+    expect(screen.getByText('적정가를 30,000원 초과했습니다.')).toBeInTheDocument();
   });
 
   it('calls onClose from the close button, backdrop, and Escape key', async () => {

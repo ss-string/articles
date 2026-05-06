@@ -645,13 +645,13 @@ h3 {
 .summary-row {
   display: grid;
   grid-template-columns:
-    minmax(160px, 1.35fr)
-    minmax(112px, 0.75fr)
-    minmax(142px, 0.95fr)
-    minmax(82px, 0.55fr)
-    minmax(220px, 1.25fr);
+    minmax(160px, 1.25fr)
+    minmax(112px, 0.7fr)
+    minmax(132px, 0.85fr)
+    minmax(132px, 0.72fr)
+    minmax(230px, 1.3fr);
   align-items: center;
-  min-width: 860px;
+  min-width: 900px;
 }
 
 .table-head {
@@ -732,8 +732,11 @@ h3 {
 .gap-negative,
 .gap-neutral {
   color: #0f766e;
+  display: grid;
+  gap: 2px;
   font-size: 15px;
   font-weight: 900;
+  line-height: 1.3;
   white-space: nowrap;
 }
 
@@ -766,6 +769,55 @@ h3 {
 .gap-bar.large {
   height: 10px;
   margin: 14px 0 10px;
+}
+
+.price-position {
+  display: grid;
+  grid-template-columns: minmax(74px, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.price-position-bar {
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  background: #e7edf3;
+  border-radius: 999px;
+}
+
+.price-position-bar span {
+  display: block;
+  width: 0;
+  height: 100%;
+  max-width: 100%;
+  background: #0f766e;
+  border-radius: inherit;
+}
+
+.price-position-bar.is-overflow span {
+  background: #dc2626;
+}
+
+.price-position-value,
+.price-position-overflow {
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.price-position-overflow {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 4px 8px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #dc2626;
+  font-weight: 900;
 }
 
 .consensus-badge,
@@ -844,6 +896,99 @@ h3 {
   color: #152238;
   font-size: 17px;
   line-height: 1.25;
+}
+
+.detail-price-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.detail-price-metric {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #e3e7ee;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.detail-price-metric span,
+.detail-price-progress p {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.detail-price-metric strong,
+.detail-price-metric em {
+  display: block;
+  overflow-wrap: anywhere;
+  color: #152238;
+  font-size: 16px;
+  font-style: normal;
+  line-height: 1.25;
+}
+
+.detail-price-progress {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #e3e7ee;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.detail-progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.detail-progress-head strong {
+  color: #152238;
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.detail-progress-bar {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e7edf3;
+}
+
+.detail-progress-bar span {
+  display: block;
+  height: 100%;
+  max-width: 100%;
+  border-radius: inherit;
+  background: #0f766e;
+}
+
+.detail-progress-bar.is-overflow span {
+  background: #dc2626;
+}
+
+.detail-progress-value,
+.detail-progress-overflow {
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.detail-progress-overflow {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  padding: 4px 8px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #dc2626;
+  font-weight: 900;
 }
 
 .trend-card {
@@ -1895,6 +2040,7 @@ h3 {
 
   .hot-news-grid,
   .price-compare,
+  .detail-price-metrics,
   .checkpoint-row {
     grid-template-columns: 1fr;
   }
@@ -1990,7 +2136,7 @@ h3 {
   }
 
   .summary-row [role="cell"]:nth-child(3)::before {
-    content: "적정주가";
+    content: "적정가";
   }
 
   .summary-row [role="cell"]:nth-child(4)::before {
@@ -1998,7 +2144,7 @@ h3 {
   }
 
   .summary-row [role="cell"]:nth-child(5)::before {
-    content: "1개월 컨센서스";
+    content: "적정가 대비 현재가";
   }
 
   .summary-row [role="cell"]:nth-child(1) {
