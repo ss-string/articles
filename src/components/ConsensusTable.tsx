@@ -77,7 +77,7 @@ export function ConsensusTable({ rows, onSelect }: ConsensusTableProps) {
                 <div className="price-position">
                   <div
                     className={`price-position-bar${isPricePositionOverflow ? ' is-overflow' : ''}`}
-                    aria-label={`현재가가 적정주가의 ${formatPricePositionPercent(pricePositionPercent)} 수준${
+                    aria-label={`현재가가 적정가의 ${formatPricePositionPercent(pricePositionPercent)} 수준${
                       isPricePositionOverflow ? '으로 초과했습니다.' : '입니다.'
                     }`}
                   >

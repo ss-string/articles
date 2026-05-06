@@ -141,7 +141,7 @@ describe('ConsensusTable', () => {
       />,
     );
 
-    const bar = screen.getByLabelText('현재가가 적정주가의 55.0% 수준입니다.');
+    const bar = screen.getByLabelText('현재가가 적정가의 55.0% 수준입니다.');
     const fill = bar.querySelector('span');
 
     expect(fill).toHaveStyle({ width: '55%' });
@@ -157,7 +157,7 @@ describe('ConsensusTable', () => {
       />,
     );
 
-    const bar = screen.getByLabelText('현재가가 적정주가의 130.0% 수준으로 초과했습니다.');
+    const bar = screen.getByLabelText('현재가가 적정가의 130.0% 수준으로 초과했습니다.');
     const fill = bar.querySelector('span');
 
     expect(bar).toHaveClass('is-overflow');
