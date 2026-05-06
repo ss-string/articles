@@ -9,14 +9,26 @@ type ConsensusDetailModalProps = {
 
 function formatGapDescription(gapAmount: number) {
   if (gapAmount > 0) {
-    return `현재가가 적정주가 대비 ${formatWon(gapAmount)} 낮습니다.`;
+    return `적정가까지 ${formatWon(gapAmount)} 남았습니다.`;
   }
 
   if (gapAmount < 0) {
-    return `현재가가 적정주가 대비 ${formatWon(Math.abs(gapAmount))} 높습니다.`;
+    return `적정가를 ${formatWon(Math.abs(gapAmount))} 초과했습니다.`;
   }
 
-  return '현재가와 적정주가가 같습니다.';
+  return '현재가와 적정가가 같습니다.';
+}
+
+function getPricePositionPercent(row: ConsensusRankingRow) {
+  return (row.currentPrice / row.fairPrice) * 100;
+}
+
+function formatPricePositionPercent(value: number) {
+  return `${value.toFixed(1)}%`;
+}
+
+function formatSignedWon(value: number) {
+  return `${value >= 0 ? '+' : '-'}${formatWon(Math.abs(value))}`;
 }
 
 function formatRecommendation(firm: SecuritiesFirmSummary) {
@@ -42,6 +54,9 @@ function formatUpdatedAt(value: string | null) {
 
 export function ConsensusDetailModal({ row, onClose }: ConsensusDetailModalProps) {
   const report = row.summaryReport;
+  const pricePositionPercent = getPricePositionPercent(row);
+  const cappedPricePositionPercent = Number(Math.min(Math.max(pricePositionPercent, 0), 100).toFixed(1));
+  const isPricePositionOverflow = pricePositionPercent > 100;
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -81,20 +96,42 @@ export function ConsensusDetailModal({ row, onClose }: ConsensusDetailModalProps
           <div className="detail-grid">
             <article className="detail-card">
               <h3>가격 비교</h3>
-              <div className="price-compare">
-                <div className="price-tile">
-                  <span>현재 가격</span>
+              <div className="detail-price-metrics">
+                <div className="detail-price-metric">
+                  <span>현재가</span>
                   <strong>{formatWon(row.currentPrice)}</strong>
                 </div>
-                <div className="price-tile">
-                  <span>적정주가</span>
+                <div className="detail-price-metric">
+                  <span>적정가</span>
                   <strong>{formatWon(row.fairPrice)}</strong>
                 </div>
+                <div className={`detail-price-metric detail-gap-metric${row.gapPercent < 0 ? ' negative' : ''}`}>
+                  <span>갭</span>
+                  <strong className="detail-gap-amount">{formatSignedWon(row.gapAmount)}</strong>
+                  <em className="detail-gap-percent">{formatPercent(row.gapPercent)}</em>
+                </div>
               </div>
-              <div className="gap-bar large">
-                <span style={{ width: `${Math.min(Math.max(row.gapPercent, 0), 100)}%` }} />
+              <div className="detail-price-progress">
+                <div className="detail-progress-head">
+                  <strong>적정가 대비 현재가</strong>
+                  {isPricePositionOverflow ? (
+                    <span className="detail-progress-overflow">
+                      초과 {formatPricePositionPercent(pricePositionPercent)}
+                    </span>
+                  ) : (
+                    <span className="detail-progress-value">{formatPricePositionPercent(pricePositionPercent)}</span>
+                  )}
+                </div>
+                <div
+                  className={`detail-progress-bar${isPricePositionOverflow ? ' is-overflow' : ''}`}
+                  aria-label={`현재가가 적정가의 ${formatPricePositionPercent(pricePositionPercent)} 수준${
+                    isPricePositionOverflow ? '으로 초과했습니다.' : '입니다.'
+                  }`}
+                >
+                  <span style={{ width: `${cappedPricePositionPercent}%` }} />
+                </div>
+                <p>{formatGapDescription(row.gapAmount)}</p>
               </div>
-              <p className="muted">{formatGapDescription(row.gapAmount)}</p>
               <div className="target-range-inline">
                 <h3>목표주가 범위</h3>
                 <div className="range-grid">

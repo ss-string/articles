@@ -898,6 +898,110 @@ h3 {
   line-height: 1.25;
 }
 
+.detail-price-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.detail-price-metric {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #e3e7ee;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.detail-price-metric span,
+.detail-price-progress p {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.detail-price-metric strong,
+.detail-price-metric em {
+  display: block;
+  overflow-wrap: anywhere;
+  color: #152238;
+  font-size: 16px;
+  font-style: normal;
+  line-height: 1.25;
+}
+
+.detail-gap-metric strong,
+.detail-gap-metric em {
+  color: #0f766e;
+  font-weight: 900;
+}
+
+.detail-gap-metric.negative strong,
+.detail-gap-metric.negative em {
+  color: #dc2626;
+}
+
+.detail-price-progress {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #e3e7ee;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.detail-progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.detail-progress-head strong {
+  color: #152238;
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.detail-progress-bar {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e7edf3;
+}
+
+.detail-progress-bar span {
+  display: block;
+  height: 100%;
+  max-width: 100%;
+  border-radius: inherit;
+  background: #0f766e;
+}
+
+.detail-progress-bar.is-overflow span {
+  background: #dc2626;
+}
+
+.detail-progress-value,
+.detail-progress-overflow {
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.detail-progress-overflow {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  padding: 4px 8px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #dc2626;
+  font-weight: 900;
+}
+
 .trend-card {
   min-width: 0;
 }
@@ -1947,6 +2051,7 @@ h3 {
 
   .hot-news-grid,
   .price-compare,
+  .detail-price-metrics,
   .checkpoint-row {
     grid-template-columns: 1fr;
   }
