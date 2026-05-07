@@ -7,6 +7,7 @@ import {
   mainRoutes,
   navigateToPath,
   normalizePathname,
+  realEstateRoutes,
   routes,
   stripBasePath,
   toBrowserPath,
@@ -21,6 +22,8 @@ describe('navigation', () => {
     expect(normalizePathname('/finance/consensus')).toBe('/finance/consensus');
     expect(normalizePathname('/articles/finance/consensus')).toBe('/finance/consensus');
     expect(normalizePathname('/finance/ai-reports')).toBe('/finance/ai-reports');
+    expect(normalizePathname('/real-estate/transactions')).toBe('/real-estate/transactions');
+    expect(normalizePathname('/articles/real-estate/transactions')).toBe('/real-estate/transactions');
     expect(normalizePathname('/unknown')).toBe('/main/macro-regime');
   });
 
@@ -29,6 +32,7 @@ describe('navigation', () => {
     expect(stripBasePath('/articles/')).toBe('/');
     expect(stripBasePath('/finance/consensus')).toBe('/finance/consensus');
     expect(toBrowserPath('/finance/ai-reports')).toBe('/articles/finance/ai-reports');
+    expect(toBrowserPath('/real-estate/transactions')).toBe('/articles/real-estate/transactions');
     expect(toBrowserPath('/unknown')).toBe('/articles/main/macro-regime');
   });
 
@@ -41,13 +45,22 @@ describe('navigation', () => {
       kicker: '금융 밸류에이션',
       symbol: '↗',
     });
-    expect(routes.map((route) => route.symbol)).toEqual(['◷', '≡', '↗', '⌁']);
+    expect(getActiveRoute('/real-estate/transactions')).toEqual({
+      path: '/real-estate/transactions',
+      section: 'real-estate',
+      label: '실거래정보',
+      shortLabel: '실거래',
+      kicker: '부동산 가격 모니터링',
+      symbol: '⌁',
+    });
+    expect(routes.map((route) => route.symbol)).toEqual(['◷', '≡', '↗', '⌁', '⌁']);
     expect(mainRoutes.map((route) => route.label)).toEqual(['매크로 레짐']);
     expect(financeRoutes.map((route) => route.label)).toEqual([
       '핫 뉴스 분석 리포트',
       '컨센서스 괴리율 랭킹',
       'AI 분석 리포트',
     ]);
+    expect(realEstateRoutes.map((route) => route.label)).toEqual(['실거래정보']);
   });
 
   it('maps legacy root consensus query links to the consensus route', () => {
@@ -74,6 +87,13 @@ describe('navigation', () => {
         active: false,
         children: [],
       },
+      {
+        key: 'real-estate',
+        label: '부동산',
+        symbol: '▦',
+        active: false,
+        children: [],
+      },
     ]);
 
     expect(getVisibleNavigation('/finance/hot-news')).toEqual([
@@ -90,6 +110,37 @@ describe('navigation', () => {
         symbol: '◆',
         active: true,
         children: financeRoutes,
+      },
+      {
+        key: 'real-estate',
+        label: '부동산',
+        symbol: '▦',
+        active: false,
+        children: [],
+      },
+    ]);
+
+    expect(getVisibleNavigation('/real-estate/transactions')).toEqual([
+      {
+        key: 'main',
+        label: '메인',
+        symbol: '⌂',
+        active: false,
+        children: [],
+      },
+      {
+        key: 'finance',
+        label: '금융',
+        symbol: '◆',
+        active: false,
+        children: [],
+      },
+      {
+        key: 'real-estate',
+        label: '부동산',
+        symbol: '▦',
+        active: true,
+        children: realEstateRoutes,
       },
     ]);
   });

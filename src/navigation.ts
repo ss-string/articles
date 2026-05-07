@@ -1,6 +1,6 @@
 import { appBasePath } from './appBasePath';
 
-export type AppSection = 'main' | 'finance';
+export type AppSection = 'main' | 'finance' | 'real-estate';
 
 export type AppRoute = {
   path: string;
@@ -60,7 +60,18 @@ export const financeRoutes: AppRoute[] = [
   },
 ];
 
-export const routes: AppRoute[] = [...mainRoutes, ...financeRoutes];
+export const realEstateRoutes: AppRoute[] = [
+  {
+    path: '/real-estate/transactions',
+    section: 'real-estate',
+    label: '실거래정보',
+    shortLabel: '실거래',
+    kicker: '부동산 가격 모니터링',
+    symbol: '⌁',
+  },
+];
+
+export const routes: AppRoute[] = [...mainRoutes, ...financeRoutes, ...realEstateRoutes];
 
 function ensureLeadingSlash(path: string) {
   return path.startsWith('/') ? path : `/${path}`;
@@ -149,6 +160,13 @@ export function getVisibleNavigation(pathname: string): TopLevelNavigationItem[]
       symbol: '◆',
       active: activeRoute.section === 'finance',
       children: activeRoute.section === 'finance' ? financeRoutes : [],
+    },
+    {
+      key: 'real-estate',
+      label: '부동산',
+      symbol: '▦',
+      active: activeRoute.section === 'real-estate',
+      children: activeRoute.section === 'real-estate' ? realEstateRoutes : [],
     },
   ];
 }

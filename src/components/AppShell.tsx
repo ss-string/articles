@@ -1,5 +1,11 @@
 import { type ReactNode, useState } from 'react';
-import { financeRoutes, getVisibleNavigation, type AppRoute } from '../navigation';
+import {
+  financeRoutes,
+  getVisibleNavigation,
+  realEstateRoutes,
+  type AppRoute,
+  type AppSection,
+} from '../navigation';
 
 type AppShellProps = {
   activeRoute: AppRoute;
@@ -18,10 +24,16 @@ export function AppShell({ activeRoute, onNavigate, children }: AppShellProps) {
     .filter(Boolean)
     .join(' ');
 
-  const sectionPaths = {
+  const sectionPaths: Record<AppSection, string> = {
     main: '/main/macro-regime',
     finance: '/finance/hot-news',
+    'real-estate': '/real-estate/transactions',
   };
+  const sectionTabs: Partial<Record<AppSection, AppRoute[]>> = {
+    finance: financeRoutes,
+    'real-estate': realEstateRoutes,
+  };
+  const activeTabs = sectionTabs[activeRoute.section] ?? [];
 
   function handleNavigate(path: string) {
     onNavigate(path);
@@ -115,9 +127,13 @@ export function AppShell({ activeRoute, onNavigate, children }: AppShellProps) {
           </div>
         </header>
 
-        {activeRoute.section === 'finance' ? (
-          <nav className="finance-tabs" aria-label="금융 하위 페이지" role="tablist">
-            {financeRoutes.map((route) => (
+        {activeTabs.length > 0 ? (
+          <nav
+            className="finance-tabs"
+            aria-label={`${visibleNavigation.find((item) => item.key === activeRoute.section)?.label ?? ''} 하위 페이지`}
+            role="tablist"
+          >
+            {activeTabs.map((route) => (
               <button
                 aria-selected={route.path === activeRoute.path}
                 className={route.path === activeRoute.path ? 'finance-tab active' : 'finance-tab'}
