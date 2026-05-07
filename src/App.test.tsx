@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import App from './App';
 import type { RawHotNewsReportRow } from './hot-news/model';
 import type { RawRealEstateTables } from './real-estate/model';
+import type { RawVolatilityCalendarRow } from './volatility-calendar/model';
 
 const rows = [
   {
@@ -68,6 +69,26 @@ const realEstateTables: RawRealEstateTables = {
     },
   ],
 };
+
+const volatilityRows: RawVolatilityCalendarRow[] = [
+  {
+    id: 1,
+    issue_date: '2026-05-07',
+    updated_at: '2026-05-07T02:23:06.029364+00:00',
+    events: [
+      {
+        event: '미국 4월 소비자물가지수',
+        market: 'US_STOCK',
+        category: 'macro_inflation',
+        date_kst: '2026-05-12',
+        time_kst: '21:30',
+        risk_level: 0.9,
+        buy_caution: '매수 전 헤드라인 및 근원 물가의 상방 이탈 여부를 확인해야 합니다.',
+        check_points: ['근원 CPI 전월비'],
+      },
+    ],
+  },
+];
 
 describe('App routing', () => {
   afterEach(() => {
@@ -194,6 +215,29 @@ describe('App routing', () => {
     expect(await screen.findByText('약수하이츠')).toBeInTheDocument();
   });
 
+  it('renders the volatility calendar route from a base-prefixed direct entry', async () => {
+    window.history.pushState({}, '', '/articles/finance/volatility-calendar');
+
+    render(
+      <App
+        queryRows={async () => rows}
+        queryHotNewsRows={async () => hotNewsRows}
+        queryMacroRows={async () => macroRows}
+        queryReports={async () => []}
+        queryVolatilityRows={async () => volatilityRows}
+      />,
+    );
+
+    const sidebar = screen.getByRole('complementary', { name: '분석자료실 메뉴' });
+
+    expect(within(sidebar).getByRole('button', { name: /◆ 금융/ })).toHaveClass('active');
+    expect(within(sidebar).getByRole('button', { name: /□ 변동성 캘린더/ })).toHaveClass('active');
+    expect(screen.getByRole('tab', { name: '변동성 캘린더' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('heading', { level: 1, name: '변동성 캘린더' })).toBeInTheDocument();
+    expect(screen.getAllByText('매수 주의 캘린더')).toHaveLength(2);
+    expect(await screen.findByText('미국 4월 소비자물가지수')).toBeInTheDocument();
+  });
+
   it('navigates between finance pages from underline tabs', async () => {
     const user = userEvent.setup();
     window.history.pushState({}, '', '/finance/hot-news');
@@ -232,6 +276,28 @@ describe('App routing', () => {
 
     expect(window.location.pathname).toBe('/articles/finance/ai-reports');
     expect(screen.getByRole('heading', { level: 1, name: 'AI 분석 리포트' })).toBeInTheDocument();
+  });
+
+  it('navigates to the volatility calendar from finance tabs', async () => {
+    const user = userEvent.setup();
+    window.history.pushState({}, '', '/articles/finance/consensus');
+
+    render(
+      <App
+        queryRows={async () => rows}
+        queryHotNewsRows={async () => hotNewsRows}
+        queryMacroRows={async () => macroRows}
+        queryReports={async () => []}
+        queryVolatilityRows={async () => volatilityRows}
+      />,
+    );
+
+    await user.click(screen.getByRole('tab', { name: '변동성 캘린더' }));
+
+    expect(window.location.pathname).toBe('/articles/finance/volatility-calendar');
+    expect(screen.getByRole('heading', { level: 1, name: '변동성 캘린더' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: '45일 이벤트 캘린더' })).toBeInTheDocument();
+    expect(await screen.findByText('미국 4월 소비자물가지수')).toBeInTheDocument();
   });
 
   it('opens and closes the mobile sidebar from the dimmed area without a close button', async () => {

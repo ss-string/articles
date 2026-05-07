@@ -21,6 +21,8 @@ describe('navigation', () => {
     expect(normalizePathname('/finance/hot-news')).toBe('/finance/hot-news');
     expect(normalizePathname('/finance/consensus')).toBe('/finance/consensus');
     expect(normalizePathname('/articles/finance/consensus')).toBe('/finance/consensus');
+    expect(normalizePathname('/finance/volatility-calendar')).toBe('/finance/volatility-calendar');
+    expect(normalizePathname('/articles/finance/volatility-calendar')).toBe('/finance/volatility-calendar');
     expect(normalizePathname('/finance/ai-reports')).toBe('/finance/ai-reports');
     expect(normalizePathname('/real-estate/transactions')).toBe('/real-estate/transactions');
     expect(normalizePathname('/articles/real-estate/transactions')).toBe('/real-estate/transactions');
@@ -31,6 +33,7 @@ describe('navigation', () => {
     expect(stripBasePath('/articles/finance/consensus')).toBe('/finance/consensus');
     expect(stripBasePath('/articles/')).toBe('/');
     expect(stripBasePath('/finance/consensus')).toBe('/finance/consensus');
+    expect(toBrowserPath('/finance/volatility-calendar')).toBe('/articles/finance/volatility-calendar');
     expect(toBrowserPath('/finance/ai-reports')).toBe('/articles/finance/ai-reports');
     expect(toBrowserPath('/real-estate/transactions')).toBe('/articles/real-estate/transactions');
     expect(toBrowserPath('/unknown')).toBe('/articles/main/macro-regime');
@@ -45,6 +48,14 @@ describe('navigation', () => {
       kicker: '금융 밸류에이션',
       symbol: '↗',
     });
+    expect(getActiveRoute('/finance/volatility-calendar')).toEqual({
+      path: '/finance/volatility-calendar',
+      section: 'finance',
+      label: '변동성 캘린더',
+      shortLabel: '변동성 캘린더',
+      kicker: '매수 주의 캘린더',
+      symbol: '□',
+    });
     expect(getActiveRoute('/real-estate/transactions')).toEqual({
       path: '/real-estate/transactions',
       section: 'real-estate',
@@ -53,11 +64,12 @@ describe('navigation', () => {
       kicker: '부동산 가격 모니터링',
       symbol: '⌁',
     });
-    expect(routes.map((route) => route.symbol)).toEqual(['◷', '≡', '↗', '⌁', '⌁']);
+    expect(routes.map((route) => route.symbol)).toEqual(['◷', '≡', '↗', '□', '⌁', '⌁']);
     expect(mainRoutes.map((route) => route.label)).toEqual(['매크로 레짐']);
     expect(financeRoutes.map((route) => route.label)).toEqual([
       '핫 뉴스 분석 리포트',
       '컨센서스 괴리율 랭킹',
+      '변동성 캘린더',
       'AI 분석 리포트',
     ]);
     expect(realEstateRoutes.map((route) => route.label)).toEqual(['실거래정보']);
@@ -163,6 +175,11 @@ describe('navigation', () => {
 
       expect(window.location.pathname).toBe('/articles/finance/ai-reports');
       expect(popstateCount).toBe(2);
+
+      navigateToPath('/finance/volatility-calendar');
+
+      expect(window.location.pathname).toBe('/articles/finance/volatility-calendar');
+      expect(popstateCount).toBe(3);
     } finally {
       window.removeEventListener('popstate', handlePopstate);
     }

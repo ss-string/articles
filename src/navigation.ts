@@ -51,6 +51,14 @@ export const financeRoutes: AppRoute[] = [
     symbol: '↗',
   },
   {
+    path: '/finance/volatility-calendar',
+    section: 'finance',
+    label: '변동성 캘린더',
+    shortLabel: '변동성 캘린더',
+    kicker: '매수 주의 캘린더',
+    symbol: '□',
+  },
+  {
     path: '/finance/ai-reports',
     section: 'finance',
     label: 'AI 분석 리포트',

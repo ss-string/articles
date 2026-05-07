@@ -383,7 +383,8 @@ h3 {
 .hero-copy,
 .consensus-copy,
 .hot-news-copy,
-.macro-regime-copy {
+.macro-regime-copy,
+.volatility-calendar-copy {
   max-width: 760px;
   margin-bottom: 18px;
   color: #465468;
@@ -1642,6 +1643,302 @@ h3 {
   font-weight: 850;
 }
 
+.volatility-calendar-heading {
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.volatility-updated-chip,
+.volatility-filter,
+.volatility-stance {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.volatility-updated-chip,
+.volatility-filter.active,
+.volatility-stance.bull {
+  border: 1px solid #b9d6d2;
+  background: #eef7f6;
+  color: #0f766e;
+}
+
+.volatility-updated-chip {
+  padding: 0 10px;
+}
+
+.volatility-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.volatility-filter {
+  padding: 0 12px;
+  border: 1px solid #d8dee8;
+  background: #ffffff;
+  color: #465468;
+  cursor: pointer;
+}
+
+.volatility-filter:hover,
+.volatility-filter:focus-visible {
+  border-color: #b9d6d2;
+  color: #0f766e;
+}
+
+.volatility-stance {
+  width: fit-content;
+  padding: 0 9px;
+}
+
+.volatility-stance.bear {
+  border: 1px solid #fecdd3;
+  background: #fff1f2;
+  color: #dc2626;
+}
+
+.volatility-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.volatility-day-card {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #e3e7ee;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.volatility-day-card > strong {
+  color: #152238;
+  font-size: 0.92rem;
+  line-height: 1.2;
+}
+
+.volatility-day-events {
+  display: grid;
+  gap: 10px;
+}
+
+.volatility-event-card {
+  display: grid;
+  min-width: 0;
+  gap: 9px;
+  padding: 14px;
+  border: 1px solid #e3e7ee;
+  border-radius: 8px;
+  background: #ffffff;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.volatility-event-card:hover,
+.volatility-event-card:focus-visible {
+  border-color: #b9d6d2;
+  background: #f8fcfb;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.volatility-event-meta,
+.volatility-modal-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.volatility-event-meta span:not(.volatility-stance),
+.volatility-modal-meta > span:not(.volatility-stance) {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  border-radius: 999px;
+  background: #f1f5f9;
+  padding: 0 8px;
+}
+
+.volatility-event-card b {
+  overflow-wrap: anywhere;
+  color: #152238;
+  font-size: 0.96rem;
+  line-height: 1.35;
+}
+
+.volatility-importance-label {
+  color: #465468;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.volatility-importance-bar {
+  display: block;
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e3e7ee;
+}
+
+.volatility-importance-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #0f766e;
+}
+
+.volatility-modal-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.38);
+  backdrop-filter: blur(6px);
+}
+
+.volatility-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.volatility-modal {
+  position: relative;
+  z-index: 1;
+  width: min(860px, 100%);
+  max-height: min(760px, calc(100vh - 48px));
+  overflow: auto;
+  border: 1px solid #d8dee8;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 28px 90px rgba(15, 23, 42, 0.22);
+}
+
+.volatility-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px;
+  border-bottom: 1px solid #e3e7ee;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.volatility-modal-kicker {
+  color: #0f766e;
+  font-size: 0.76rem;
+  font-weight: 850;
+  letter-spacing: 0;
+}
+
+.volatility-modal-header h3 {
+  margin: 4px 0 10px;
+  color: #152238;
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.volatility-modal-close {
+  display: grid;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid #d8dee8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #172033;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.volatility-modal-close:hover,
+.volatility-modal-close:focus-visible {
+  background: #eef7f6;
+  color: #0f766e;
+}
+
+.volatility-modal-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 0.62fr);
+  gap: 14px;
+  padding: 22px;
+}
+
+.volatility-modal-primary,
+.volatility-modal-secondary {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 14px;
+}
+
+.volatility-modal-panel {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #e3e7ee;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.volatility-modal-panel h4 {
+  margin: 0 0 12px;
+  color: #0f766e;
+}
+
+.volatility-modal-panel p,
+.volatility-modal-panel ul {
+  margin: 0;
+  color: #465468;
+}
+
+.volatility-modal-panel strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #152238;
+}
+
+.volatility-modal-panel ul {
+  display: grid;
+  gap: 8px;
+  padding-left: 18px;
+}
+
 .macro-card-meta {
   display: flex;
   align-items: center;
@@ -2310,7 +2607,9 @@ h3 {
   }
 
   .macro-regime-grid,
-  .macro-modal-body {
+  .macro-modal-body,
+  .volatility-modal-body,
+  .volatility-calendar-grid {
     grid-template-columns: 1fr;
   }
 
@@ -2426,16 +2725,24 @@ h3 {
     padding: 12px;
   }
 
-  .hot-news-modal {
+  .volatility-modal-layer {
+    padding: 12px;
+  }
+
+  .hot-news-modal,
+  .volatility-modal {
     max-height: calc(100vh - 24px);
   }
 
   .hot-news-modal-header,
-  .hot-news-modal-body {
+  .hot-news-modal-body,
+  .volatility-modal-header,
+  .volatility-modal-body {
     padding: 16px;
   }
 
-  .hot-news-modal-header {
+  .hot-news-modal-header,
+  .volatility-modal-header {
     gap: 12px;
   }
 
