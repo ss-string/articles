@@ -22,6 +22,15 @@ const macroRoute: AppRoute = {
   symbol: '◷',
 };
 
+const realEstateRoute: AppRoute = {
+  path: '/real-estate/transactions',
+  section: 'real-estate',
+  label: '실거래정보',
+  shortLabel: '실거래',
+  kicker: '부동산 가격 모니터링',
+  symbol: '⌁',
+};
+
 describe('AppShell', () => {
   it('renders the library brand in the sidebar but not in the top row', async () => {
     const user = userEvent.setup();
@@ -132,9 +141,11 @@ describe('AppShell', () => {
     const sidebar = screen.getByRole('complementary', { name: '분석자료실 메뉴' });
     await user.click(within(sidebar).getByRole('button', { name: /⌂ 메인/ }));
     await user.click(within(sidebar).getByRole('button', { name: /◆ 금융/ }));
+    await user.click(within(sidebar).getByRole('button', { name: /▦ 부동산/ }));
 
     expect(onNavigate).toHaveBeenNthCalledWith(1, '/main/macro-regime');
     expect(onNavigate).toHaveBeenNthCalledWith(2, '/finance/hot-news');
+    expect(onNavigate).toHaveBeenNthCalledWith(3, '/real-estate/transactions');
   });
 
   it('shows only main children when the main route is active', () => {
@@ -239,6 +250,23 @@ describe('AppShell', () => {
     await user.click(screen.getByRole('tab', { name: 'AI 분석 리포트' }));
 
     expect(onNavigate).toHaveBeenCalledWith('/finance/ai-reports');
+  });
+
+  it('shows real estate children and tabs when a real estate route is active', () => {
+    render(
+      <AppShell activeRoute={realEstateRoute} onNavigate={vi.fn()}>
+        <p>본문</p>
+      </AppShell>,
+    );
+
+    const sidebar = screen.getByRole('complementary', { name: '분석자료실 메뉴' });
+    const realEstateTabs = screen.getByRole('tablist', { name: '부동산 하위 페이지' });
+    const activeTab = screen.getByRole('tab', { name: '실거래정보' });
+
+    expect(within(sidebar).getByRole('button', { name: /▦ 부동산/ })).toHaveClass('active');
+    expect(within(sidebar).getByRole('button', { name: /⌁ 실거래정보/ })).toHaveClass('active');
+    expect(realEstateTabs).toHaveClass('finance-tabs');
+    expect(activeTab).toHaveAttribute('aria-selected', 'true');
   });
 
   it('does not render finance tabs for a main route', () => {

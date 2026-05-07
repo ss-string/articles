@@ -2,6 +2,7 @@ import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
 import type { RawHotNewsReportRow } from './hot-news/model';
+import type { RawRealEstateTables } from './real-estate/model';
 import type { RawVolatilityCalendarRow } from './volatility-calendar/model';
 
 const rows = [
@@ -41,6 +42,33 @@ const hotNewsRows: RawHotNewsReportRow[] = [
     tldr: ['국내 조선·해양 에너지 인프라 기업의 수주 뉴스가 집중'],
   },
 ];
+
+const realEstateTables: RawRealEstateTables = {
+  interestTargets: [{ complex_id: 'c1', pyeong_type: '80', sort_order: 1 }],
+  complexes: [{ complex_id: 'c1', complex_name: '약수하이츠', households: 2282, use_approved_at: '1999-07-01' }],
+  pyeongOptions: [{ complex_id: 'c1', pyeong_type: '80', display_pyeong_name: '80형' }],
+  articles: [
+    {
+      article_number: 'a1',
+      complex_id: 'c1',
+      pyeong_type: '80',
+      trade_type: '매매',
+      price: 1320000000,
+      building_name: '116동',
+      floor_info: '저/18',
+    },
+  ],
+  priceMetrics: [
+    {
+      complex_id: 'c1',
+      pyeong_type: '80',
+      metric_date: '2026-05-01',
+      actual_average_price: 1480000000,
+      asking_average_price: 1460000000,
+      actual_median_price: 1470000000,
+    },
+  ],
+};
 
 const volatilityRows: RawVolatilityCalendarRow[] = [
   {
@@ -146,6 +174,45 @@ describe('App routing', () => {
     expect(within(sidebar).getByRole('button', { name: /↗ 컨센서스 괴리율 랭킹/ })).toHaveClass('active');
     expect(screen.getByRole('tab', { name: '컨센서스 괴리율 랭킹' })).toHaveAttribute('aria-selected', 'true');
     expect(await screen.findByText('삼성전자')).toBeInTheDocument();
+  });
+
+  it('renders real estate transactions route with real estate navigation state', async () => {
+    window.history.pushState({}, '', '/real-estate/transactions');
+
+    render(
+      <App
+        queryRows={async () => rows}
+        queryHotNewsRows={async () => hotNewsRows}
+        queryMacroRows={async () => macroRows}
+        queryReports={async () => []}
+        queryRealEstateTables={async () => realEstateTables}
+      />,
+    );
+
+    const sidebar = screen.getByRole('complementary', { name: '분석자료실 메뉴' });
+
+    expect(within(sidebar).getByRole('button', { name: /▦ 부동산/ })).toHaveClass('active');
+    expect(within(sidebar).getByRole('button', { name: /⌁ 실거래정보/ })).toHaveClass('active');
+    expect(screen.getByRole('tab', { name: '실거래정보' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('heading', { level: 1, name: '실거래정보' })).toBeInTheDocument();
+    expect(await screen.findByText('약수하이츠')).toBeInTheDocument();
+  });
+
+  it('renders real estate transactions route from a base-prefixed direct entry', async () => {
+    window.history.pushState({}, '', '/articles/real-estate/transactions');
+
+    render(
+      <App
+        queryRows={async () => rows}
+        queryHotNewsRows={async () => hotNewsRows}
+        queryMacroRows={async () => macroRows}
+        queryReports={async () => []}
+        queryRealEstateTables={async () => realEstateTables}
+      />,
+    );
+
+    expect(screen.getByRole('tab', { name: '실거래정보' })).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByText('약수하이츠')).toBeInTheDocument();
   });
 
   it('renders the volatility calendar route from a base-prefixed direct entry', async () => {

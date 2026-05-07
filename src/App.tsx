@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import type { RawConsensusRow, RawSummaryReportRow } from './consensus/model';
 import type { RawHotNewsReportRow } from './hot-news/model';
 import type { RawMacroRegimeRow } from './macro-regime/model';
+import type { RawRealEstateTables } from './real-estate/model';
 import type { RawVolatilityCalendarRow } from './volatility-calendar/model';
 import { AiAnalysisReportsPage } from './components/AiAnalysisReportsPage';
 import { AppShell } from './components/AppShell';
 import { ConsensusRankingPage } from './components/ConsensusRankingPage';
 import { HotNewsReportsPage } from './components/HotNewsReportsPage';
 import { MacroRegimePage } from './components/MacroRegimePage';
+import { RealEstateTransactionsPage } from './components/RealEstateTransactionsPage';
 import { VolatilityCalendarPage } from './components/VolatilityCalendarPage';
 import { getActiveRouteForLocation, navigateToPath } from './navigation';
 import './styles.css';
@@ -17,10 +19,18 @@ type AppProps = {
   queryHotNewsRows?: () => Promise<RawHotNewsReportRow[]>;
   queryMacroRows?: () => Promise<RawMacroRegimeRow[]>;
   queryReports?: () => Promise<RawSummaryReportRow[]>;
+  queryRealEstateTables?: () => Promise<RawRealEstateTables>;
   queryVolatilityRows?: () => Promise<RawVolatilityCalendarRow[]>;
 };
 
-export default function App({ queryRows, queryHotNewsRows, queryMacroRows, queryReports, queryVolatilityRows }: AppProps) {
+export default function App({
+  queryRows,
+  queryHotNewsRows,
+  queryMacroRows,
+  queryReports,
+  queryRealEstateTables,
+  queryVolatilityRows,
+}: AppProps) {
   const [activeRoute, setActiveRoute] = useState(() =>
     getActiveRouteForLocation(window.location.pathname, window.location.search),
   );
@@ -46,6 +56,8 @@ export default function App({ queryRows, queryHotNewsRows, queryMacroRows, query
       <HotNewsReportsPage queryRows={queryHotNewsRows} />
     ) : activeRoute.path === '/finance/consensus' ? (
       <ConsensusRankingPage queryRows={queryRows} queryReports={queryReports} />
+    ) : activeRoute.path === '/real-estate/transactions' ? (
+      <RealEstateTransactionsPage queryTables={queryRealEstateTables} />
     ) : activeRoute.path === '/finance/volatility-calendar' ? (
       <VolatilityCalendarPage queryRows={queryVolatilityRows} />
     ) : (

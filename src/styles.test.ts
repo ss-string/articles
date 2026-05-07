@@ -38,4 +38,11 @@ describe('styles.css layout regressions', () => {
     expect(styles).toContain('.brand-subtitle');
     expect(styles).not.toContain('.brand-mark {');
   });
+
+  it('keeps real estate dashboard layout and chart selectors stable', () => {
+    expect(styles).toContain('.real-estate-layout');
+    expect(styles).toContain('grid-template-columns: 270px minmax(0, 1fr)');
+    expect(styles).toContain('.real-estate-chart-line.actual');
+    expect(styles).toContain('@media (max-width: 900px)');
+  });
 });
