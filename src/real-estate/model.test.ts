@@ -27,7 +27,15 @@ describe('buildRealEstateDashboard', () => {
       ],
       articles: [
         { article_no: 'a2', complex_id: 'c1', pyeong_type: '80', trade_type: '매매', price: 1550000000 },
-        { article_number: 'a1', complex_id: 'c1', pyeong_type: '80', trade_type: 'sale', price: 1320000000 },
+        {
+          article_number: 'a1',
+          complex_id: 'c1',
+          pyeong_type: '80',
+          trade_type: 'sale',
+          price: 1320000000,
+          building_name: '116동',
+          floor_info: '저/18',
+        },
         { article_number: 'median', complex_id: 'c1', pyeong_type: '80', trade_type: '매매', price: 1470000000 },
         { article_no: 'lease1', complex_id: 'c1', pyeong_type: '80', trade_type: '전세', price: 900000000 },
         { article_no: 'a3', complex_id: 'c1', pyeong_type: '80', trade_type: null, price: 1420000000 },
@@ -65,6 +73,10 @@ describe('buildRealEstateDashboard', () => {
       1420000000,
       1470000000,
     ]);
+    expect(dashboard.targets[0]?.belowMedianArticles[0]).toMatchObject({
+      buildingName: '116동',
+      floorInfo: '저/18',
+    });
     expect(dashboard.targets[0]?.metricsSeries.map((metric) => metric.metricDate)).toEqual([
       '2026-04-01',
       '2026-05-01',

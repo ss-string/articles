@@ -25,6 +25,8 @@ export type RealEstateArticle = {
   pyeongType: string;
   tradeType: string | null;
   price: number;
+  buildingName: string | null;
+  floorInfo: string | null;
   priceGapFromMedian: number | null;
   priceGapPercentFromMedian: number | null;
 };
@@ -62,6 +64,8 @@ const columnCandidates = {
   articleNo: ['article_number', 'article_no', 'articleNo', 'id'],
   tradeType: ['trade_type', 'tradeType'],
   price: ['price', 'deal_or_warrant_prc', 'asking_price'],
+  buildingName: ['building_name', 'buildingName', 'dong_name'],
+  floorInfo: ['floor_info', 'floorInfo', 'floor'],
   metricDate: ['metric_date', 'collected_at', 'created_at'],
   actualAveragePrice: ['actual_average_price', 'actual_avg_price', 'trade_average_price', 'average_price'],
   askingAveragePrice: ['asking_average_price', 'asking_avg_price', 'article_average_price'],
@@ -165,6 +169,8 @@ function normalizeArticle(row: RawRealEstateRow, latestMedianPrice: number | nul
     pyeongType,
     tradeType,
     price,
+    buildingName: parseText(readValue(row, columnCandidates.buildingName)),
+    floorInfo: parseText(readValue(row, columnCandidates.floorInfo)),
     priceGapFromMedian,
     priceGapPercentFromMedian:
       latestMedianPrice === null || latestMedianPrice <= 0 ? null : (priceGapFromMedian! / latestMedianPrice) * 100,
