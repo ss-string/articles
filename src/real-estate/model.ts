@@ -23,6 +23,8 @@ export type RealEstatePriceMetric = {
 
 export type RealEstateArticle = {
   articleNo: string;
+  articleName: string | null;
+  articleUrl: string | null;
   complexId: string;
   pyeongType: string;
   tradeType: string | null;
@@ -39,6 +41,7 @@ export type RealEstateInterestTarget = {
   pyeongType: string;
   sortOrder: number;
   complexName: string;
+  complexUrl: string | null;
   pyeongName: string | null;
   households: number | null;
   approvedAt: string | null;
@@ -60,11 +63,14 @@ const columnCandidates = {
   pyeongType: ['pyeong_type', 'pyeongType'],
   sortOrder: ['sort_order', 'sortOrder', 'display_order'],
   complexName: ['complex_name', 'name'],
+  complexUrl: ['complex_url', 'complexUrl'],
   households: ['households', 'household_count', 'total_household_number'],
   approvedAt: ['use_approved_at', 'use_approved_date', 'use_approval_date', 'approval_date'],
   pyeongName: ['display_pyeong_name', 'pyeong_name'],
   exclusiveSpace: ['exclusive_space', 'exclusiveSpace'],
   articleNo: ['article_number', 'article_no', 'articleNo', 'id'],
+  articleName: ['article_name', 'articleName'],
+  articleUrl: ['article_url', 'articleUrl'],
   tradeType: ['trade_type', 'tradeType', 'trade_type_name'],
   price: ['price', 'deal_price', 'deal_or_warrant_prc', 'asking_price'],
   buildingName: ['building_name', 'buildingName', 'dong_name'],
@@ -125,6 +131,14 @@ function parsePyeongType(row: RawRealEstateRow): string | null {
 
 function tableKey(complexId: string | null, pyeongType: string | null) {
   return complexId && pyeongType ? `${complexId}:${pyeongType}` : null;
+}
+
+function buildNaverComplexUrl(complexId: string) {
+  return `https://fin.land.naver.com/complexes/${encodeURIComponent(complexId)}?tab=article`;
+}
+
+function buildNaverArticleUrl(articleNo: string) {
+  return `https://fin.land.naver.com/articles/${encodeURIComponent(articleNo)}`;
 }
 
 function parseExclusiveSpace(row: RawRealEstateRow | null | undefined): number | null {
@@ -282,8 +296,12 @@ function normalizeArticle(row: RawRealEstateRow, latestMedianPrice: number | nul
 
   const priceGapFromMedian = latestMedianPrice === null ? null : price - latestMedianPrice;
 
+  const articleNo = parseText(readValue(row, columnCandidates.articleNo)) ?? `${complexId}:${pyeongType}:${price}`;
+
   return {
-    articleNo: parseText(readValue(row, columnCandidates.articleNo)) ?? `${complexId}:${pyeongType}:${price}`,
+    articleNo,
+    articleName: parseText(readValue(row, columnCandidates.articleName)),
+    articleUrl: parseText(readValue(row, columnCandidates.articleUrl)) ?? buildNaverArticleUrl(articleNo),
     complexId,
     pyeongType,
     tradeType,
@@ -413,6 +431,10 @@ export function buildRealEstateDashboard(tables: RawRealEstateTables): RealEstat
           parseText(readValue(firstTarget.row, columnCandidates.complexName)) ??
           parseText(complex ? readValue(complex, columnCandidates.complexName) : null) ??
           complexId,
+        complexUrl:
+          parseText(readValue(firstTarget.row, columnCandidates.complexUrl)) ??
+          parseText(complex ? readValue(complex, columnCandidates.complexUrl) : null) ??
+          buildNaverComplexUrl(complexId),
         pyeongName: pyeongNames.join(' / '),
         households: parseNumber(complex ? readValue(complex, columnCandidates.households) : null),
         approvedAt: parseText(complex ? readValue(complex, columnCandidates.approvedAt) : null),

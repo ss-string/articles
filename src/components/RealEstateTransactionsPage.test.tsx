@@ -10,7 +10,13 @@ const tables: RawRealEstateTables = {
     { complex_id: 'c2', pyeong_type: '84A', sort_order: 2 },
   ],
   complexes: [
-    { complex_id: 'c1', complex_name: '약수하이츠', households: 2282, use_approved_at: '1999-07-01' },
+    {
+      complex_id: 'c1',
+      complex_name: '약수하이츠',
+      complex_url: 'https://fin.land.naver.com/complexes/c1?tab=article',
+      households: 2282,
+      use_approved_at: '1999-07-01',
+    },
     { complex_id: 'c2', complex_name: '신당삼성', households: 994, use_approved_at: '1999-11-20' },
   ],
   pyeongOptions: [
@@ -20,6 +26,7 @@ const tables: RawRealEstateTables = {
   articles: [
     {
       article_number: 'a1',
+      article_name: '약수하이츠',
       complex_id: 'c1',
       pyeong_type: '80',
       trade_type: '매매',
@@ -29,6 +36,7 @@ const tables: RawRealEstateTables = {
     },
     {
       article_number: 'a2',
+      article_name: '약수하이츠',
       complex_id: 'c1',
       pyeong_type: '80',
       trade_type: '매매',
@@ -80,6 +88,10 @@ describe('RealEstateTransactionsPage', () => {
 
     expect(await screen.findByRole('heading', { name: '관심 단지 가격 흐름' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /약수하이츠/ })).toHaveClass('active');
+    expect(screen.getByRole('link', { name: '약수하이츠 네이버 부동산 열기' })).toHaveAttribute(
+      'href',
+      'https://fin.land.naver.com/complexes/c1?tab=article',
+    );
     expect(screen.getByText('실거래 평균')).toBeInTheDocument();
     expect(screen.getByText('호가 평균')).toBeInTheDocument();
     expect(screen.getByText('중위값')).toBeInTheDocument();
@@ -88,9 +100,31 @@ describe('RealEstateTransactionsPage', () => {
     expect(screen.getByRole('img', { name: '약수하이츠 80형 가격 비교 그래프' })).toBeInTheDocument();
 
     const belowMedianRegion = screen.getByRole('region', { name: '중위값 이하 매물' });
-    expect(within(belowMedianRegion).getByText('매물번호 a1')).toBeInTheDocument();
+    expect(within(belowMedianRegion).getByRole('link', { name: '약수하이츠 매물 a1 네이버 부동산 열기' })).toHaveAttribute(
+      'href',
+      'https://fin.land.naver.com/articles/a1',
+    );
     expect(within(belowMedianRegion).getByText('116동 · 저/18')).toBeInTheDocument();
     expect(within(belowMedianRegion).queryByText('매물번호 a2')).not.toBeInTheDocument();
+  });
+
+  it('toggles between below-median and all articles', async () => {
+    const user = userEvent.setup();
+    render(<RealEstateTransactionsPage queryTables={async () => tables} />);
+
+    const belowMedianRegion = await screen.findByRole('region', { name: '중위값 이하 매물' });
+    expect(within(belowMedianRegion).queryByText('110동 · 중/20')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '전체 매물' }));
+
+    const allArticlesRegion = screen.getByRole('region', { name: '전체 매물' });
+    expect(within(allArticlesRegion).getByText('116동 · 저/18')).toBeInTheDocument();
+    expect(within(allArticlesRegion).getByText('110동 · 중/20')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '중위값 이하' }));
+
+    expect(screen.getByRole('region', { name: '중위값 이하 매물' })).toBeInTheDocument();
+    expect(screen.queryByText('110동 · 중/20')).not.toBeInTheDocument();
   });
 
   it('updates the active card, summary, chart, and articles when selecting another target', async () => {

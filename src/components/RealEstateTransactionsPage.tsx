@@ -3,6 +3,7 @@ import {
   formatKoreanHousePrice,
   type RawRealEstateTables,
   type RealEstateInterestTarget,
+  type RealEstateArticle,
   type RealEstatePriceMetric,
 } from '../real-estate/model';
 import { useRealEstateTransactions } from '../real-estate/useRealEstateTransactions';
@@ -17,8 +18,14 @@ type ChartPoint = {
   askingY: number | null;
 };
 
+type ArticleFilter = 'belowMedian' | 'all';
+
 function getDisplayPyeongName(target: RealEstateInterestTarget) {
   return target.pyeongName ?? target.pyeongType;
+}
+
+function getArticleTitle(article: RealEstateArticle) {
+  return article.articleName ?? `매물번호 ${article.articleNo}`;
 }
 
 function formatCount(value: number | null) {
@@ -119,6 +126,7 @@ export function RealEstateTransactionsPage({ queryTables }: RealEstateTransactio
   const state = useRealEstateTransactions({ queryTables });
   const targets = state.dashboard.targets;
   const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
+  const [articleFilter, setArticleFilter] = useState<ArticleFilter>('belowMedian');
 
   useEffect(() => {
     if (targets.length === 0) {
@@ -132,6 +140,9 @@ export function RealEstateTransactionsPage({ queryTables }: RealEstateTransactio
   }, [targets]);
 
   const selectedTarget = targets.find((target) => target.id === selectedTargetId) ?? targets[0] ?? null;
+  const visibleArticles =
+    articleFilter === 'all' ? selectedTarget?.currentArticles ?? [] : selectedTarget?.belowMedianArticles ?? [];
+  const articleSectionTitle = articleFilter === 'all' ? '전체 매물' : '중위값 이하 매물';
 
   return (
     <section className="dashboard-section real-estate-section" aria-labelledby="real-estate-title">
@@ -154,19 +165,32 @@ export function RealEstateTransactionsPage({ queryTables }: RealEstateTransactio
               const isActive = selectedTarget.id === target.id;
 
               return (
-                <button
+                <article
                   className={['real-estate-target-card', isActive ? 'active' : ''].filter(Boolean).join(' ')}
                   key={target.id}
-                  type="button"
-                  onClick={() => setSelectedTargetId(target.id)}
                 >
-                  <span className="real-estate-card-meta">{displayPyeongName}</span>
-                  <strong>{target.complexName}</strong>
-                  <span>{formatCount(target.households)}세대</span>
-                  <span>사용승인 {target.approvedAt ?? '-'}</span>
-                  <span>중위값 이하 {target.belowMedianArticles.length.toLocaleString('ko-KR')}건</span>
-                  <em>호가 {formatKoreanHousePrice(target.latestMetric?.askingAveragePrice ?? null)}</em>
-                </button>
+                  <a
+                    aria-label={`${target.complexName} 네이버 부동산 열기`}
+                    className="real-estate-target-name"
+                    href={target.complexUrl ?? undefined}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    {target.complexName}
+                  </a>
+                  <button
+                    aria-label={`${target.complexName} 관심 단지 선택`}
+                    className={['real-estate-target-select', isActive ? 'active' : ''].filter(Boolean).join(' ')}
+                    type="button"
+                    onClick={() => setSelectedTargetId(target.id)}
+                  >
+                    <span className="real-estate-card-meta">{displayPyeongName}</span>
+                    <span>{formatCount(target.households)}세대</span>
+                    <span>사용승인 {target.approvedAt ?? '-'}</span>
+                    <span>중위값 이하 {target.belowMedianArticles.length.toLocaleString('ko-KR')}건</span>
+                    <em>호가 {formatKoreanHousePrice(target.latestMetric?.askingAveragePrice ?? null)}</em>
+                  </button>
+                </article>
               );
             })}
           </aside>
@@ -205,19 +229,48 @@ export function RealEstateTransactionsPage({ queryTables }: RealEstateTransactio
               <PriceChart target={selectedTarget} />
             </section>
 
-            <section className="real-estate-panel" aria-label="중위값 이하 매물">
+            <section className="real-estate-panel" aria-label={articleSectionTitle}>
               <header className="real-estate-panel-header">
                 <div>
-                  <span>Below Median Articles</span>
-                  <h3>중위값 이하 매물</h3>
+                  <span>{articleFilter === 'all' ? 'All Articles' : 'Below Median Articles'}</span>
+                  <h3>{articleSectionTitle}</h3>
+                </div>
+                <div className="real-estate-article-filter" role="group" aria-label="매물 표시 범위">
+                  <button
+                    className={articleFilter === 'belowMedian' ? 'active' : ''}
+                    type="button"
+                    onClick={() => setArticleFilter('belowMedian')}
+                  >
+                    중위값 이하
+                  </button>
+                  <button
+                    className={articleFilter === 'all' ? 'active' : ''}
+                    type="button"
+                    onClick={() => setArticleFilter('all')}
+                  >
+                    전체 매물
+                  </button>
                 </div>
               </header>
-              {selectedTarget.belowMedianArticles.length > 0 ? (
+              {visibleArticles.length > 0 ? (
                 <div className="real-estate-article-list">
-                  {selectedTarget.belowMedianArticles.map((article) => (
+                  {visibleArticles.map((article) => (
                     <article className="real-estate-article-row" key={article.articleNo}>
                       <div>
-                        <strong>매물번호 {article.articleNo}</strong>
+                        {article.articleUrl ? (
+                          <a
+                            aria-label={`${getArticleTitle(article)} 매물 ${article.articleNo} 네이버 부동산 열기`}
+                            className="real-estate-article-link"
+                            href={article.articleUrl}
+                            rel="noreferrer"
+                            target="_blank"
+                          >
+                            {getArticleTitle(article)}
+                          </a>
+                        ) : (
+                          <strong>{getArticleTitle(article)}</strong>
+                        )}
+                        {article.articleName ? <span>매물번호 {article.articleNo}</span> : null}
                         {article.buildingName || article.floorInfo ? (
                           <span>
                             {[article.buildingName, article.floorInfo].filter(Boolean).join(' · ')}
@@ -234,7 +287,7 @@ export function RealEstateTransactionsPage({ queryTables }: RealEstateTransactio
                   ))}
                 </div>
               ) : (
-                <div className="state-panel">중위값 이하 매물이 없습니다.</div>
+                <div className="state-panel">{articleSectionTitle}이 없습니다.</div>
               )}
             </section>
           </div>

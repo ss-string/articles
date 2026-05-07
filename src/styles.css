@@ -1919,12 +1919,11 @@ h3 {
   border-radius: 8px;
   background: #ffffff;
   color: #465468;
-  cursor: pointer;
   text-align: left;
 }
 
 .real-estate-target-card:hover,
-.real-estate-target-card:focus-visible {
+.real-estate-target-card:focus-within {
   border-color: #b9d6d2;
   background: #f8fcfb;
 }
@@ -1934,15 +1933,37 @@ h3 {
   background: #eef7f6;
 }
 
-.real-estate-target-card strong {
+.real-estate-target-name {
   overflow-wrap: anywhere;
   color: #152238;
   font-size: 1.05rem;
+  font-weight: 850;
   line-height: 1.3;
+  text-decoration: none;
 }
 
-.real-estate-target-card span,
-.real-estate-target-card em {
+.real-estate-target-name:hover,
+.real-estate-target-name:focus-visible,
+.real-estate-article-link:hover,
+.real-estate-article-link:focus-visible {
+  color: #0f766e;
+  text-decoration: underline;
+}
+
+.real-estate-target-select {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.real-estate-target-select span,
+.real-estate-target-select em {
   min-width: 0;
   overflow-wrap: anywhere;
   font-size: 0.82rem;
@@ -1951,7 +1972,7 @@ h3 {
   line-height: 1.35;
 }
 
-.real-estate-target-card em,
+.real-estate-target-select em,
 .real-estate-card-meta {
   color: #0f766e;
 }
@@ -2021,6 +2042,37 @@ h3 {
 
 .real-estate-chart-legend .asking::before {
   background: #2563eb;
+}
+
+.real-estate-article-filter {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid #dce4ec;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.real-estate-article-filter button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.real-estate-article-filter button:hover,
+.real-estate-article-filter button:focus-visible {
+  color: #0f766e;
+}
+
+.real-estate-article-filter button.active {
+  background: #0f766e;
+  color: #ffffff;
 }
 
 .real-estate-chart {
@@ -2108,6 +2160,14 @@ h3 {
   overflow-wrap: anywhere;
   color: #152238;
   line-height: 1.3;
+}
+
+.real-estate-article-link {
+  overflow-wrap: anywhere;
+  color: #152238;
+  font-weight: 850;
+  line-height: 1.3;
+  text-decoration: none;
 }
 
 .real-estate-article-row span,
