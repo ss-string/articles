@@ -19,7 +19,7 @@ export async function queryVolatilityCalendarRows(): Promise<RawVolatilityCalend
   const supabase = createClient(url, publishableKey);
   const { data, error } = await supabase
     .from(tableName)
-    .select('id, issue_date, events, created_at, updated_at')
+    .select('id, issue_date, events, updated_at')
     .order('issue_date', { ascending: false })
     .limit(1);
 

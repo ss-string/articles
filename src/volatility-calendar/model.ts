@@ -137,7 +137,7 @@ function deriveStance(value: Record<string, unknown>): VolatilityStance {
   }
 
   const category = parseText(value.category)?.toLowerCase() ?? '';
-  const bearCategories = ['inflation', 'central_bank', 'minutes', 'holiday', 'expiry', 'month_end'];
+  const bearCategories = ['inflation', 'central_bank', 'minutes', 'holiday', 'expiry', 'month_end', 'rebalance', 'rebalancing'];
 
   return bearCategories.some((item) => category.includes(item)) ? 'bear' : 'bull';
 }

@@ -99,4 +99,16 @@ describe('volatility calendar model', () => {
     expect(filterVolatilityEvents(calendar?.events ?? [], 'KR_STOCK').map((event) => event.marketLabel)).toEqual(['한국']);
     expect(filterVolatilityEvents(calendar?.events ?? [], 'US_STOCK').map((event) => event.marketLabel)).toEqual(['미국']);
   });
+
+  it('treats rebalance categories as Bear when stance is missing', () => {
+    const calendar = normalizeVolatilityCalendarRow({
+      ...rawRow,
+      events: [
+        { event: '월말 리밸런싱', market: 'US_STOCK', category: 'equity_rebalance', date_kst: '2026-05-29', risk_level: 0.8 },
+        { event: '분기 리밸런싱', market: 'KR_STOCK', category: 'quarterly_rebalancing', date_kst: '2026-05-30', risk_level: 0.7 },
+      ],
+    });
+
+    expect(calendar?.events.map((event) => event.stanceLabel)).toEqual(['Bear', 'Bear']);
+  });
 });
