@@ -211,6 +211,28 @@ describe('App routing', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'AI 분석 리포트' })).toBeInTheDocument();
   });
 
+  it('navigates to the volatility calendar from finance tabs', async () => {
+    const user = userEvent.setup();
+    window.history.pushState({}, '', '/articles/finance/consensus');
+
+    render(
+      <App
+        queryRows={async () => rows}
+        queryHotNewsRows={async () => hotNewsRows}
+        queryMacroRows={async () => macroRows}
+        queryReports={async () => []}
+        queryVolatilityRows={async () => volatilityRows}
+      />,
+    );
+
+    await user.click(screen.getByRole('tab', { name: '변동성 캘린더' }));
+
+    expect(window.location.pathname).toBe('/articles/finance/volatility-calendar');
+    expect(screen.getByRole('heading', { level: 1, name: '변동성 캘린더' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: '45일 이벤트 캘린더' })).toBeInTheDocument();
+    expect(await screen.findByText('미국 4월 소비자물가지수')).toBeInTheDocument();
+  });
+
   it('opens and closes the mobile sidebar from the dimmed area without a close button', async () => {
     const user = userEvent.setup();
     const { container } = render(
