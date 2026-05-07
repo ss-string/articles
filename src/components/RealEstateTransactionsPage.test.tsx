@@ -92,6 +92,7 @@ describe('RealEstateTransactionsPage', () => {
       'href',
       'https://fin.land.naver.com/complexes/c1?tab=article',
     );
+    expect(screen.getByRole('button', { name: '약수하이츠 관심 단지 선택' })).toHaveTextContent('전체 매물 2건');
     expect(screen.getByText('실거래 평균')).toBeInTheDocument();
     expect(screen.getByText('호가 평균')).toBeInTheDocument();
     expect(screen.getByText('중위값')).toBeInTheDocument();

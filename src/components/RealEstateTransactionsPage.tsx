@@ -188,6 +188,7 @@ export function RealEstateTransactionsPage({ queryTables }: RealEstateTransactio
                     <span>{formatCount(target.households)}세대</span>
                     <span>사용승인 {target.approvedAt ?? '-'}</span>
                     <span>중위값 이하 {target.belowMedianArticles.length.toLocaleString('ko-KR')}건</span>
+                    <span>전체 매물 {target.currentArticles.length.toLocaleString('ko-KR')}건</span>
                     <em>호가 {formatKoreanHousePrice(target.latestMetric?.askingAveragePrice ?? null)}</em>
                   </button>
                 </article>

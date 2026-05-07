@@ -1902,9 +1902,6 @@ h3 {
   grid-template-columns: 270px minmax(0, 1fr);
   gap: 14px;
   align-items: start;
-  max-height: calc(100vh - 250px);
-  min-height: 520px;
-  overflow: hidden;
 }
 
 .real-estate-target-list {
@@ -1987,15 +1984,21 @@ h3 {
 .real-estate-main {
   display: grid;
   gap: 14px;
-  max-height: calc(100vh - 250px);
   min-width: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding-right: 4px;
 }
 
 .real-estate-summary-grid {
   gap: 10px;
+}
+
+.real-estate-summary-grid .summary-card {
+  padding: 16px;
+}
+
+.real-estate-summary-grid .summary-card strong {
+  overflow-wrap: anywhere;
+  font-size: clamp(1.45rem, 2.6vw, 2.45rem);
+  line-height: 1.15;
 }
 
 .real-estate-panel {
@@ -2259,9 +2262,6 @@ h3 {
 
   .real-estate-layout {
     grid-template-columns: 1fr;
-    max-height: none;
-    min-height: 0;
-    overflow: visible;
   }
 
   .real-estate-target-list {
@@ -2276,8 +2276,6 @@ h3 {
   }
 
   .real-estate-main {
-    max-height: none;
-    overflow: visible;
     padding-right: 0;
   }
 
