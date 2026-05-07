@@ -36,6 +36,28 @@ function formatPercent(value: number | null) {
   return value === null || !Number.isFinite(value) ? '-' : `${value.toFixed(1)}%`;
 }
 
+function formatSignedPercent(value: number | null) {
+  if (value === null || !Number.isFinite(value)) {
+    return '-';
+  }
+
+  const sign = value > 0 ? '+' : '';
+  return `${sign}${value.toFixed(1)}%`;
+}
+
+function formatSignedKoreanHousePrice(value: number | null) {
+  if (value === null || !Number.isFinite(value)) {
+    return '-';
+  }
+
+  if (value === 0) {
+    return '0';
+  }
+
+  const sign = value > 0 ? '+' : '-';
+  return `${sign}${formatKoreanHousePrice(Math.abs(value))}`;
+}
+
 function getMetricValues(metric: RealEstatePriceMetric) {
   return [metric.actualAveragePrice, metric.askingAveragePrice].filter(
     (value): value is number => value !== null && Number.isFinite(value),
@@ -90,10 +112,13 @@ function pointsToPolyline(points: ChartPoint[], key: 'actualY' | 'askingY') {
 }
 
 function PriceChart({ target }: { target: RealEstateInterestTarget }) {
+  const [activePointIndex, setActivePointIndex] = useState<number | null>(null);
   const chartPoints = useMemo(() => buildChartPoints(target.metricsSeries), [target.metricsSeries]);
   const actualPoints = pointsToPolyline(chartPoints, 'actualY');
   const askingPoints = pointsToPolyline(chartPoints, 'askingY');
   const displayPyeongName = getDisplayPyeongName(target);
+  const activeMetric = activePointIndex === null ? null : target.metricsSeries[activePointIndex];
+  const activePoint = activePointIndex === null ? null : chartPoints[activePointIndex];
 
   return (
     <div
@@ -118,6 +143,39 @@ function PriceChart({ target }: { target: RealEstateInterestTarget }) {
       ) : (
         <div className="real-estate-chart-empty">표시할 가격 흐름이 없습니다.</div>
       )}
+      {chartPoints.map((point, index) => {
+        const metric = target.metricsSeries[index];
+        const top = Math.min(point.actualY ?? 110, point.askingY ?? 110);
+
+        return (
+          <button
+            aria-label={`${metric.metricDate ?? `${index + 1}번째`} 가격 보기`}
+            className="real-estate-chart-hit-area"
+            key={`${target.id}-hit-${index}`}
+            style={{ left: `${(point.x / 520) * 100}%`, top: `${(top / 220) * 100}%` }}
+            type="button"
+            onBlur={() => setActivePointIndex(null)}
+            onFocus={() => setActivePointIndex(index)}
+            onMouseEnter={() => setActivePointIndex(index)}
+            onMouseLeave={() => setActivePointIndex(null)}
+          />
+        );
+      })}
+      {activeMetric && activePoint ? (
+        <div
+          aria-label={`${activeMetric.metricDate ?? '선택 지점'} 가격`}
+          className="real-estate-chart-tooltip"
+          role="status"
+          style={{
+            left: `${(activePoint.x / 520) * 100}%`,
+            top: `${(Math.min(activePoint.actualY ?? 110, activePoint.askingY ?? 110) / 220) * 100}%`,
+          }}
+        >
+          <strong>{activeMetric.metricDate ?? '가격'}</strong>
+          <span>실거래 {formatKoreanHousePrice(activeMetric.actualAveragePrice)}</span>
+          <span>호가 {formatKoreanHousePrice(activeMetric.askingAveragePrice)}</span>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -143,6 +201,12 @@ export function RealEstateTransactionsPage({ queryTables }: RealEstateTransactio
   const visibleArticles =
     articleFilter === 'all' ? selectedTarget?.currentArticles ?? [] : selectedTarget?.belowMedianArticles ?? [];
   const articleSectionTitle = articleFilter === 'all' ? '전체 매물' : '중위값 이하 매물';
+  const latestActualAverage = selectedTarget?.latestMetric?.actualAveragePrice ?? null;
+  const latestAskingAverage = selectedTarget?.latestMetric?.askingAveragePrice ?? null;
+  const askingGap =
+    latestActualAverage === null || latestAskingAverage === null ? null : latestAskingAverage - latestActualAverage;
+  const askingGapPercent =
+    askingGap === null || latestActualAverage === null || latestActualAverage <= 0 ? null : (askingGap / latestActualAverage) * 100;
 
   return (
     <section className="dashboard-section real-estate-section" aria-labelledby="real-estate-title">
@@ -205,10 +269,9 @@ export function RealEstateTransactionsPage({ queryTables }: RealEstateTransactio
               <article className="summary-card">
                 <span>호가 평균</span>
                 <strong>{formatKoreanHousePrice(selectedTarget.latestMetric?.askingAveragePrice ?? null)}</strong>
-              </article>
-              <article className="summary-card">
-                <span>중위값</span>
-                <strong>{formatKoreanHousePrice(selectedTarget.latestMetric?.actualMedianPrice ?? null)}</strong>
+                <em className="real-estate-gap-label">
+                  참고 갭 {formatSignedKoreanHousePrice(askingGap)} ({formatSignedPercent(askingGapPercent)})
+                </em>
               </article>
               <article className="summary-card">
                 <span>현재 매물</span>

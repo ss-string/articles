@@ -84,7 +84,7 @@ const tables: RawRealEstateTables = {
 
 describe('RealEstateTransactionsPage', () => {
   it('renders the active interest target summary, chart, and below-median articles', async () => {
-    render(<RealEstateTransactionsPage queryTables={async () => tables} />);
+    const { container } = render(<RealEstateTransactionsPage queryTables={async () => tables} />);
 
     expect(await screen.findByRole('heading', { name: '관심 단지 가격 흐름' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /약수하이츠/ })).toHaveClass('active');
@@ -95,9 +95,10 @@ describe('RealEstateTransactionsPage', () => {
     expect(screen.getByRole('button', { name: '약수하이츠 관심 단지 선택' })).toHaveTextContent('전체 매물 2건');
     expect(screen.getByText('실거래 평균')).toBeInTheDocument();
     expect(screen.getByText('호가 평균')).toBeInTheDocument();
-    expect(screen.getByText('중위값')).toBeInTheDocument();
+    expect(container.querySelector('.real-estate-summary-grid')).not.toHaveTextContent('중위값');
     expect(screen.getByText('현재 매물')).toBeInTheDocument();
     expect(screen.getByText('14억 8,000만')).toBeInTheDocument();
+    expect(container.querySelector('.real-estate-gap-label')).toHaveTextContent('참고 갭 -2,000만 (-1.4%)');
     expect(screen.getByRole('img', { name: '약수하이츠 80형 가격 비교 그래프' })).toBeInTheDocument();
 
     const belowMedianRegion = screen.getByRole('region', { name: '중위값 이하 매물' });
@@ -108,6 +109,17 @@ describe('RealEstateTransactionsPage', () => {
     expect(within(belowMedianRegion).getByText('116동 · 저/18')).toBeInTheDocument();
     expect(within(belowMedianRegion).getByText('-10.2%')).toHaveClass('below-average');
     expect(within(belowMedianRegion).queryByText('매물번호 a2')).not.toBeInTheDocument();
+  });
+
+  it('shows a price overlay when hovering a chart point', async () => {
+    const user = userEvent.setup();
+    render(<RealEstateTransactionsPage queryTables={async () => tables} />);
+
+    await user.hover(await screen.findByRole('button', { name: '2026-05-01 가격 보기' }));
+
+    const overlay = screen.getByRole('status', { name: '2026-05-01 가격' });
+    expect(overlay).toHaveTextContent('실거래 14억 8,000만');
+    expect(overlay).toHaveTextContent('호가 14억 6,000만');
   });
 
   it('toggles between below-median and all articles', async () => {

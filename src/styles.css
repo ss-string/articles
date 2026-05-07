@@ -1988,6 +1988,7 @@ h3 {
 }
 
 .real-estate-summary-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -1999,6 +2000,16 @@ h3 {
   overflow-wrap: anywhere;
   font-size: clamp(1.45rem, 2.6vw, 2.45rem);
   line-height: 1.15;
+}
+
+.real-estate-gap-label {
+  display: block;
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-style: normal;
+  font-weight: 850;
+  line-height: 1.35;
 }
 
 .real-estate-panel {
@@ -2090,6 +2101,7 @@ h3 {
 }
 
 .real-estate-chart {
+  position: relative;
   min-height: 242px;
   overflow: hidden;
   border: 1px solid #e3e7ee;
@@ -2142,6 +2154,46 @@ h3 {
   place-items: center;
   color: #64748b;
   font-weight: 750;
+}
+
+.real-estate-chart-hit-area {
+  position: absolute;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: crosshair;
+  transform: translate(-50%, -50%);
+}
+
+.real-estate-chart-hit-area:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+
+.real-estate-chart-tooltip {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  min-width: 150px;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid #b9d6d2;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.14);
+  color: #465468;
+  font-size: 0.78rem;
+  font-weight: 800;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 12px));
+}
+
+.real-estate-chart-tooltip strong {
+  color: #152238;
 }
 
 .real-estate-article-list {
