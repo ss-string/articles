@@ -59,7 +59,7 @@ const columnCandidates = {
   households: ['households', 'household_count'],
   approvedAt: ['use_approved_at', 'use_approved_date', 'approval_date'],
   pyeongName: ['display_pyeong_name', 'pyeong_name'],
-  articleNo: ['article_no', 'articleNo', 'id'],
+  articleNo: ['article_number', 'article_no', 'articleNo', 'id'],
   tradeType: ['trade_type', 'tradeType'],
   price: ['price', 'deal_or_warrant_prc', 'asking_price'],
   metricDate: ['metric_date', 'collected_at', 'created_at'],
@@ -246,7 +246,7 @@ export function buildRealEstateDashboard(tables: RawRealEstateTables): RealEstat
         belowMedianArticles:
           latestMedianPrice === null
             ? []
-            : currentArticles.filter((article) => article.price < latestMedianPrice).sort((left, right) => left.price - right.price),
+            : currentArticles.filter((article) => article.price <= latestMedianPrice).sort((left, right) => left.price - right.price),
         metricsSeries,
         latestMetric,
       };

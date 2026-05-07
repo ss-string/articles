@@ -27,7 +27,8 @@ describe('buildRealEstateDashboard', () => {
       ],
       articles: [
         { article_no: 'a2', complex_id: 'c1', pyeong_type: '80', trade_type: '매매', price: 1550000000 },
-        { article_no: 'a1', complex_id: 'c1', pyeong_type: '80', trade_type: 'sale', price: 1320000000 },
+        { article_number: 'a1', complex_id: 'c1', pyeong_type: '80', trade_type: 'sale', price: 1320000000 },
+        { article_number: 'median', complex_id: 'c1', pyeong_type: '80', trade_type: '매매', price: 1470000000 },
         { article_no: 'lease1', complex_id: 'c1', pyeong_type: '80', trade_type: '전세', price: 900000000 },
         { article_no: 'a3', complex_id: 'c1', pyeong_type: '80', trade_type: null, price: 1420000000 },
       ],
@@ -58,10 +59,11 @@ describe('buildRealEstateDashboard', () => {
       '래미안옥수리버젠',
     ]);
     expect(dashboard.targets[0]?.latestMetric?.actualAveragePrice).toBe(1480000000);
-    expect(dashboard.targets[0]?.belowMedianArticles.map((article) => article.articleNo)).toEqual(['a1', 'a3']);
+    expect(dashboard.targets[0]?.belowMedianArticles.map((article) => article.articleNo)).toEqual(['a1', 'a3', 'median']);
     expect(dashboard.targets[0]?.belowMedianArticles.map((article) => article.price)).toEqual([
       1320000000,
       1420000000,
+      1470000000,
     ]);
     expect(dashboard.targets[0]?.metricsSeries.map((metric) => metric.metricDate)).toEqual([
       '2026-04-01',
