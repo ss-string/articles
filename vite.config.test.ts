@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { resolveEnvDir } from './vite.config';
+import viteConfig, { resolveEnvDir } from './vite.config';
 
 describe('vite envDir resolution', () => {
   it('uses the parent project root when running inside a feature worktree', () => {
@@ -21,5 +21,11 @@ describe('vite envDir resolution', () => {
     const projectDirectory = path.join(path.sep, 'Users', 'sunghyun', 'project', 'articles');
 
     expect(resolveEnvDir(projectDirectory)).toBe(projectDirectory);
+  });
+
+  it('excludes local feature worktrees from the root test run', () => {
+    const exclude = viteConfig.test?.exclude ?? [];
+
+    expect(exclude).toContain('**/.worktrees/**');
   });
 });
