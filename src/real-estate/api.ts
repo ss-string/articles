@@ -31,7 +31,11 @@ export async function queryRealEstateTables(): Promise<RawRealEstateTables> {
   const supabase = createClient(url, publishableKey);
 
   const [interestTargets, complexes, pyeongOptions, articles, priceMetrics] = await Promise.all([
-    supabase.from(tableNames.interestTargets).select('*').order('sort_order', { ascending: true }),
+    supabase
+      .from(tableNames.interestTargets)
+      .select('*')
+      .eq('is_active', true)
+      .order('display_order', { ascending: true }),
     supabase.from(tableNames.complexes).select('*'),
     supabase.from(tableNames.pyeongOptions).select('*'),
     supabase.from(tableNames.articles).select('*'),
