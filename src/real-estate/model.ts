@@ -11,6 +11,8 @@ export type RawRealEstateTables = {
 export type RealEstatePriceMetric = {
   complexId: string;
   pyeongType: string;
+  tradeType: string | null;
+  windowMonths: number | null;
   metricDate: string | null;
   actualAveragePrice: number | null;
   askingAveragePrice: number | null;
@@ -58,20 +60,21 @@ const columnCandidates = {
   pyeongType: ['pyeong_type', 'pyeongType'],
   sortOrder: ['sort_order', 'sortOrder', 'display_order'],
   complexName: ['complex_name', 'name'],
-  households: ['households', 'household_count'],
-  approvedAt: ['use_approved_at', 'use_approved_date', 'approval_date'],
+  households: ['households', 'household_count', 'total_household_number'],
+  approvedAt: ['use_approved_at', 'use_approved_date', 'use_approval_date', 'approval_date'],
   pyeongName: ['display_pyeong_name', 'pyeong_name'],
   articleNo: ['article_number', 'article_no', 'articleNo', 'id'],
-  tradeType: ['trade_type', 'tradeType'],
-  price: ['price', 'deal_or_warrant_prc', 'asking_price'],
+  tradeType: ['trade_type', 'tradeType', 'trade_type_name'],
+  price: ['price', 'deal_price', 'deal_or_warrant_prc', 'asking_price'],
   buildingName: ['building_name', 'buildingName', 'dong_name'],
   floorInfo: ['floor_info', 'floorInfo', 'floor'],
-  metricDate: ['metric_date', 'collected_at', 'created_at'],
-  actualAveragePrice: ['actual_average_price', 'actual_avg_price', 'trade_average_price', 'average_price'],
+  windowMonths: ['window_months', 'windowMonths'],
+  metricDate: ['metric_date', 'collected_at', 'last_seen_at', 'updated_at', 'created_at'],
+  actualAveragePrice: ['actual_average_price', 'actual_avg_price', 'trade_average_price', 'average_price', 'median_deal_price'],
   askingAveragePrice: ['asking_average_price', 'asking_avg_price', 'article_average_price'],
-  actualMedianPrice: ['actual_median_price', 'median_price', 'trade_median_price'],
-  minPrice: ['min_price', 'actual_min_price', 'asking_min_price'],
-  maxPrice: ['max_price', 'actual_max_price', 'asking_max_price'],
+  actualMedianPrice: ['actual_median_price', 'median_deal_price', 'median_price', 'trade_median_price'],
+  minPrice: ['min_price', 'min_deal_price', 'actual_min_price', 'asking_min_price'],
+  maxPrice: ['max_price', 'max_deal_price', 'actual_max_price', 'asking_max_price'],
 } as const;
 
 function readValue(row: RawRealEstateRow, candidates: readonly string[]) {
@@ -128,7 +131,12 @@ function sortByMetricDateAsc(left: RealEstatePriceMetric, right: RealEstatePrice
 }
 
 function isSaleTradeType(value: string | null) {
-  return value === null || value === '매매' || value.toLowerCase() === 'sale';
+  if (value === null) {
+    return false;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return ['매매', 'sale', 'a1'].includes(normalized);
 }
 
 function normalizeMetric(row: RawRealEstateRow): RealEstatePriceMetric | null {
@@ -142,6 +150,8 @@ function normalizeMetric(row: RawRealEstateRow): RealEstatePriceMetric | null {
   return {
     complexId,
     pyeongType,
+    tradeType: parseText(readValue(row, columnCandidates.tradeType)),
+    windowMonths: parseNumber(readValue(row, columnCandidates.windowMonths)),
     metricDate: parseText(readValue(row, columnCandidates.metricDate)),
     actualAveragePrice: parseNumber(readValue(row, columnCandidates.actualAveragePrice)),
     askingAveragePrice: parseNumber(readValue(row, columnCandidates.askingAveragePrice)),
@@ -149,6 +159,35 @@ function normalizeMetric(row: RawRealEstateRow): RealEstatePriceMetric | null {
     minPrice: parseNumber(readValue(row, columnCandidates.minPrice)),
     maxPrice: parseNumber(readValue(row, columnCandidates.maxPrice)),
   };
+}
+
+function selectTargetMetrics(metrics: RealEstatePriceMetric[]) {
+  const saleMetrics = metrics.filter((metric) => {
+    if (metric.tradeType === null) {
+      return true;
+    }
+
+    return isSaleTradeType(metric.tradeType);
+  });
+  const source = saleMetrics.length > 0 ? saleMetrics : metrics;
+  const windowedSource = (() => {
+    if (source.some((metric) => metric.windowMonths === 3)) {
+      return source.filter((metric) => metric.windowMonths === 3);
+    }
+
+    const windowValues = source
+      .map((metric) => metric.windowMonths)
+      .filter((value): value is number => value !== null);
+
+    if (windowValues.length === 0) {
+      return source;
+    }
+
+    const shortestWindow = Math.min(...windowValues);
+    return source.filter((metric) => metric.windowMonths === shortestWindow);
+  })();
+
+  return [...windowedSource].sort(sortByMetricDateAsc);
 }
 
 function normalizeArticle(row: RawRealEstateRow, latestMedianPrice: number | null): RealEstateArticle | null {
@@ -225,7 +264,7 @@ export function buildRealEstateDashboard(tables: RawRealEstateTables): RealEstat
 
       const complex = complexesById.get(complexId);
       const pyeongOption = pyeongOptionsByKey.get(key);
-      const metricsSeries = [...(metricsByKey.get(key) ?? [])].sort(sortByMetricDateAsc);
+      const metricsSeries = selectTargetMetrics(metricsByKey.get(key) ?? []);
       const latestMetric = metricsSeries.length > 0 ? metricsSeries[metricsSeries.length - 1] : null;
       const latestMedianPrice = latestMetric?.actualMedianPrice ?? null;
       const currentArticles = tables.articles

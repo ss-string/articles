@@ -38,7 +38,8 @@ describe('buildRealEstateDashboard', () => {
         },
         { article_number: 'median', complex_id: 'c1', pyeong_type: '80', trade_type: '매매', price: 1470000000 },
         { article_no: 'lease1', complex_id: 'c1', pyeong_type: '80', trade_type: '전세', price: 900000000 },
-        { article_no: 'a3', complex_id: 'c1', pyeong_type: '80', trade_type: null, price: 1420000000 },
+        { article_no: 'unknown1', complex_id: 'c1', pyeong_type: '80', trade_type: null, price: 1420000000 },
+        { article_no: 'a3', complex_id: 'c1', pyeong_type: '80', trade_type: '매매', price: 1420000000 },
       ],
       priceMetrics: [
         {
@@ -81,6 +82,88 @@ describe('buildRealEstateDashboard', () => {
       '2026-04-01',
       '2026-05-01',
     ]);
+  });
+
+  it('accepts the local Supabase real estate schema column names and prefers sale metrics', () => {
+    const dashboard = buildRealEstateDashboard({
+      interestTargets: [{ complex_id: 'c1', pyeong_type: '80', sort_order: 1 }],
+      complexes: [
+        {
+          complex_id: 'c1',
+          complex_name: '약수하이츠',
+          total_household_number: 2282,
+          use_approval_date: '1999-07-30',
+        },
+      ],
+      pyeongOptions: [{ complex_id: 'c1', pyeong_type: '80', pyeong_name: '80형', exclusive_space: 59.97 }],
+      articles: [
+        {
+          article_number: 'sale1',
+          complex_id: 'c1',
+          pyeong_type: '80',
+          trade_type_name: '매매',
+          deal_price: 1320000000,
+          dong_name: '116동',
+          floor_info: '저/18',
+        },
+        {
+          article_number: 'lease1',
+          complex_id: 'c1',
+          pyeong_type: '80',
+          trade_type_name: '전세',
+          deal_price: 700000000,
+        },
+        {
+          article_number: 'unknown1',
+          complex_id: 'c1',
+          pyeong_type: '80',
+          deal_price: 1200000000,
+        },
+      ],
+      priceMetrics: [
+        {
+          complex_id: 'c1',
+          pyeong_type: '80',
+          trade_type: '전세',
+          window_months: 3,
+          median_deal_price: 700000000,
+          updated_at: '2026-05-03T00:00:00Z',
+        },
+        {
+          complex_id: 'c1',
+          pyeong_type: '80',
+          trade_type: '매매',
+          window_months: 12,
+          median_deal_price: 1600000000,
+          updated_at: '2026-05-04T00:00:00Z',
+        },
+        {
+          complex_id: 'c1',
+          pyeong_type: '80',
+          trade_type: '매매',
+          window_months: 3,
+          median_deal_price: 1470000000,
+          min_deal_price: 1320000000,
+          max_deal_price: 1590000000,
+          updated_at: '2026-05-02T00:00:00Z',
+        },
+      ],
+    });
+
+    expect(dashboard.targets[0]).toMatchObject({
+      households: 2282,
+      approvedAt: '1999-07-30',
+      pyeongName: '80형',
+      latestMetric: {
+        tradeType: '매매',
+        windowMonths: 3,
+        actualAveragePrice: 1470000000,
+        actualMedianPrice: 1470000000,
+        minPrice: 1320000000,
+        maxPrice: 1590000000,
+      },
+    });
+    expect(dashboard.targets[0]?.belowMedianArticles.map((article) => article.articleNo)).toEqual(['sale1']);
   });
 });
 
