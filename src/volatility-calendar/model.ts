@@ -102,7 +102,7 @@ export function formatKstDateLabel(value: string): string {
   const date = new Date(year, month - 1, day);
   const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
 
-  return `${value.replaceAll('-', '.')} ${weekdays[date.getDay()]}`;
+  return `${value.replace(/-/g, '.')} ${weekdays[date.getDay()]}`;
 }
 
 function formatUpdatedAtLabel(value: unknown): { updatedAt: string | null; updatedAtLabel: string } {
