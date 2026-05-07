@@ -63,6 +63,7 @@ const columnCandidates = {
   households: ['households', 'household_count', 'total_household_number'],
   approvedAt: ['use_approved_at', 'use_approved_date', 'use_approval_date', 'approval_date'],
   pyeongName: ['display_pyeong_name', 'pyeong_name'],
+  exclusiveSpace: ['exclusive_space', 'exclusiveSpace'],
   articleNo: ['article_number', 'article_no', 'articleNo', 'id'],
   tradeType: ['trade_type', 'tradeType', 'trade_type_name'],
   price: ['price', 'deal_price', 'deal_or_warrant_prc', 'asking_price'],
@@ -70,7 +71,7 @@ const columnCandidates = {
   floorInfo: ['floor_info', 'floorInfo', 'floor'],
   windowMonths: ['window_months', 'windowMonths'],
   metricDate: ['metric_date', 'collected_at', 'last_seen_at', 'updated_at', 'created_at'],
-  actualAveragePrice: ['actual_average_price', 'actual_avg_price', 'trade_average_price', 'average_price', 'median_deal_price'],
+  actualAveragePrice: ['actual_average_price', 'actual_avg_price', 'trade_average_price', 'average_price'],
   askingAveragePrice: ['asking_average_price', 'asking_avg_price', 'article_average_price'],
   actualMedianPrice: ['actual_median_price', 'median_deal_price', 'median_price', 'trade_median_price'],
   minPrice: ['min_price', 'min_deal_price', 'actual_min_price', 'asking_min_price'],
@@ -126,6 +127,19 @@ function tableKey(complexId: string | null, pyeongType: string | null) {
   return complexId && pyeongType ? `${complexId}:${pyeongType}` : null;
 }
 
+function parseExclusiveSpace(row: RawRealEstateRow | null | undefined): number | null {
+  return row ? parseNumber(readValue(row, columnCandidates.exclusiveSpace)) : null;
+}
+
+function mergeKey(complexId: string | null, pyeongType: string | null, pyeongOption: RawRealEstateRow | undefined) {
+  if (!complexId || !pyeongType) {
+    return null;
+  }
+
+  const exclusiveSpace = parseExclusiveSpace(pyeongOption);
+  return exclusiveSpace === null ? tableKey(complexId, pyeongType) : `${complexId}:exclusive:${exclusiveSpace.toFixed(2)}`;
+}
+
 function sortByMetricDateAsc(left: RealEstatePriceMetric, right: RealEstatePriceMetric) {
   return (left.metricDate ?? '').localeCompare(right.metricDate ?? '');
 }
@@ -139,9 +153,48 @@ function isSaleTradeType(value: string | null) {
   return ['매매', 'sale', 'a1'].includes(normalized);
 }
 
+function averageNumbers(values: Array<number | null>) {
+  const numbers = values.filter((value): value is number => value !== null && Number.isFinite(value));
+  return numbers.length === 0 ? null : numbers.reduce((sum, value) => sum + value, 0) / numbers.length;
+}
+
+function minNumber(values: Array<number | null>) {
+  const numbers = values.filter((value): value is number => value !== null && Number.isFinite(value));
+  return numbers.length === 0 ? null : Math.min(...numbers);
+}
+
+function maxNumber(values: Array<number | null>) {
+  const numbers = values.filter((value): value is number => value !== null && Number.isFinite(value));
+  return numbers.length === 0 ? null : Math.max(...numbers);
+}
+
+function parseRawRealPriceAverage(row: RawRealEstateRow): number | null {
+  const rawRealPrice = row.raw_real_price;
+
+  if (!rawRealPrice || typeof rawRealPrice !== 'object' || !('records' in rawRealPrice)) {
+    return null;
+  }
+
+  const records = (rawRealPrice as { records?: unknown }).records;
+  if (!Array.isArray(records)) {
+    return null;
+  }
+
+  return averageNumbers(
+    records.map((record) => {
+      if (!record || typeof record !== 'object') {
+        return null;
+      }
+
+      return parseNumber((record as { dealPrice?: unknown; deal_price?: unknown }).dealPrice ?? (record as { deal_price?: unknown }).deal_price);
+    }),
+  );
+}
+
 function normalizeMetric(row: RawRealEstateRow): RealEstatePriceMetric | null {
   const complexId = parseComplexId(row);
   const pyeongType = parsePyeongType(row);
+  const actualMedianPrice = parseNumber(readValue(row, columnCandidates.actualMedianPrice));
 
   if (!complexId || !pyeongType) {
     return null;
@@ -153,9 +206,10 @@ function normalizeMetric(row: RawRealEstateRow): RealEstatePriceMetric | null {
     tradeType: parseText(readValue(row, columnCandidates.tradeType)),
     windowMonths: parseNumber(readValue(row, columnCandidates.windowMonths)),
     metricDate: parseText(readValue(row, columnCandidates.metricDate)),
-    actualAveragePrice: parseNumber(readValue(row, columnCandidates.actualAveragePrice)),
+    actualAveragePrice:
+      parseNumber(readValue(row, columnCandidates.actualAveragePrice)) ?? parseRawRealPriceAverage(row) ?? actualMedianPrice,
     askingAveragePrice: parseNumber(readValue(row, columnCandidates.askingAveragePrice)),
-    actualMedianPrice: parseNumber(readValue(row, columnCandidates.actualMedianPrice)),
+    actualMedianPrice,
     minPrice: parseNumber(readValue(row, columnCandidates.minPrice)),
     maxPrice: parseNumber(readValue(row, columnCandidates.maxPrice)),
   };
@@ -188,6 +242,32 @@ function selectTargetMetrics(metrics: RealEstatePriceMetric[]) {
   })();
 
   return [...windowedSource].sort(sortByMetricDateAsc);
+}
+
+function aggregateMetrics(metrics: RealEstatePriceMetric[]): RealEstatePriceMetric[] {
+  const grouped = groupByKey(
+    metrics,
+    (metric) => `${metric.metricDate ?? ''}:${metric.tradeType ?? ''}:${metric.windowMonths ?? ''}`,
+  );
+
+  return Array.from(grouped.values())
+    .map((items) => {
+      const first = items[0]!;
+
+      return {
+        complexId: first.complexId,
+        pyeongType: first.pyeongType,
+        tradeType: first.tradeType,
+        windowMonths: first.windowMonths,
+        metricDate: first.metricDate,
+        actualAveragePrice: averageNumbers(items.map((item) => item.actualAveragePrice)),
+        askingAveragePrice: averageNumbers(items.map((item) => item.askingAveragePrice)),
+        actualMedianPrice: averageNumbers(items.map((item) => item.actualMedianPrice)),
+        minPrice: minNumber(items.map((item) => item.minPrice)),
+        maxPrice: maxNumber(items.map((item) => item.maxPrice)),
+      };
+    })
+    .sort(sortByMetricDateAsc);
 }
 
 function normalizeArticle(row: RawRealEstateRow, latestMedianPrice: number | null): RealEstateArticle | null {
@@ -251,40 +331,89 @@ export function buildRealEstateDashboard(tables: RawRealEstateTables): RealEstat
     tables.priceMetrics.map(normalizeMetric).filter((metric): metric is RealEstatePriceMetric => metric !== null),
     (metric) => tableKey(metric.complexId, metric.pyeongType),
   );
+  const targetGroups = groupByKey(
+    tables.interestTargets
+      .map((row) => {
+        const complexId = parseComplexId(row);
+        const pyeongType = parsePyeongType(row);
+        const key = tableKey(complexId, pyeongType);
+        const pyeongOption = key ? pyeongOptionsByKey.get(key) : undefined;
 
-  const targets = tables.interestTargets
-    .map((row): RealEstateInterestTarget | null => {
-      const complexId = parseComplexId(row);
-      const pyeongType = parsePyeongType(row);
-      const key = tableKey(complexId, pyeongType);
+        if (!complexId || !pyeongType || !key) {
+          return null;
+        }
 
-      if (!complexId || !pyeongType || !key) {
+        return {
+          row,
+          complexId,
+          pyeongType,
+          key,
+          pyeongOption,
+          sortOrder: parseNumber(readValue(row, columnCandidates.sortOrder)) ?? Number.MAX_SAFE_INTEGER,
+        };
+      })
+      .filter(
+        (
+          target,
+        ): target is {
+          row: RawRealEstateRow;
+          complexId: string;
+          pyeongType: string;
+          key: string;
+          pyeongOption: RawRealEstateRow | undefined;
+          sortOrder: number;
+        } => target !== null,
+      ),
+    (target) => mergeKey(target.complexId, target.pyeongType, target.pyeongOption),
+  );
+
+  const targets = Array.from(targetGroups.entries())
+    .map(([groupKey, groupedTargets]): RealEstateInterestTarget | null => {
+      const sortedTargets = [...groupedTargets].sort((left, right) => left.sortOrder - right.sortOrder);
+      const firstTarget = sortedTargets[0];
+      if (!firstTarget) {
         return null;
       }
 
+      const { complexId } = firstTarget;
+      const pyeongTypes = new Set(sortedTargets.map((target) => target.pyeongType));
       const complex = complexesById.get(complexId);
-      const pyeongOption = pyeongOptionsByKey.get(key);
-      const metricsSeries = selectTargetMetrics(metricsByKey.get(key) ?? []);
-      const latestMetric = metricsSeries.length > 0 ? metricsSeries[metricsSeries.length - 1] : null;
-      const latestMedianPrice = latestMetric?.actualMedianPrice ?? null;
+      const rawMetrics = sortedTargets.flatMap((target) => metricsByKey.get(target.key) ?? []);
+      const metricsSeries = aggregateMetrics(selectTargetMetrics(rawMetrics));
+      const latestMetricWithoutAsking = metricsSeries.length > 0 ? metricsSeries[metricsSeries.length - 1] : null;
+      const latestMedianPrice = latestMetricWithoutAsking?.actualMedianPrice ?? null;
       const currentArticles = tables.articles
         .map((article) => normalizeArticle(article, latestMedianPrice))
         .filter(
           (article): article is RealEstateArticle =>
-            article !== null && article.complexId === complexId && article.pyeongType === pyeongType,
+            article !== null && article.complexId === complexId && pyeongTypes.has(article.pyeongType),
         )
         .sort((left, right) => left.price - right.price);
+      const articleAskingAverage = averageNumbers(currentArticles.map((article) => article.price));
+      const metricsSeriesWithAsking = metricsSeries.map((metric) => ({
+        ...metric,
+        askingAveragePrice: metric.askingAveragePrice ?? articleAskingAverage,
+      }));
+      const latestMetric = metricsSeriesWithAsking.length > 0 ? metricsSeriesWithAsking[metricsSeriesWithAsking.length - 1] : null;
+      const pyeongNames = sortedTargets
+        .map(
+          (target) =>
+            parseText(readValue(target.row, columnCandidates.pyeongName)) ??
+            parseText(target.pyeongOption ? readValue(target.pyeongOption, columnCandidates.pyeongName) : null) ??
+            target.pyeongType,
+        )
+        .filter((name, index, names) => names.indexOf(name) === index);
 
       return {
-        id: parseText(readValue(row, columnCandidates.id)) ?? key,
+        id: groupKey,
         complexId,
-        pyeongType,
-        sortOrder: parseNumber(readValue(row, columnCandidates.sortOrder)) ?? Number.MAX_SAFE_INTEGER,
+        pyeongType: sortedTargets.map((target) => target.pyeongType).join(','),
+        sortOrder: firstTarget.sortOrder,
         complexName:
-          parseText(readValue(row, columnCandidates.complexName)) ??
+          parseText(readValue(firstTarget.row, columnCandidates.complexName)) ??
           parseText(complex ? readValue(complex, columnCandidates.complexName) : null) ??
           complexId,
-        pyeongName: parseText(pyeongOption ? readValue(pyeongOption, columnCandidates.pyeongName) : null),
+        pyeongName: pyeongNames.join(' / '),
         households: parseNumber(complex ? readValue(complex, columnCandidates.households) : null),
         approvedAt: parseText(complex ? readValue(complex, columnCandidates.approvedAt) : null),
         currentArticles,
@@ -292,7 +421,7 @@ export function buildRealEstateDashboard(tables: RawRealEstateTables): RealEstat
           latestMedianPrice === null
             ? []
             : currentArticles.filter((article) => article.price <= latestMedianPrice).sort((left, right) => left.price - right.price),
-        metricsSeries,
+        metricsSeries: metricsSeriesWithAsking,
         latestMetric,
       };
     })

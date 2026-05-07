@@ -165,6 +165,113 @@ describe('buildRealEstateDashboard', () => {
     });
     expect(dashboard.targets[0]?.belowMedianArticles.map((article) => article.articleNo)).toEqual(['sale1']);
   });
+
+  it('merges same-complex pyeong targets with the same exclusive area and derives asking average from articles', () => {
+    const dashboard = buildRealEstateDashboard({
+      interestTargets: [
+        { complex_id: '103797', pyeong_type: '3', display_order: 5, display_pyeong_name: '84C' },
+        { complex_id: '103797', pyeong_type: '1', display_order: 6, display_pyeong_name: '85A' },
+        { complex_id: '103797', pyeong_type: '2', display_order: 7, display_pyeong_name: '85B' },
+      ],
+      complexes: [
+        {
+          complex_id: '103797',
+          complex_name: '래미안크레시티',
+          total_household_number: 2397,
+          use_approval_date: '2014-10-23',
+        },
+      ],
+      pyeongOptions: [
+        { complex_id: '103797', pyeong_type: '1', pyeong_name: '85A', exclusive_space: 59.99 },
+        { complex_id: '103797', pyeong_type: '2', pyeong_name: '85B', exclusive_space: 59.99 },
+        { complex_id: '103797', pyeong_type: '3', pyeong_name: '84C', exclusive_space: 59.99 },
+      ],
+      articles: [
+        {
+          article_number: 'c-low',
+          complex_id: '103797',
+          pyeong_type: '3',
+          trade_type_name: '매매',
+          deal_price: 1520000000,
+        },
+        {
+          article_number: 'a-high',
+          complex_id: '103797',
+          pyeong_type: '1',
+          trade_type_name: '매매',
+          deal_price: 1600000000,
+        },
+        {
+          article_number: 'b-high',
+          complex_id: '103797',
+          pyeong_type: '2',
+          trade_type_name: '매매',
+          deal_price: 1640000000,
+        },
+      ],
+      priceMetrics: [
+        {
+          complex_id: '103797',
+          pyeong_type: '1',
+          trade_type: 'A1',
+          window_months: 3,
+          median_deal_price: 1547500000,
+          raw_real_price: {
+            records: [
+              { dealPrice: 1510000000 },
+              { dealPrice: 1620000000 },
+            ],
+          },
+          updated_at: '2026-05-07T08:02:25.029+00:00',
+        },
+        {
+          complex_id: '103797',
+          pyeong_type: '2',
+          trade_type: 'A1',
+          window_months: 3,
+          median_deal_price: 1547500000,
+          raw_real_price: {
+            records: [
+              { dealPrice: 1510000000 },
+              { dealPrice: 1620000000 },
+            ],
+          },
+          updated_at: '2026-05-07T08:02:25.029+00:00',
+        },
+        {
+          complex_id: '103797',
+          pyeong_type: '3',
+          trade_type: 'A1',
+          window_months: 3,
+          median_deal_price: 1547500000,
+          raw_real_price: {
+            records: [
+              { dealPrice: 1510000000 },
+              { dealPrice: 1620000000 },
+            ],
+          },
+          updated_at: '2026-05-07T08:02:25.029+00:00',
+        },
+      ],
+    });
+
+    expect(dashboard.targets).toHaveLength(1);
+    expect(dashboard.targets[0]).toMatchObject({
+      complexName: '래미안크레시티',
+      pyeongName: '84C / 85A / 85B',
+      latestMetric: {
+        actualAveragePrice: 1565000000,
+        actualMedianPrice: 1547500000,
+        askingAveragePrice: 1586666666.6666667,
+      },
+    });
+    expect(dashboard.targets[0]?.currentArticles.map((article) => article.articleNo)).toEqual([
+      'c-low',
+      'a-high',
+      'b-high',
+    ]);
+    expect(dashboard.targets[0]?.belowMedianArticles.map((article) => article.articleNo)).toEqual(['c-low']);
+  });
 });
 
 describe('formatKoreanHousePrice', () => {
