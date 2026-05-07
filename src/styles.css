@@ -1902,12 +1902,19 @@ h3 {
   grid-template-columns: 270px minmax(0, 1fr);
   gap: 14px;
   align-items: start;
+  max-height: calc(100vh - 250px);
+  min-height: 520px;
+  overflow: hidden;
 }
 
 .real-estate-target-list {
   display: grid;
   gap: 10px;
+  max-height: calc(100vh - 250px);
   min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
 }
 
 .real-estate-target-card {
@@ -1980,7 +1987,11 @@ h3 {
 .real-estate-main {
   display: grid;
   gap: 14px;
+  max-height: calc(100vh - 250px);
   min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
 }
 
 .real-estate-summary-grid {
@@ -2178,8 +2189,8 @@ h3 {
   font-weight: 750;
 }
 
-.real-estate-article-row em.discount {
-  color: #dc2626;
+.real-estate-article-row em.below-average {
+  color: #0f766e;
 }
 
 @media (max-width: 900px) {
@@ -2248,14 +2259,26 @@ h3 {
 
   .real-estate-layout {
     grid-template-columns: 1fr;
+    max-height: none;
+    min-height: 0;
+    overflow: visible;
   }
 
   .real-estate-target-list {
     grid-auto-columns: minmax(220px, 72vw);
     grid-auto-flow: column;
     grid-template-columns: none;
+    max-height: none;
     overflow-x: auto;
+    overflow-y: hidden;
     padding-bottom: 4px;
+    padding-right: 0;
+  }
+
+  .real-estate-main {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
   }
 
   .macro-modal {

@@ -279,7 +279,7 @@ export function RealEstateTransactionsPage({ queryTables }: RealEstateTransactio
                       </div>
                       <div>
                         <strong>{formatKoreanHousePrice(article.price)}</strong>
-                        <em className={article.priceGapPercentFromMedian !== null && article.priceGapPercentFromMedian < 0 ? 'discount' : ''}>
+                        <em className={article.priceGapPercentFromMedian !== null && article.priceGapPercentFromMedian < 0 ? 'below-average' : ''}>
                           {formatPercent(article.priceGapPercentFromMedian)}
                         </em>
                       </div>

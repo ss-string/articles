@@ -141,17 +141,12 @@ function buildNaverArticleUrl(articleNo: string) {
   return `https://fin.land.naver.com/articles/${encodeURIComponent(articleNo)}`;
 }
 
-function parseExclusiveSpace(row: RawRealEstateRow | null | undefined): number | null {
-  return row ? parseNumber(readValue(row, columnCandidates.exclusiveSpace)) : null;
-}
-
-function mergeKey(complexId: string | null, pyeongType: string | null, pyeongOption: RawRealEstateRow | undefined) {
-  if (!complexId || !pyeongType) {
+function mergeKey(complexId: string | null) {
+  if (!complexId) {
     return null;
   }
 
-  const exclusiveSpace = parseExclusiveSpace(pyeongOption);
-  return exclusiveSpace === null ? tableKey(complexId, pyeongType) : `${complexId}:exclusive:${exclusiveSpace.toFixed(2)}`;
+  return complexId;
 }
 
 function sortByMetricDateAsc(left: RealEstatePriceMetric, right: RealEstatePriceMetric) {
@@ -382,7 +377,7 @@ export function buildRealEstateDashboard(tables: RawRealEstateTables): RealEstat
           sortOrder: number;
         } => target !== null,
       ),
-    (target) => mergeKey(target.complexId, target.pyeongType, target.pyeongOption),
+    (target) => mergeKey(target.complexId),
   );
 
   const targets = Array.from(targetGroups.entries())

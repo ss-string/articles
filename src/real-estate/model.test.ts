@@ -272,6 +272,58 @@ describe('buildRealEstateDashboard', () => {
     ]);
     expect(dashboard.targets[0]?.belowMedianArticles.map((article) => article.articleNo)).toEqual(['c-low']);
   });
+
+  it('merges all interest pyeongs under the same complex even when exclusive areas differ or are missing', () => {
+    const dashboard = buildRealEstateDashboard({
+      interestTargets: [
+        { complex_id: '100692', pyeong_type: '1', display_order: 1, display_pyeong_name: '1' },
+        { complex_id: '100692', pyeong_type: '2', display_order: 2, display_pyeong_name: '79B' },
+        { complex_id: '100692', pyeong_type: '3', display_order: 3, display_pyeong_name: '79C' },
+        { complex_id: '100692', pyeong_type: '4', display_order: 4, display_pyeong_name: '4' },
+      ],
+      complexes: [{ complex_id: '100692', complex_name: '래미안옥수리버젠' }],
+      pyeongOptions: [
+        { complex_id: '100692', pyeong_type: '1', pyeong_name: '1', exclusive_space: null },
+        { complex_id: '100692', pyeong_type: '2', pyeong_name: '79B', exclusive_space: 59.25 },
+        { complex_id: '100692', pyeong_type: '3', pyeong_name: '79C', exclusive_space: 59.84 },
+        { complex_id: '100692', pyeong_type: '4', pyeong_name: '4', exclusive_space: null },
+      ],
+      articles: [
+        { article_number: 'b', complex_id: '100692', pyeong_type: '2', trade_type_name: '매매', deal_price: 1500000000 },
+        { article_number: 'c', complex_id: '100692', pyeong_type: '3', trade_type_name: '매매', deal_price: 1600000000 },
+      ],
+      priceMetrics: [
+        {
+          complex_id: '100692',
+          pyeong_type: '2',
+          trade_type: 'A1',
+          window_months: 3,
+          median_deal_price: 1550000000,
+          updated_at: '2026-05-07T00:00:00Z',
+        },
+        {
+          complex_id: '100692',
+          pyeong_type: '3',
+          trade_type: 'A1',
+          window_months: 3,
+          median_deal_price: 1570000000,
+          updated_at: '2026-05-07T00:00:00Z',
+        },
+      ],
+    });
+
+    expect(dashboard.targets).toHaveLength(1);
+    expect(dashboard.targets[0]).toMatchObject({
+      id: '100692',
+      complexName: '래미안옥수리버젠',
+      pyeongName: '1 / 79B / 79C / 4',
+      latestMetric: {
+        actualMedianPrice: 1560000000,
+      },
+    });
+    expect(dashboard.targets[0]?.currentArticles.map((article) => article.articleNo)).toEqual(['b', 'c']);
+    expect(dashboard.targets[0]?.belowMedianArticles.map((article) => article.articleNo)).toEqual(['b']);
+  });
 });
 
 describe('formatKoreanHousePrice', () => {

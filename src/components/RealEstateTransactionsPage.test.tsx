@@ -105,6 +105,7 @@ describe('RealEstateTransactionsPage', () => {
       'https://fin.land.naver.com/articles/a1',
     );
     expect(within(belowMedianRegion).getByText('116동 · 저/18')).toBeInTheDocument();
+    expect(within(belowMedianRegion).getByText('-10.2%')).toHaveClass('below-average');
     expect(within(belowMedianRegion).queryByText('매물번호 a2')).not.toBeInTheDocument();
   });
 
