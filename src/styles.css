@@ -1993,13 +1993,15 @@ h3 {
 }
 
 .real-estate-summary-grid .summary-card {
+  container-type: inline-size;
   padding: 16px;
 }
 
 .real-estate-summary-grid .summary-card strong {
-  overflow-wrap: anywhere;
-  font-size: clamp(1.45rem, 2.6vw, 2.45rem);
+  overflow-wrap: normal;
+  font-size: clamp(1.2rem, 14cqw, 2.45rem);
   line-height: 1.15;
+  white-space: nowrap;
 }
 
 .real-estate-gap-label {
@@ -2159,8 +2161,8 @@ h3 {
 .real-estate-chart-hit-area {
   position: absolute;
   z-index: 2;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: 0;
   border-radius: 999px;
@@ -2189,7 +2191,7 @@ h3 {
   font-size: 0.78rem;
   font-weight: 800;
   pointer-events: none;
-  transform: translate(-50%, calc(-100% - 12px));
+  transform: translate(-50%, 14px);
 }
 
 .real-estate-chart-tooltip strong {

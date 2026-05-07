@@ -98,7 +98,7 @@ describe('RealEstateTransactionsPage', () => {
     expect(container.querySelector('.real-estate-summary-grid')).not.toHaveTextContent('중위값');
     expect(screen.getByText('현재 매물')).toBeInTheDocument();
     expect(screen.getByText('14억 8,000만')).toBeInTheDocument();
-    expect(container.querySelector('.real-estate-gap-label')).toHaveTextContent('참고 갭 -2,000만 (-1.4%)');
+    expect(container.querySelector('.real-estate-gap-label')).toHaveTextContent('갭 -2,000만 (-1.4%)');
     expect(screen.getByRole('img', { name: '약수하이츠 80형 가격 비교 그래프' })).toBeInTheDocument();
 
     const belowMedianRegion = screen.getByRole('region', { name: '중위값 이하 매물' });
@@ -120,6 +120,9 @@ describe('RealEstateTransactionsPage', () => {
     const overlay = screen.getByRole('status', { name: '2026-05-01 가격' });
     expect(overlay).toHaveTextContent('실거래 14억 8,000만');
     expect(overlay).toHaveTextContent('호가 14억 6,000만');
+    expect(screen.getByRole('button', { name: '2026-05-01 가격 보기' })).toHaveStyle({
+      left: '90.76923076923077%',
+    });
   });
 
   it('toggles between below-median and all articles', async () => {

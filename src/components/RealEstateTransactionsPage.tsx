@@ -67,7 +67,8 @@ function getMetricValues(metric: RealEstatePriceMetric) {
 function buildChartPoints(metrics: RealEstatePriceMetric[]): ChartPoint[] {
   const width = 520;
   const height = 220;
-  const padding = 24;
+  const paddingX = 48;
+  const paddingY = 44;
   const values = metrics.flatMap(getMetricValues);
 
   if (metrics.length === 0 || values.length === 0) {
@@ -86,7 +87,7 @@ function buildChartPoints(metrics: RealEstatePriceMetric[]): ChartPoint[] {
       return width / 2;
     }
 
-    return padding + (index / (metrics.length - 1)) * (width - padding * 2);
+    return paddingX + (index / (metrics.length - 1)) * (width - paddingX * 2);
   }
 
   function getY(value: number | null) {
@@ -94,7 +95,7 @@ function buildChartPoints(metrics: RealEstatePriceMetric[]): ChartPoint[] {
       return null;
     }
 
-    return height - padding - ((value - domainMin) / domainRange) * (height - padding * 2);
+    return height - paddingY - ((value - domainMin) / domainRange) * (height - paddingY * 2);
   }
 
   return metrics.map((metric, index) => ({
@@ -270,7 +271,7 @@ export function RealEstateTransactionsPage({ queryTables }: RealEstateTransactio
                 <span>호가 평균</span>
                 <strong>{formatKoreanHousePrice(selectedTarget.latestMetric?.askingAveragePrice ?? null)}</strong>
                 <em className="real-estate-gap-label">
-                  참고 갭 {formatSignedKoreanHousePrice(askingGap)} ({formatSignedPercent(askingGapPercent)})
+                  갭 {formatSignedKoreanHousePrice(askingGap)} ({formatSignedPercent(askingGapPercent)})
                 </em>
               </article>
               <article className="summary-card">
