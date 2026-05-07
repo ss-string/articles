@@ -41,13 +41,24 @@ describe('VolatilityCalendarPage', () => {
     expect(await screen.findByRole('heading', { name: '45일 이벤트 캘린더' })).toBeInTheDocument();
     expect(screen.getByText('최신 업데이트 2026.05.07 11:23')).toBeInTheDocument();
     expect(screen.getByText(/매수관점에서 중요하게 보아야하는 시점/)).toBeInTheDocument();
+    expect(within(screen.getByLabelText('시장 필터')).getAllByRole('button').map((button) => button.textContent)).toEqual([
+      '전체',
+      '한국',
+      '미국',
+    ]);
     expect(screen.getByRole('button', { name: '전체' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: '한국' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '미국' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '높음' })).not.toBeInTheDocument();
     expect(screen.getByText('2026.05.12 화')).toBeInTheDocument();
-    expect(screen.getByText('중요도 0.90')).toBeInTheDocument();
-    expect(screen.getByText('Bear')).toBeInTheDocument();
+    const eventCard = screen.getByRole('button', { name: /미국 4월 소비자물가지수/ });
+    expect(within(eventCard).getByText('미국')).toBeInTheDocument();
+    expect(within(eventCard).getByText('21:30')).toBeInTheDocument();
+    expect(within(eventCard).getByText('미국 4월 소비자물가지수')).toBeInTheDocument();
+    expect(within(eventCard).getByText('Bear')).toBeInTheDocument();
+    expect(within(eventCard).getByText('중요도 0.90')).toBeInTheDocument();
+    const progressbar = within(eventCard).getByRole('progressbar', { name: '미국 4월 소비자물가지수 중요도' });
+    expect(progressbar).toHaveAttribute('aria-valuemin', '0');
+    expect(progressbar).toHaveAttribute('aria-valuemax', '100');
+    expect(progressbar).toHaveAttribute('aria-valuenow', '90');
     expect(screen.queryByText('강도')).not.toBeInTheDocument();
     expect(screen.queryByText('매수 관점')).not.toBeInTheDocument();
     expect(screen.queryByText('매도 관점')).not.toBeInTheDocument();

@@ -245,7 +245,14 @@ export function VolatilityCalendarPage({ queryRows }: VolatilityCalendarPageProp
                       <b>{event.name}</b>
                       <span className={`volatility-stance ${event.stance}`}>{event.stanceLabel}</span>
                       <span className="volatility-importance-label">{event.importanceLabel}</span>
-                      <span className="volatility-importance-bar" aria-hidden="true">
+                      <span
+                        aria-label={`${event.name} 중요도`}
+                        aria-valuemax={100}
+                        aria-valuemin={0}
+                        aria-valuenow={event.importancePercent}
+                        className="volatility-importance-bar"
+                        role="progressbar"
+                      >
                         <span style={{ width: `${event.importancePercent}%` }} />
                       </span>
                     </button>
