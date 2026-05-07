@@ -100,6 +100,8 @@ describe('VolatilityCalendarPage', () => {
     expect(within(dialog).getByText('중요도')).toBeInTheDocument();
     expect(within(dialog).getByText('macro_inflation')).toBeInTheDocument();
     expect(within(dialog).getByText('근원 CPI 전월비')).toBeInTheDocument();
+    expect(dialog.querySelector('.volatility-modal-primary')).toBeInTheDocument();
+    expect(dialog.querySelector('.volatility-modal-secondary')).toBeInTheDocument();
     expect(document.body).toHaveClass('modal-open');
 
     await user.click(within(dialog).getByRole('button', { name: '이벤트 상세 닫기' }));

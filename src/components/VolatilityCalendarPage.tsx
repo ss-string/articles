@@ -141,35 +141,39 @@ function EventDetailModal({ event, onClose }: { event: VolatilityCalendarEvent; 
           </button>
         </header>
         <div className="volatility-modal-body">
-          <section className="volatility-modal-panel">
-            <h4>무엇인지</h4>
-            <p>{event.brief}</p>
-          </section>
-          <section className="volatility-modal-panel">
-            <h4>왜 중요한지</h4>
-            <p>{event.reason}</p>
-          </section>
-          <section className="volatility-modal-panel">
-            <h4>중요도</h4>
-            <strong>{event.importance.toFixed(2)}</strong>
-            <div className="volatility-importance-bar" aria-hidden="true">
-              <span style={{ width: `${event.importancePercent}%` }} />
-            </div>
-          </section>
-          <section className="volatility-modal-panel">
-            <h4>분류</h4>
-            <p>{event.category}</p>
-          </section>
-          <section className="volatility-modal-panel">
-            <h4>체크포인트</h4>
-            <ul>
-              {event.checkPoints.length > 0 ? (
-                event.checkPoints.map((item) => <li key={item}>{item}</li>)
-              ) : (
-                <li>표시할 체크포인트가 없습니다.</li>
-              )}
-            </ul>
-          </section>
+          <div className="volatility-modal-primary">
+            <section className="volatility-modal-panel">
+              <h4>무엇인지</h4>
+              <p>{event.brief}</p>
+            </section>
+            <section className="volatility-modal-panel">
+              <h4>왜 중요한지</h4>
+              <p>{event.reason}</p>
+            </section>
+          </div>
+          <div className="volatility-modal-secondary">
+            <section className="volatility-modal-panel">
+              <h4>중요도</h4>
+              <strong>{event.importance.toFixed(2)}</strong>
+              <div className="volatility-importance-bar" aria-hidden="true">
+                <span style={{ width: `${event.importancePercent}%` }} />
+              </div>
+            </section>
+            <section className="volatility-modal-panel">
+              <h4>분류</h4>
+              <p>{event.category}</p>
+            </section>
+            <section className="volatility-modal-panel">
+              <h4>체크포인트</h4>
+              <ul>
+                {event.checkPoints.length > 0 ? (
+                  event.checkPoints.map((item) => <li key={item}>{item}</li>)
+                ) : (
+                  <li>표시할 체크포인트가 없습니다.</li>
+                )}
+              </ul>
+            </section>
+          </div>
         </div>
       </section>
     </div>

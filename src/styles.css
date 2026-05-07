@@ -1895,8 +1895,17 @@ h3 {
 
 .volatility-modal-body {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 0.62fr);
   gap: 14px;
   padding: 22px;
+}
+
+.volatility-modal-primary,
+.volatility-modal-secondary {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 14px;
 }
 
 .volatility-modal-panel {
@@ -2241,6 +2250,7 @@ h3 {
 
   .macro-regime-grid,
   .macro-modal-body,
+  .volatility-modal-body,
   .volatility-calendar-grid {
     grid-template-columns: 1fr;
   }
