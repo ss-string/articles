@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { RawHotNewsReportRow } from './model';
 
-const tableName = 'toss_wts_hot_news_reports';
+const latestReportsViewName = 'toss_wts_hot_news_latest_reports';
+const reportsTableName = 'toss_wts_hot_news_reports';
 
 export function getHotNewsSupabaseConfig() {
   const url = import.meta.env.VITE_SUPABASE_URL;
@@ -14,14 +15,55 @@ export function getHotNewsSupabaseConfig() {
   return { url, publishableKey };
 }
 
-export async function queryHotNewsReportRows(): Promise<RawHotNewsReportRow[]> {
+export async function queryHotNewsReportRows(issueDate?: string): Promise<RawHotNewsReportRow[]> {
+  const { url, publishableKey } = getHotNewsSupabaseConfig();
+  const supabase = createClient(url, publishableKey);
+  let query = supabase.from(latestReportsViewName).select('*');
+
+  if (issueDate) {
+    query = query.eq('issue_date', issueDate);
+  }
+
+  const { data, error } = await query
+    .order('issue_date', { ascending: false })
+    .order('perspective_key', { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ?? [];
+}
+
+export async function queryHotNewsLatestIssueDate(): Promise<string | null> {
   const { url, publishableKey } = getHotNewsSupabaseConfig();
   const supabase = createClient(url, publishableKey);
   const { data, error } = await supabase
-    .from(tableName)
-    .select('*')
+    .from(latestReportsViewName)
+    .select('issue_date')
     .order('issue_date', { ascending: false })
-    .order('id', { ascending: false });
+    .limit(1);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return typeof data?.[0]?.issue_date === 'string' ? data[0].issue_date : null;
+}
+
+export async function queryHotNewsReportHistoryRows(
+  issueDate: string,
+  perspectiveKey: string,
+): Promise<RawHotNewsReportRow[]> {
+  const { url, publishableKey } = getHotNewsSupabaseConfig();
+  const supabase = createClient(url, publishableKey);
+  const { data, error } = await supabase
+    .from(reportsTableName)
+    .select('*')
+    .eq('issue_date', issueDate)
+    .eq('perspective_key', perspectiveKey)
+    .order('is_latest', { ascending: false })
+    .order('run_slot', { ascending: true });
 
   if (error) {
     throw new Error(error.message);
