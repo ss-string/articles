@@ -1,16 +1,24 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { vi } from 'vitest';
 import { HotNewsReportsPage } from './HotNewsReportsPage';
 
-const rows = [
-  {
+function createReportRow(overrides: Record<string, unknown> = {}) {
+  return {
     id: 1,
-    issue_date: '2026-05-04',
-    title: '2026-05-04 조선 에너지 수주',
-    perspective: '조선 에너지 수주',
+    issue_date: '2026-05-07',
+    title: '2026-05-07 AI 인프라 리포트',
+    perspective: 'AI 반도체 인프라',
+    perspective_key: 'ai_infra',
+    run_slot: 'latest',
+    change_status: 'initial',
+    updated_at: '2026-05-07T10:30:00+09:00',
+    source_news_ids: ['news-1', 'news-2'],
+    company_codes: ['A010140'],
+    position_map: { A010140: 'bull' },
     tldr: [
-      '국내 조선·해양 에너지 인프라 기업의 수주 뉴스가 집중',
-      'LNG-FSRU, 암모니아운반선, 해양 전력망 등 에너지 전환 관련 발주가 핵심',
+      '국내 AI 인프라 기업의 수주 뉴스가 집중',
+      '데이터센터 전력망과 반도체 장비 투자가 핵심',
     ],
     key_articles: [
       {
@@ -30,37 +38,125 @@ const rows = [
         ],
       },
     ],
-    interpretation: '조선과 해양 인프라에서는 에너지 운반 수요가 동시에 확인된다.',
-  },
-];
+    interpretation: 'AI 인프라에서는 전력과 설비 투자 수요가 동시에 확인된다.',
+    ...overrides,
+  };
+}
+
+const rows = [createReportRow()];
 
 describe('HotNewsReportsPage', () => {
-  it('renders hot news report cards with title, date, perspective, and summary', async () => {
-    render(<HotNewsReportsPage queryRows={async () => rows} />);
+  it('renders today-scope displayTitle cards, update time, and debug status only in the modal footer', async () => {
+    const queryRows = async (issueDate?: string) => (issueDate === '2026-05-08' ? rows : []);
+
+    render(
+      <HotNewsReportsPage
+        queryHistoryRows={async () => []}
+        queryRows={queryRows}
+        today="2026-05-08"
+      />,
+    );
 
     expect(await screen.findByRole('heading', { name: '핫뉴스 리포트' })).toBeInTheDocument();
     expect(
       screen.getByText('토스증권 주요 뉴스 묶음을 카드로 훑고, 선택한 이슈의 리포트를 팝업에서 확인합니다.'),
     ).toBeInTheDocument();
-    expect(screen.getByText('2026-05-04 조선 에너지 수주')).toBeInTheDocument();
-    expect(screen.getByText('2026.05.04')).toBeInTheDocument();
-    expect(screen.getByText('조선 에너지 수주')).toBeInTheDocument();
-    expect(screen.getByText('국내 조선·해양 에너지 인프라 기업의 수주 뉴스가 집중')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '오늘' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: '전체' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.queryByText(/최신 .* 리포트를 표시합니다/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/오늘 업데이트된 리포트입니다/)).not.toBeInTheDocument();
+    expect(screen.getByText('AI 인프라 리포트')).toBeInTheDocument();
+    expect(screen.queryByText('2026-05-07 AI 인프라 리포트')).not.toBeInTheDocument();
+    expect(screen.getByText('업데이트 2026-05-07 10:30')).toBeInTheDocument();
+    expect(screen.getByText('국내 AI 인프라 기업의 수주 뉴스가 집중')).toBeInTheDocument();
+    expect(screen.queryByText('AI 반도체 인프라')).not.toBeInTheDocument();
+    expect(screen.queryByText('ai_infra')).not.toBeInTheDocument();
+    expect(screen.queryByText('초기 문서')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /AI 인프라 리포트/ }));
+
+    const dialog = screen.getByRole('dialog', { name: 'AI 인프라 리포트' });
+    const modalHeader = within(dialog).getByRole('heading', { name: 'AI 인프라 리포트' }).closest('header');
+    expect(modalHeader).not.toBeNull();
+    expect(within(modalHeader as HTMLElement).getByText('업데이트 2026-05-07 10:30')).toBeInTheDocument();
+    expect(within(modalHeader as HTMLElement).queryByText('2026.05.07 · AI 반도체 인프라')).not.toBeInTheDocument();
+    const debugSection = within(dialog).getByRole('heading', { name: '디버그 상태' }).closest('section');
+    expect(debugSection).not.toBeNull();
+    expect(within(debugSection as HTMLElement).getByText('문서 상태')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('초기 문서')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('업데이트 2026-05-07 10:30')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('이력 조회 성공')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('원본 추적 필드')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('관점 키')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('ai_infra')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('뉴스 ID')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('news-1, news-2')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('종목 코드')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('A010140')).toBeInTheDocument();
+    expect(screen.getAllByText('초기 문서')).toHaveLength(1);
   });
 
-  it('opens and closes a dimmed report modal from a selected card', async () => {
+  it('defaults to today issue-date rows and switches to all latest rows without fallback notice', async () => {
     const user = userEvent.setup();
-    render(<HotNewsReportsPage queryRows={async () => rows} />);
+    const queryRows = vi.fn(async (issueDate?: string) => (issueDate === undefined ? rows : []));
 
-    await user.click(await screen.findByRole('button', { name: /2026-05-04 조선 에너지 수주/ }));
+    render(
+      <HotNewsReportsPage
+        queryHistoryRows={async () => []}
+        queryRows={queryRows}
+        today="2026-05-08"
+      />,
+    );
 
-    const dialog = screen.getByRole('dialog', { name: '2026-05-04 조선 에너지 수주' });
+    expect(await screen.findByText('표시할 핫뉴스 리포트가 없습니다.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '오늘' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: '전체' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.queryByRole('button', { name: /AI 인프라 리포트/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/최신 .* 리포트를 표시합니다/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/오늘 업데이트된 리포트입니다/)).not.toBeInTheDocument();
+    expect(queryRows).toHaveBeenLastCalledWith('2026-05-08');
+
+    await user.click(screen.getByRole('button', { name: '전체' }));
+
+    expect(await screen.findByRole('button', { name: /AI 인프라 리포트/ })).toBeInTheDocument();
+    expect(queryRows).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it('shows created timestamp wording when updated_at is missing', async () => {
+    const user = userEvent.setup();
+    const createdRow = createReportRow({
+      created_at: '2026-05-08T01:30:00Z',
+      updated_at: null,
+    });
+
+    render(<HotNewsReportsPage queryHistoryRows={async () => []} queryRows={async () => [createdRow]} />);
+
+    expect(await screen.findByText('생성 2026-05-08 10:30')).toBeInTheDocument();
+    expect(screen.queryByText('업데이트 2026-05-08 10:30')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /AI 인프라 리포트/ }));
+
+    const dialog = screen.getByRole('dialog', { name: 'AI 인프라 리포트' });
+    const modalHeader = within(dialog).getByRole('heading', { name: 'AI 인프라 리포트' }).closest('header');
+    expect(within(modalHeader as HTMLElement).getByText('생성 2026-05-08 10:30')).toBeInTheDocument();
+    const debugSection = within(dialog).getByRole('heading', { name: '디버그 상태' }).closest('section');
+    expect(within(debugSection as HTMLElement).getByText('생성 2026-05-08 10:30')).toBeInTheDocument();
+  });
+
+  it('opens a displayTitle modal and keeps report sections and bull tone styling', async () => {
+    const user = userEvent.setup();
+    render(<HotNewsReportsPage queryHistoryRows={async () => []} queryRows={async () => rows} />);
+
+    await user.click(await screen.findByRole('button', { name: /AI 인프라 리포트/ }));
+
+    const dialog = screen.getByRole('dialog', { name: 'AI 인프라 리포트' });
     expect(dialog).toBeInTheDocument();
     expect(screen.getByTestId('hot-news-modal-backdrop')).toBeInTheDocument();
     expect(within(dialog).getByText('TL;DR')).toBeInTheDocument();
     expect(within(dialog).getByText('시장 해석')).toBeInTheDocument();
     expect(within(dialog).getByText('기업별 근거')).toBeInTheDocument();
     expect(within(dialog).getByText('주요 기사')).toBeInTheDocument();
+    expect(within(dialog).getByText('삼성중공업').closest('article')).toHaveClass('hot-news-evidence-card tone-bull');
     expect(document.body).toHaveClass('modal-open');
 
     await user.click(screen.getByRole('button', { name: '리포트 닫기' }));
@@ -71,22 +167,23 @@ describe('HotNewsReportsPage', () => {
 
   it('closes the modal by backdrop click and Escape', async () => {
     const user = userEvent.setup();
-    render(<HotNewsReportsPage queryRows={async () => rows} />);
+    render(<HotNewsReportsPage queryHistoryRows={async () => []} queryRows={async () => rows} />);
 
-    await user.click(await screen.findByRole('button', { name: /2026-05-04 조선 에너지 수주/ }));
+    await user.click(await screen.findByRole('button', { name: /AI 인프라 리포트/ }));
+    expect(screen.queryByRole('button', { name: '리포트 배경 닫기' })).not.toBeInTheDocument();
     await user.click(screen.getByTestId('hot-news-modal-backdrop'));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /2026-05-04 조선 에너지 수주/ }));
+    await user.click(screen.getByRole('button', { name: /AI 인프라 리포트/ }));
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('renders key article links when links are present and text when links are absent', async () => {
     const user = userEvent.setup();
-    render(<HotNewsReportsPage queryRows={async () => rows} />);
+    render(<HotNewsReportsPage queryHistoryRows={async () => []} queryRows={async () => rows} />);
 
-    await user.click(await screen.findByRole('button', { name: /2026-05-04 조선 에너지 수주/ }));
+    await user.click(await screen.findByRole('button', { name: /AI 인프라 리포트/ }));
 
     const link = screen.getByRole('link', {
       name: /삼성중공업, 4848억 규모 LNG 부유식 저장·재기화 설비 1척 수주/,
@@ -100,11 +197,11 @@ describe('HotNewsReportsPage', () => {
 
   it('renders compact company evidence source links next to the evidence text', async () => {
     const user = userEvent.setup();
-    const { container } = render(<HotNewsReportsPage queryRows={async () => rows} />);
+    const { container } = render(<HotNewsReportsPage queryHistoryRows={async () => []} queryRows={async () => rows} />);
 
-    await user.click(await screen.findByRole('button', { name: /2026-05-04 조선 에너지 수주/ }));
+    await user.click(await screen.findByRole('button', { name: /AI 인프라 리포트/ }));
 
-    const dialog = screen.getByRole('dialog', { name: '2026-05-04 조선 에너지 수주' });
+    const dialog = screen.getByRole('dialog', { name: 'AI 인프라 리포트' });
     const evidenceItem = within(dialog)
       .getByText('아시아 지역 선주로부터 LNG-FSRU 1척을 4848억원에 수주')
       .closest('li');
@@ -122,9 +219,9 @@ describe('HotNewsReportsPage', () => {
     const user = userEvent.setup();
     render(
       <HotNewsReportsPage
+        queryHistoryRows={async () => []}
         queryRows={async () => [
-          {
-            ...rows[0],
+          createReportRow({
             company_news_evidence: [
               {
                 code: 'A000001',
@@ -148,12 +245,12 @@ describe('HotNewsReportsPage', () => {
                 detailedNewsLinks: [],
               },
             ],
-          },
+          }),
         ]}
       />,
     );
 
-    await user.click(await screen.findByRole('button', { name: /2026-05-04 조선 에너지 수주/ }));
+    await user.click(await screen.findByRole('button', { name: /AI 인프라 리포트/ }));
 
     expect(screen.getByText('우호기업').closest('article')).toHaveClass('hot-news-evidence-card tone-bull');
     expect(screen.getByText('중립기업').closest('article')).toHaveClass('hot-news-evidence-card tone-neutral');
@@ -164,9 +261,9 @@ describe('HotNewsReportsPage', () => {
     const user = userEvent.setup();
     render(
       <HotNewsReportsPage
+        queryHistoryRows={async () => []}
         queryRows={async () => [
-          {
-            ...rows[0],
+          createReportRow({
             company_news_evidence: [
               {
                 code: 'A000004',
@@ -183,12 +280,12 @@ describe('HotNewsReportsPage', () => {
                 detailedNewsLinks: [],
               },
             ],
-          },
+          }),
         ]}
       />,
     );
 
-    await user.click(await screen.findByRole('button', { name: /2026-05-04 조선 에너지 수주/ }));
+    await user.click(await screen.findByRole('button', { name: /AI 인프라 리포트/ }));
 
     const pendingArticle = screen.getByText('미정기업').closest('article');
     const unknownArticle = screen.getByText('불명기업').closest('article');
@@ -204,12 +301,12 @@ describe('HotNewsReportsPage', () => {
 
   it('moves focus into the modal, traps tab navigation, and restores focus to the opener', async () => {
     const user = userEvent.setup();
-    render(<HotNewsReportsPage queryRows={async () => rows} />);
+    render(<HotNewsReportsPage queryHistoryRows={async () => []} queryRows={async () => rows} />);
 
-    const opener = await screen.findByRole('button', { name: /2026-05-04 조선 에너지 수주/ });
+    const opener = await screen.findByRole('button', { name: /AI 인프라 리포트/ });
     await user.click(opener);
 
-    const dialog = screen.getByRole('dialog', { name: '2026-05-04 조선 에너지 수주' });
+    const dialog = screen.getByRole('dialog', { name: 'AI 인프라 리포트' });
     const closeButton = within(dialog).getByRole('button', { name: '리포트 닫기' });
     expect(closeButton).toHaveFocus();
     expect(dialog).toContainElement(document.activeElement as HTMLElement);
@@ -229,8 +326,148 @@ describe('HotNewsReportsPage', () => {
 
     expect(await screen.findByText('표시할 핫뉴스 리포트가 없습니다.')).toBeInTheDocument();
 
-    rerender(<HotNewsReportsPage queryRows={async () => Promise.reject(new Error('network failed'))} />);
+    rerender(
+      <HotNewsReportsPage
+        queryRows={async () => Promise.reject(new Error('network failed'))}
+      />,
+    );
 
     expect(await screen.findByText('network failed')).toBeInTheDocument();
+  });
+
+  it('keeps material change status out of the card and shows it only in modal debug', async () => {
+    const user = userEvent.setup();
+    render(
+      <HotNewsReportsPage
+        queryHistoryRows={async () => [
+          createReportRow({
+            id: 2,
+            change_reason: '새 기사 2건과 종목 코드 변화',
+            change_status: 'material_change',
+            tldr: ['중요 변경 이력 요약'],
+            updated_at: '2026-05-07T11:20:00+09:00',
+          }),
+        ]}
+        queryRows={async () => [createReportRow({ change_status: 'material_change' })]}
+      />,
+    );
+
+    const card = await screen.findByRole('button', { name: /AI 인프라 리포트/ });
+    expect(within(card).queryByText('중요 변경')).not.toBeInTheDocument();
+    expect(screen.queryByText('중요 변경 업데이트')).not.toBeInTheDocument();
+
+    await user.click(card);
+
+    const dialog = screen.getByRole('dialog', { name: 'AI 인프라 리포트' });
+    const debugSection = within(dialog).getByRole('heading', { name: '디버그 상태' }).closest('section');
+    expect(await within(debugSection as HTMLElement).findByText('중요 변경 업데이트')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('중요 변경 이력')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('새 기사 2건과 종목 코드 변화')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('중요 변경 이력 요약')).toBeInTheDocument();
+  });
+
+  it('keeps deduplicated history rows out of the card list and shows them only in modal debug', async () => {
+    const user = userEvent.setup();
+    render(
+      <HotNewsReportsPage
+        queryHistoryRows={async () => [
+          createReportRow({
+            id: 2,
+            change_status: 'deduplicated',
+            tldr: ['중복 정리된 과거 요약'],
+            updated_at: '2026-05-07T11:00:00+09:00',
+          }),
+        ]}
+        queryRows={async () => rows}
+      />,
+    );
+
+    expect(await screen.findByRole('button', { name: /AI 인프라 리포트/ })).toBeInTheDocument();
+    expect(screen.queryByText('중복 정리된 과거 요약')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /AI 인프라 리포트/ }));
+
+    const dialog = screen.getByRole('dialog', { name: 'AI 인프라 리포트' });
+    const debugSection = within(dialog).getByRole('heading', { name: '디버그 상태' }).closest('section');
+    expect(await within(debugSection as HTMLElement).findByText('중복 정리됨')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('중복 정리된 과거 요약')).toBeInTheDocument();
+    expect(screen.getAllByText('중복 정리됨')).toHaveLength(1);
+  });
+
+  it('queries history with the selected report issueDate instead of the page issueDate', async () => {
+    const user = userEvent.setup();
+    const historyCalls: Array<[string, string]> = [];
+    const todayRows = [
+      createReportRow({
+        issue_date: '2026-05-06',
+        title: '2026-05-06 AI 인프라 리포트',
+      }),
+    ];
+    const queryRows = async (issueDate?: string) => (issueDate === '2026-05-08' ? todayRows : []);
+
+    render(
+      <HotNewsReportsPage
+        queryHistoryRows={async (issueDate, perspectiveKey) => {
+          historyCalls.push([issueDate, perspectiveKey]);
+          return [];
+        }}
+        queryRows={queryRows}
+        today="2026-05-08"
+      />,
+    );
+
+    await user.click(await screen.findByRole('button', { name: /AI 인프라 리포트/ }));
+
+    expect(historyCalls).toEqual([['2026-05-06', 'ai_infra']]);
+  });
+
+  it('does not show previous card deduplicated history after switching cards', async () => {
+    const user = userEvent.setup();
+    const secondRow = createReportRow({
+      id: 2,
+      issue_date: '2026-05-08',
+      title: '2026-05-08 전력망 리포트',
+      perspective_key: 'power_grid',
+      tldr: ['전력망 증설 뉴스가 집중'],
+    });
+
+    render(
+      <HotNewsReportsPage
+        queryHistoryRows={async (_issueDate, perspectiveKey) =>
+          perspectiveKey === 'ai_infra'
+            ? [
+                createReportRow({
+                  id: 3,
+                  change_status: 'deduplicated',
+                  tldr: ['첫 카드 중복 정리 요약'],
+                }),
+              ]
+            : []
+        }
+        queryRows={async () => [rows[0], secondRow]}
+      />,
+    );
+
+    await user.click(await screen.findByRole('button', { name: /AI 인프라 리포트/ }));
+    expect(await screen.findByText('첫 카드 중복 정리 요약')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /전력망 리포트/ }));
+
+    const dialog = screen.getByRole('dialog', { name: '전력망 리포트' });
+    const debugSection = within(dialog).getByRole('heading', { name: '디버그 상태' }).closest('section');
+    expect(debugSection).not.toBeNull();
+    expect(within(debugSection as HTMLElement).queryByText('첫 카드 중복 정리 요약')).not.toBeInTheDocument();
+  });
+
+  it('does not expose raw issue date, perspective key, and change status combinations', async () => {
+    const user = userEvent.setup();
+    render(<HotNewsReportsPage queryHistoryRows={async () => []} queryRows={async () => rows} />);
+
+    expect(await screen.findByRole('button', { name: /AI 인프라 리포트/ })).toBeInTheDocument();
+    expect(screen.queryByText('2026-05-07 · ai_infra · initial')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /AI 인프라 리포트/ }));
+
+    expect(screen.queryByText('2026-05-07 · ai_infra · initial')).not.toBeInTheDocument();
   });
 });

@@ -13,12 +13,35 @@ export type HotNewsCompanyEvidence = {
   links: string[];
 };
 
+export type HotNewsChangeStatus =
+  | 'initial'
+  | 'refresh'
+  | 'material_change'
+  | 'deduplicated'
+  | (string & {});
+
 export type HotNewsReport = {
   id: string;
   issueDate: string | null;
   displayDate: string;
   title: string;
+  displayTitle: string;
   perspective: string | null;
+  perspectiveKey: string | null;
+  runSlot: string | null;
+  isLatest: boolean;
+  changeStatus: HotNewsChangeStatus | null;
+  changeReason: string | null;
+  materialChangeScore: number;
+  sourceNewsIds: string[];
+  companyCodes: string[];
+  positionMap: Record<string, string>;
+  updatedAt: string | null;
+  displayUpdatedAt: string | null;
+  createdAt: string | null;
+  displayCreatedAt: string | null;
+  hasBeenUpdated: boolean;
+  displayTimestampLabel: string;
   interpretation: string | null;
   tldr: string[];
   keyArticles: HotNewsArticle[];
@@ -44,6 +67,34 @@ function parseTextArray(value: unknown): string[] {
   }
 
   return value.map(parseText).filter((text): text is string => text !== null);
+}
+
+function parseNumber(value: unknown): number {
+  if (typeof value !== 'number' && typeof value !== 'string') {
+    return 0;
+  }
+
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function parseChangeStatus(value: unknown): HotNewsChangeStatus | null {
+  return parseText(value);
+}
+
+function normalizePositionMap(value: unknown): Record<string, string> {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  return Object.entries(value).reduce<Record<string, string>>((positionMap, [key, rawPosition]) => {
+    const position = parseText(rawPosition);
+    if (position) {
+      positionMap[key] = position;
+    }
+
+    return positionMap;
+  }, {});
 }
 
 function normalizeArticles(value: unknown): HotNewsArticle[] {
@@ -124,6 +175,67 @@ export function formatIssueDate(value: unknown): string {
   return `${match[1]}.${match[2]}.${match[3]}`;
 }
 
+export function stripIssueDatePrefix(value: string): string {
+  return value.replace(/^\d{4}-\d{2}-\d{2}\s+/, '');
+}
+
+export function formatKoreanDateTime(value: unknown): string | null {
+  const text = parseText(value);
+  if (!text) {
+    return null;
+  }
+
+  const date = new Date(text);
+  if (Number.isNaN(date.getTime())) {
+    return text;
+  }
+
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+
+  const getPart = (type: string) => parts.find((part) => part.type === type)?.value ?? '';
+
+  return `${getPart('year')}-${getPart('month')}-${getPart('day')} ${getPart('hour')}:${getPart('minute')}`;
+}
+
+export function getHotNewsChangeStatusLabel(status: HotNewsChangeStatus | null): string {
+  if (!status) {
+    return '상태 없음';
+  }
+
+  const labels: Record<HotNewsChangeStatus, string> = {
+    initial: '초기 문서',
+    refresh: '새로고침 업데이트',
+    material_change: '중요 변경 업데이트',
+    deduplicated: '중복 정리됨',
+  };
+
+  return labels[status] ?? status;
+}
+
+function getDisplayTimestampLabel(
+  displayUpdatedAt: string | null,
+  displayCreatedAt: string | null,
+  displayDate: string,
+) {
+  if (displayUpdatedAt) {
+    return `업데이트 ${displayUpdatedAt}`;
+  }
+
+  if (displayCreatedAt) {
+    return `생성 ${displayCreatedAt}`;
+  }
+
+  return displayDate;
+}
+
 export function normalizeHotNewsReport(row: RawHotNewsReportRow): HotNewsReport | null {
   const payload = isRecord(row.report_payload) ? row.report_payload : null;
   const title = preferText(payload, row, 'title', 'title');
@@ -133,13 +245,34 @@ export function normalizeHotNewsReport(row: RawHotNewsReportRow): HotNewsReport 
   }
 
   const issueDate = parseText(row.issue_date);
+  const displayDate = formatIssueDate(row.issue_date);
+  const updatedAt = parseText(row.updated_at);
+  const createdAt = parseText(row.created_at);
+  const displayUpdatedAt = formatKoreanDateTime(updatedAt);
+  const displayCreatedAt = formatKoreanDateTime(createdAt);
 
   return {
     id: parseText(row.id) ?? title,
     issueDate,
-    displayDate: formatIssueDate(row.issue_date),
+    displayDate,
     title,
+    displayTitle: stripIssueDatePrefix(title),
     perspective: parseText(row.perspective),
+    perspectiveKey: parseText(row.perspective_key),
+    runSlot: parseText(row.run_slot),
+    isLatest: row.is_latest === true,
+    changeStatus: parseChangeStatus(row.change_status),
+    changeReason: parseText(row.change_reason),
+    materialChangeScore: parseNumber(row.material_change_score),
+    sourceNewsIds: parseTextArray(row.source_news_ids),
+    companyCodes: parseTextArray(row.company_codes),
+    positionMap: normalizePositionMap(row.position_map),
+    updatedAt,
+    displayUpdatedAt,
+    createdAt,
+    displayCreatedAt,
+    hasBeenUpdated: updatedAt !== null,
+    displayTimestampLabel: getDisplayTimestampLabel(displayUpdatedAt, displayCreatedAt, displayDate),
     interpretation: preferText(payload, row, 'interpretation', 'interpretation'),
     tldr: preferTextArray(payload, row, 'tldr', 'tldr'),
     keyArticles: preferArticles(payload, row),

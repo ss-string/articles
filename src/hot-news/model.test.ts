@@ -1,6 +1,7 @@
 import {
   buildHotNewsReports,
   formatIssueDate,
+  getHotNewsChangeStatusLabel,
   normalizeHotNewsReport,
 } from './model';
 
@@ -88,6 +89,96 @@ describe('hot-news model', () => {
         links: ['https://www.tossinvest.com/feed/news?contentParams=%7B%22id%22%3A%22newspim_20260504000889%22%7D'],
       },
     ]);
+  });
+
+  it('normalizes report tracking fields and display labels', () => {
+    const report = normalizeHotNewsReport({
+      id: 'latest-ai',
+      issue_date: '2026-05-08',
+      title: '2026-05-08 AI 인프라 투자 확대',
+      perspective_key: 'ai_infra',
+      run_slot: 'am',
+      is_latest: true,
+      change_status: 'material_change',
+      change_reason: '신규 수주 뉴스 반영',
+      material_change_score: '0.87',
+      updated_at: '2026-05-07T23:45:00Z',
+      created_at: '2026-05-07T22:30:00Z',
+      source_news_ids: ['news_1', 2, '', null],
+      company_codes: ['A005930', ' ', 'A000660'],
+      position_map: {
+        A005930: 'bull',
+        A000660: 'neutral',
+        empty: '',
+      },
+    });
+
+    expect(report).toMatchObject({
+      displayTitle: 'AI 인프라 투자 확대',
+      perspectiveKey: 'ai_infra',
+      runSlot: 'am',
+      isLatest: true,
+      changeStatus: 'material_change',
+      changeReason: '신규 수주 뉴스 반영',
+      materialChangeScore: 0.87,
+      updatedAt: '2026-05-07T23:45:00Z',
+      displayUpdatedAt: '2026-05-08 08:45',
+      createdAt: '2026-05-07T22:30:00Z',
+      displayCreatedAt: '2026-05-08 07:30',
+      hasBeenUpdated: true,
+      displayTimestampLabel: '업데이트 2026-05-08 08:45',
+      sourceNewsIds: ['news_1', '2'],
+      companyCodes: ['A005930', 'A000660'],
+      positionMap: {
+        A005930: 'bull',
+        A000660: 'neutral',
+      },
+    });
+  });
+
+  it('uses created_at as a created timestamp when updated_at is missing', () => {
+    const report = normalizeHotNewsReport({
+      id: 'created-at-fallback',
+      title: '2026-05-08 생성 시각 fallback',
+      material_change_score: 'not-a-number',
+      created_at: '2026-05-08T01:30:00Z',
+    });
+
+    expect(report).toMatchObject({
+      updatedAt: null,
+      displayUpdatedAt: null,
+      createdAt: '2026-05-08T01:30:00Z',
+      displayCreatedAt: '2026-05-08 10:30',
+      hasBeenUpdated: false,
+      displayTimestampLabel: '생성 2026-05-08 10:30',
+      materialChangeScore: 0,
+    });
+  });
+
+  it('defaults missing material change scores to zero', () => {
+    const report = normalizeHotNewsReport({
+      id: 'missing-score',
+      title: '점수 없음',
+    });
+
+    expect(report?.materialChangeScore).toBe(0);
+  });
+
+  it('uses null display updated time when timestamps are missing', () => {
+    const report = normalizeHotNewsReport({
+      id: 'missing-timestamp',
+      issue_date: '2026-05-08',
+      title: '업데이트 시각 없음',
+    });
+
+    expect(report).toMatchObject({
+      updatedAt: null,
+      displayUpdatedAt: null,
+      createdAt: null,
+      displayCreatedAt: null,
+      hasBeenUpdated: false,
+      displayTimestampLabel: '2026.05.08',
+    });
   });
 
   it('falls back to top-level fields when report_payload is missing', () => {
@@ -249,5 +340,24 @@ describe('hot-news model', () => {
     expect(formatIssueDate('2026-05-04')).toBe('2026.05.04');
     expect(formatIssueDate('')).toBe('-');
     expect(formatIssueDate('2026/05/04')).toBe('2026/05/04');
+  });
+
+  it('maps hot-news change status values to Korean labels', () => {
+    expect(getHotNewsChangeStatusLabel('initial')).toBe('초기 문서');
+    expect(getHotNewsChangeStatusLabel('refresh')).toBe('새로고침 업데이트');
+    expect(getHotNewsChangeStatusLabel('material_change')).toBe('중요 변경 업데이트');
+    expect(getHotNewsChangeStatusLabel('deduplicated')).toBe('중복 정리됨');
+  });
+
+  it('keeps unknown change status strings and uses fallback labels', () => {
+    const report = normalizeHotNewsReport({
+      id: 'unknown-status',
+      title: '상태 보존',
+      change_status: 'manual_review',
+    });
+
+    expect(report?.changeStatus).toBe('manual_review');
+    expect(getHotNewsChangeStatusLabel('manual_review')).toBe('manual_review');
+    expect(getHotNewsChangeStatusLabel(null)).toBe('상태 없음');
   });
 });

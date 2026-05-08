@@ -1,16 +1,49 @@
 import { useCallback, useState } from 'react';
-import type { HotNewsReport, RawHotNewsReportRow } from '../hot-news/model';
-import { useHotNewsReports } from '../hot-news/useHotNewsReports';
+import { type HotNewsReport, type RawHotNewsReportRow } from '../hot-news/model';
+import type { HotNewsReportScope } from '../hot-news/useHotNewsReports';
+import { useHotNewsReportHistory, useHotNewsReports } from '../hot-news/useHotNewsReports';
 import { HotNewsReportModal } from './HotNewsReportModal';
 
 type HotNewsReportsPageProps = {
-  queryRows?: () => Promise<RawHotNewsReportRow[]>;
+  queryRows?: (issueDate?: string) => Promise<RawHotNewsReportRow[]>;
+  queryHistoryRows?: (issueDate: string, perspectiveKey: string) => Promise<RawHotNewsReportRow[]>;
+  today?: string;
 };
 
-export function HotNewsReportsPage({ queryRows }: HotNewsReportsPageProps) {
-  const state = useHotNewsReports({ queryRows });
+type HotNewsReportModalWithHistoryProps = {
+  report: HotNewsReport;
+  queryHistoryRows?: (issueDate: string, perspectiveKey: string) => Promise<RawHotNewsReportRow[]>;
+  onClose: () => void;
+};
+
+function getHistoryKey(report: HotNewsReport) {
+  return [report.issueDate ?? 'no-date', report.perspectiveKey ?? 'no-perspective', report.id].join(':');
+}
+
+function HotNewsReportModalWithHistory({ report, queryHistoryRows, onClose }: HotNewsReportModalWithHistoryProps) {
+  const historyState = useHotNewsReportHistory({
+    enabled: !!report.issueDate && !!report.perspectiveKey,
+    issueDate: report.issueDate,
+    perspectiveKey: report.perspectiveKey,
+    queryHistoryRows,
+  });
+
+  return <HotNewsReportModal historyState={historyState} report={report} onClose={onClose} />;
+}
+
+export function HotNewsReportsPage({
+  queryRows,
+  queryHistoryRows,
+  today,
+}: HotNewsReportsPageProps) {
+  const [scope, setScope] = useState<HotNewsReportScope>('today');
+  const state = useHotNewsReports({ queryRows, scope, today });
   const [selectedReport, setSelectedReport] = useState<HotNewsReport | null>(null);
   const closeSelectedReport = useCallback(() => setSelectedReport(null), []);
+  const selectScope = useCallback((nextScope: HotNewsReportScope) => {
+    setSelectedReport(null);
+    setScope(nextScope);
+  }, []);
 
   return (
     <>
@@ -20,6 +53,24 @@ export function HotNewsReportsPage({ queryRows }: HotNewsReportsPageProps) {
           <h2 id="hot-news-title">핫뉴스 리포트</h2>
         </div>
         <p className="hot-news-copy">토스증권 주요 뉴스 묶음을 카드로 훑고, 선택한 이슈의 리포트를 팝업에서 확인합니다.</p>
+        <div className="hot-news-scope-toggle" role="group" aria-label="핫뉴스 표시 범위">
+          <button
+            aria-pressed={scope === 'today'}
+            className={scope === 'today' ? 'active' : ''}
+            onClick={() => selectScope('today')}
+            type="button"
+          >
+            오늘
+          </button>
+          <button
+            aria-pressed={scope === 'all'}
+            className={scope === 'all' ? 'active' : ''}
+            onClick={() => selectScope('all')}
+            type="button"
+          >
+            전체
+          </button>
+        </div>
 
         {state.status === 'loading' ? <div className="state-panel">핫뉴스 리포트를 불러오는 중입니다.</div> : null}
         {state.status === 'error' ? <div className="state-panel error">{state.error}</div> : null}
@@ -36,9 +87,8 @@ export function HotNewsReportsPage({ queryRows }: HotNewsReportsPageProps) {
                 onClick={() => setSelectedReport(report)}
                 type="button"
               >
-                <span className="hot-news-card-date">{report.displayDate}</span>
-                {report.perspective ? <span className="hot-news-card-perspective">{report.perspective}</span> : null}
-                <strong>{report.title}</strong>
+                <span className="hot-news-card-date">{report.displayTimestampLabel}</span>
+                <strong>{report.displayTitle}</strong>
                 {report.tldr[0] ? <span className="hot-news-card-summary">{report.tldr[0]}</span> : null}
               </button>
             ))}
@@ -46,7 +96,14 @@ export function HotNewsReportsPage({ queryRows }: HotNewsReportsPageProps) {
         ) : null}
       </section>
 
-      {selectedReport ? <HotNewsReportModal report={selectedReport} onClose={closeSelectedReport} /> : null}
+      {selectedReport ? (
+        <HotNewsReportModalWithHistory
+          key={getHistoryKey(selectedReport)}
+          queryHistoryRows={queryHistoryRows}
+          report={selectedReport}
+          onClose={closeSelectedReport}
+        />
+      ) : null}
     </>
   );
 }
