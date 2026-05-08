@@ -1,14 +1,43 @@
 import { useCallback, useState } from 'react';
-import type { HotNewsReport, RawHotNewsReportRow } from '../hot-news/model';
-import { useHotNewsReports } from '../hot-news/useHotNewsReports';
+import { formatIssueDate, type HotNewsReport, type RawHotNewsReportRow } from '../hot-news/model';
+import { useHotNewsReportHistory, useHotNewsReports } from '../hot-news/useHotNewsReports';
 import { HotNewsReportModal } from './HotNewsReportModal';
 
 type HotNewsReportsPageProps = {
-  queryRows?: () => Promise<RawHotNewsReportRow[]>;
+  queryRows?: (issueDate?: string) => Promise<RawHotNewsReportRow[]>;
+  queryLatestIssueDate?: () => Promise<string | null>;
+  queryHistoryRows?: (issueDate: string, perspectiveKey: string) => Promise<RawHotNewsReportRow[]>;
+  today?: string;
 };
 
-export function HotNewsReportsPage({ queryRows }: HotNewsReportsPageProps) {
-  const state = useHotNewsReports({ queryRows });
+type HotNewsReportModalWithHistoryProps = {
+  report: HotNewsReport;
+  queryHistoryRows?: (issueDate: string, perspectiveKey: string) => Promise<RawHotNewsReportRow[]>;
+  onClose: () => void;
+};
+
+function getHistoryKey(report: HotNewsReport) {
+  return [report.issueDate ?? 'no-date', report.perspectiveKey ?? 'no-perspective', report.id].join(':');
+}
+
+function HotNewsReportModalWithHistory({ report, queryHistoryRows, onClose }: HotNewsReportModalWithHistoryProps) {
+  const historyState = useHotNewsReportHistory({
+    enabled: !!report.issueDate && !!report.perspectiveKey,
+    issueDate: report.issueDate,
+    perspectiveKey: report.perspectiveKey,
+    queryHistoryRows,
+  });
+
+  return <HotNewsReportModal historyState={historyState} report={report} onClose={onClose} />;
+}
+
+export function HotNewsReportsPage({
+  queryRows,
+  queryLatestIssueDate,
+  queryHistoryRows,
+  today,
+}: HotNewsReportsPageProps) {
+  const state = useHotNewsReports({ queryRows, queryLatestIssueDate, today });
   const [selectedReport, setSelectedReport] = useState<HotNewsReport | null>(null);
   const closeSelectedReport = useCallback(() => setSelectedReport(null), []);
 
@@ -26,6 +55,11 @@ export function HotNewsReportsPage({ queryRows }: HotNewsReportsPageProps) {
         {state.status === 'success' && state.reports.length === 0 ? (
           <div className="state-panel">표시할 핫뉴스 리포트가 없습니다.</div>
         ) : null}
+        {state.status === 'success' && state.isFallback && state.issueDate ? (
+          <div className="state-panel hot-news-fallback-notice">
+            최신 {formatIssueDate(state.issueDate)} 리포트를 표시합니다.
+          </div>
+        ) : null}
 
         {state.status === 'success' && state.reports.length > 0 ? (
           <div className="hot-news-grid">
@@ -36,9 +70,13 @@ export function HotNewsReportsPage({ queryRows }: HotNewsReportsPageProps) {
                 onClick={() => setSelectedReport(report)}
                 type="button"
               >
-                <span className="hot-news-card-date">{report.displayDate}</span>
-                {report.perspective ? <span className="hot-news-card-perspective">{report.perspective}</span> : null}
-                <strong>{report.title}</strong>
+                <span className="hot-news-card-date">
+                  {report.displayUpdatedAt ? `업데이트 ${report.displayUpdatedAt}` : report.displayDate}
+                </span>
+                {report.changeStatus === 'material_change' ? (
+                  <span className="hot-news-change-badge">중요 변경</span>
+                ) : null}
+                <strong>{report.displayTitle}</strong>
                 {report.tldr[0] ? <span className="hot-news-card-summary">{report.tldr[0]}</span> : null}
               </button>
             ))}
@@ -46,7 +84,14 @@ export function HotNewsReportsPage({ queryRows }: HotNewsReportsPageProps) {
         ) : null}
       </section>
 
-      {selectedReport ? <HotNewsReportModal report={selectedReport} onClose={closeSelectedReport} /> : null}
+      {selectedReport ? (
+        <HotNewsReportModalWithHistory
+          key={getHistoryKey(selectedReport)}
+          queryHistoryRows={queryHistoryRows}
+          report={selectedReport}
+          onClose={closeSelectedReport}
+        />
+      ) : null}
     </>
   );
 }

@@ -1439,6 +1439,24 @@ h3 {
   line-height: 1.5;
 }
 
+.hot-news-fallback-notice {
+  border-color: #b9d6d2;
+  background: #f4fbfa;
+  color: #0f766e;
+}
+
+.hot-news-change-badge {
+  width: fit-content;
+  padding: 4px 8px;
+  border: 1px solid #fecdd3;
+  border-radius: 8px;
+  background: #fff1f2;
+  color: #b91c1c;
+  font-size: 0.74rem;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
 .modal-open {
   overflow: hidden;
 }
@@ -1641,6 +1659,66 @@ h3 {
   color: #0f766e;
   font-size: 0.78rem;
   font-weight: 850;
+}
+
+.hot-news-debug-section {
+  border-style: dashed;
+  background: #ffffff;
+}
+
+.hot-news-debug-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.hot-news-debug-list div,
+.hot-news-deduped-history li {
+  display: grid;
+  gap: 4px;
+}
+
+.hot-news-debug-list dt,
+.hot-news-deduped-history span {
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 850;
+}
+
+.hot-news-debug-list dd {
+  min-width: 0;
+  margin: 0;
+  color: #152238;
+  font-size: 0.86rem;
+  overflow-wrap: anywhere;
+}
+
+.hot-news-deduped-history {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e3e7ee;
+}
+
+.hot-news-deduped-history strong {
+  color: #152238;
+  font-size: 0.82rem;
+}
+
+.hot-news-deduped-history ul {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.hot-news-deduped-history li {
+  color: #465468;
+}
+
+.hot-news-deduped-history p {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
 }
 
 .volatility-calendar-heading {

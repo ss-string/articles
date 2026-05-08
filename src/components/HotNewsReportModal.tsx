@@ -1,8 +1,15 @@
 import { useEffect, useRef } from 'react';
-import type { HotNewsReport } from '../hot-news/model';
+import { getHotNewsChangeStatusLabel, type HotNewsReport } from '../hot-news/model';
+
+type HotNewsReportHistoryState = {
+  status: 'loading' | 'success' | 'error';
+  reports: HotNewsReport[];
+  error: string | null;
+};
 
 type HotNewsReportModalProps = {
   report: HotNewsReport;
+  historyState: HotNewsReportHistoryState;
   onClose: () => void;
 };
 
@@ -19,9 +26,24 @@ function getEvidenceToneClass(position: string | null) {
   }
 }
 
-export function HotNewsReportModal({ report, onClose }: HotNewsReportModalProps) {
+function getHistoryStatusText(historyState: HotNewsReportHistoryState) {
+  switch (historyState.status) {
+    case 'loading':
+      return '이력 조회 중';
+    case 'error':
+      return '이력 조회 오류';
+    case 'success':
+      return '이력 조회 성공';
+    default:
+      return '이력 조회 대기';
+  }
+}
+
+export function HotNewsReportModal({ historyState, report, onClose }: HotNewsReportModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
+  const deduplicatedReports = historyState.reports.filter((historyReport) => historyReport.changeStatus === 'deduplicated');
+  const updatedMeta = report.displayUpdatedAt ? `업데이트 ${report.displayUpdatedAt}` : report.displayDate;
 
   useEffect(() => {
     const previouslyActiveElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -79,12 +101,10 @@ export function HotNewsReportModal({ report, onClose }: HotNewsReportModalProps)
 
   return (
     <div className="hot-news-modal-layer">
-      <button
-        aria-label="리포트 배경 닫기"
+      <div
         className="hot-news-modal-backdrop"
         data-testid="hot-news-modal-backdrop"
         onClick={onClose}
-        type="button"
       />
       <section
         aria-labelledby="hot-news-modal-title"
@@ -97,11 +117,8 @@ export function HotNewsReportModal({ report, onClose }: HotNewsReportModalProps)
         <header className="hot-news-modal-header">
           <div>
             <span>Hot News Report</span>
-            <h3 id="hot-news-modal-title">{report.title}</h3>
-            <p>
-              {report.displayDate}
-              {report.perspective ? ` · ${report.perspective}` : ''}
-            </p>
+            <h3 id="hot-news-modal-title">{report.displayTitle}</h3>
+            <p>{updatedMeta}</p>
           </div>
           <button
             aria-label="리포트 닫기"
@@ -197,6 +214,43 @@ export function HotNewsReportModal({ report, onClose }: HotNewsReportModalProps)
               </ul>
             </section>
           ) : null}
+
+          <section className="hot-news-modal-section hot-news-debug-section">
+            <h4>디버그 상태</h4>
+            <dl className="hot-news-debug-list">
+              <div>
+                <dt>문서 상태</dt>
+                <dd>{getHotNewsChangeStatusLabel(report.changeStatus)}</dd>
+              </div>
+              <div>
+                <dt>업데이트 시각</dt>
+                <dd>{updatedMeta}</dd>
+              </div>
+              <div>
+                <dt>이력 조회</dt>
+                <dd>{getHistoryStatusText(historyState)}</dd>
+              </div>
+              {historyState.error ? (
+                <div>
+                  <dt>이력 오류</dt>
+                  <dd>{historyState.error}</dd>
+                </div>
+              ) : null}
+            </dl>
+            {deduplicatedReports.length > 0 ? (
+              <div className="hot-news-deduped-history">
+                <strong>정리된 중복 요약</strong>
+                <ul>
+                  {deduplicatedReports.map((historyReport) => (
+                    <li key={historyReport.id}>
+                      <span>{getHotNewsChangeStatusLabel(historyReport.changeStatus)}</span>
+                      {historyReport.tldr.length > 0 ? <p>{historyReport.tldr.join(' ')}</p> : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </section>
         </div>
       </section>
     </div>
