@@ -38,6 +38,10 @@ export type HotNewsReport = {
   positionMap: Record<string, string>;
   updatedAt: string | null;
   displayUpdatedAt: string | null;
+  createdAt: string | null;
+  displayCreatedAt: string | null;
+  hasBeenUpdated: boolean;
+  displayTimestampLabel: string;
   interpretation: string | null;
   tldr: string[];
   keyArticles: HotNewsArticle[];
@@ -216,6 +220,22 @@ export function getHotNewsChangeStatusLabel(status: HotNewsChangeStatus | null):
   return labels[status] ?? status;
 }
 
+function getDisplayTimestampLabel(
+  displayUpdatedAt: string | null,
+  displayCreatedAt: string | null,
+  displayDate: string,
+) {
+  if (displayUpdatedAt) {
+    return `업데이트 ${displayUpdatedAt}`;
+  }
+
+  if (displayCreatedAt) {
+    return `생성 ${displayCreatedAt}`;
+  }
+
+  return displayDate;
+}
+
 export function normalizeHotNewsReport(row: RawHotNewsReportRow): HotNewsReport | null {
   const payload = isRecord(row.report_payload) ? row.report_payload : null;
   const title = preferText(payload, row, 'title', 'title');
@@ -225,12 +245,16 @@ export function normalizeHotNewsReport(row: RawHotNewsReportRow): HotNewsReport 
   }
 
   const issueDate = parseText(row.issue_date);
-  const updatedAt = parseText(row.updated_at) ?? parseText(row.created_at);
+  const displayDate = formatIssueDate(row.issue_date);
+  const updatedAt = parseText(row.updated_at);
+  const createdAt = parseText(row.created_at);
+  const displayUpdatedAt = formatKoreanDateTime(updatedAt);
+  const displayCreatedAt = formatKoreanDateTime(createdAt);
 
   return {
     id: parseText(row.id) ?? title,
     issueDate,
-    displayDate: formatIssueDate(row.issue_date),
+    displayDate,
     title,
     displayTitle: stripIssueDatePrefix(title),
     perspective: parseText(row.perspective),
@@ -244,7 +268,11 @@ export function normalizeHotNewsReport(row: RawHotNewsReportRow): HotNewsReport 
     companyCodes: parseTextArray(row.company_codes),
     positionMap: normalizePositionMap(row.position_map),
     updatedAt,
-    displayUpdatedAt: formatKoreanDateTime(updatedAt),
+    displayUpdatedAt,
+    createdAt,
+    displayCreatedAt,
+    hasBeenUpdated: updatedAt !== null,
+    displayTimestampLabel: getDisplayTimestampLabel(displayUpdatedAt, displayCreatedAt, displayDate),
     interpretation: preferText(payload, row, 'interpretation', 'interpretation'),
     tldr: preferTextArray(payload, row, 'tldr', 'tldr'),
     keyArticles: preferArticles(payload, row),

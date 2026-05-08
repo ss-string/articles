@@ -19,13 +19,13 @@ describe('useHotNewsReports', () => {
     expect(result.current.error).toBe('Supabase 환경변수가 설정되지 않았습니다.');
   });
 
-  it('loads normalized hot news reports from the provided query function', async () => {
+  it('loads today reports by default from the provided query function', async () => {
     const queryRows = vi.fn().mockResolvedValue([
       {
         id: 1,
-        issue_date: '2026-05-04',
-        title: '2026-05-04 조선 에너지 수주',
-        perspective: '조선 에너지 수주',
+        issue_date: '2026-05-08',
+        title: '2026-05-08 AI 인프라',
+        perspective: 'AI 인프라',
         tldr: ['국내 조선·해양 에너지 인프라 기업의 수주 뉴스가 집중'],
       },
     ]);
@@ -33,10 +33,28 @@ describe('useHotNewsReports', () => {
     const { result } = renderHook(() => useHotNewsReports({ today: '2026-05-08', queryRows }));
 
     await waitFor(() => expect(result.current.status).toBe('success'));
-    expect(result.current.reports.map((report) => report.title)).toEqual(['2026-05-04 조선 에너지 수주']);
+    expect(result.current.reports.map((report) => report.title)).toEqual(['2026-05-08 AI 인프라']);
+    expect(queryRows).toHaveBeenCalledWith('2026-05-08');
+    expect(result.current.issueDate).toBe('2026-05-08');
+    expect(result.current.isFallback).toBe(false);
+  });
+
+  it('loads all reports without an issue date when the all scope is selected', async () => {
+    const queryRows = vi.fn().mockResolvedValue([
+      {
+        id: 1,
+        issue_date: '2026-05-04',
+        title: '2026-05-04 조선 에너지 수주',
+        perspective: '조선 에너지 수주',
+      },
+    ]);
+
+    const { result } = renderHook(() => useHotNewsReports({ scope: 'all', today: '2026-05-08', queryRows }));
+
+    await waitFor(() => expect(result.current.status).toBe('success'));
     expect(queryRows).toHaveBeenCalledWith(undefined);
     expect(result.current.issueDate).toBeNull();
-    expect(result.current.isFallback).toBe(false);
+    expect(result.current.reports.map((report) => report.title)).toEqual(['2026-05-04 조선 에너지 수주']);
   });
 
   it('loads today reports only when the today scope is selected', async () => {

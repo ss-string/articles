@@ -50,7 +50,7 @@ export function HotNewsReportModal({ historyState, report, onClose }: HotNewsRep
   const materialChangeReports = historyState.reports.filter(
     (historyReport) => historyReport.changeStatus === 'material_change',
   );
-  const updatedMeta = report.displayUpdatedAt ? `업데이트 ${report.displayUpdatedAt}` : report.displayDate;
+  const timestampMeta = report.displayTimestampLabel;
 
   useEffect(() => {
     const previouslyActiveElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -125,7 +125,7 @@ export function HotNewsReportModal({ historyState, report, onClose }: HotNewsRep
           <div>
             <span>Hot News Report</span>
             <h3 id="hot-news-modal-title">{report.displayTitle}</h3>
-            <p>{updatedMeta}</p>
+            <p>{timestampMeta}</p>
           </div>
           <button
             aria-label="리포트 닫기"
@@ -230,8 +230,8 @@ export function HotNewsReportModal({ historyState, report, onClose }: HotNewsRep
                 <dd>{getHotNewsChangeStatusLabel(report.changeStatus)}</dd>
               </div>
               <div>
-                <dt>업데이트 시각</dt>
-                <dd>{updatedMeta}</dd>
+                <dt>표시 시각</dt>
+                <dd>{timestampMeta}</dd>
               </div>
               <div>
                 <dt>이력 조회</dt>
@@ -263,7 +263,7 @@ export function HotNewsReportModal({ historyState, report, onClose }: HotNewsRep
                 <ul>
                   {materialChangeReports.map((historyReport) => (
                     <li key={historyReport.id}>
-                      <span>{historyReport.displayUpdatedAt ?? historyReport.displayDate}</span>
+                      <span>{historyReport.displayTimestampLabel}</span>
                       {historyReport.changeReason ? <p>{historyReport.changeReason}</p> : null}
                       {historyReport.tldr.length > 0 ? <p>{historyReport.tldr.join(' ')}</p> : null}
                     </li>

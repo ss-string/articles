@@ -40,7 +40,7 @@ export function getTodayInSeoul() {
 }
 
 export function useHotNewsReports(options: UseHotNewsReportsOptions = {}): HotNewsReportsState {
-  const scope = options.scope ?? 'all';
+  const scope = options.scope ?? 'today';
   const today = options.today ?? getTodayInSeoul();
   const [state, setState] = useState<HotNewsReportsState>({
     status: 'loading',

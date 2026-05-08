@@ -103,6 +103,7 @@ describe('hot-news model', () => {
       change_reason: '신규 수주 뉴스 반영',
       material_change_score: '0.87',
       updated_at: '2026-05-07T23:45:00Z',
+      created_at: '2026-05-07T22:30:00Z',
       source_news_ids: ['news_1', 2, '', null],
       company_codes: ['A005930', ' ', 'A000660'],
       position_map: {
@@ -122,6 +123,10 @@ describe('hot-news model', () => {
       materialChangeScore: 0.87,
       updatedAt: '2026-05-07T23:45:00Z',
       displayUpdatedAt: '2026-05-08 08:45',
+      createdAt: '2026-05-07T22:30:00Z',
+      displayCreatedAt: '2026-05-08 07:30',
+      hasBeenUpdated: true,
+      displayTimestampLabel: '업데이트 2026-05-08 08:45',
       sourceNewsIds: ['news_1', '2'],
       companyCodes: ['A005930', 'A000660'],
       positionMap: {
@@ -131,7 +136,7 @@ describe('hot-news model', () => {
     });
   });
 
-  it('falls back to created_at for updated timestamps and defaults invalid material change scores to zero', () => {
+  it('uses created_at as a created timestamp when updated_at is missing', () => {
     const report = normalizeHotNewsReport({
       id: 'created-at-fallback',
       title: '2026-05-08 생성 시각 fallback',
@@ -140,8 +145,12 @@ describe('hot-news model', () => {
     });
 
     expect(report).toMatchObject({
-      updatedAt: '2026-05-08T01:30:00Z',
-      displayUpdatedAt: '2026-05-08 10:30',
+      updatedAt: null,
+      displayUpdatedAt: null,
+      createdAt: '2026-05-08T01:30:00Z',
+      displayCreatedAt: '2026-05-08 10:30',
+      hasBeenUpdated: false,
+      displayTimestampLabel: '생성 2026-05-08 10:30',
       materialChangeScore: 0,
     });
   });
@@ -158,12 +167,17 @@ describe('hot-news model', () => {
   it('uses null display updated time when timestamps are missing', () => {
     const report = normalizeHotNewsReport({
       id: 'missing-timestamp',
+      issue_date: '2026-05-08',
       title: '업데이트 시각 없음',
     });
 
     expect(report).toMatchObject({
       updatedAt: null,
       displayUpdatedAt: null,
+      createdAt: null,
+      displayCreatedAt: null,
+      hasBeenUpdated: false,
+      displayTimestampLabel: '2026.05.08',
     });
   });
 

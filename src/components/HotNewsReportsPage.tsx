@@ -36,7 +36,7 @@ export function HotNewsReportsPage({
   queryHistoryRows,
   today,
 }: HotNewsReportsPageProps) {
-  const [scope, setScope] = useState<HotNewsReportScope>('all');
+  const [scope, setScope] = useState<HotNewsReportScope>('today');
   const state = useHotNewsReports({ queryRows, scope, today });
   const [selectedReport, setSelectedReport] = useState<HotNewsReport | null>(null);
   const closeSelectedReport = useCallback(() => setSelectedReport(null), []);
@@ -87,9 +87,7 @@ export function HotNewsReportsPage({
                 onClick={() => setSelectedReport(report)}
                 type="button"
               >
-                <span className="hot-news-card-date">
-                  {report.displayUpdatedAt ? `업데이트 ${report.displayUpdatedAt}` : report.displayDate}
-                </span>
+                <span className="hot-news-card-date">{report.displayTimestampLabel}</span>
                 <strong>{report.displayTitle}</strong>
                 {report.tldr[0] ? <span className="hot-news-card-summary">{report.tldr[0]}</span> : null}
               </button>
