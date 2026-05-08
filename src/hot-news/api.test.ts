@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  queryHotNewsLatestIssueDate,
-  queryHotNewsReportHistoryRows,
-  queryHotNewsReportRows,
-} from './api';
+import { queryHotNewsReportHistoryRows, queryHotNewsReportRows } from './api';
 
 const from = vi.fn();
 
@@ -61,17 +57,5 @@ describe('hot-news api', () => {
     expect(query.eq).toHaveBeenCalledWith('perspective_key', 'ai_infra');
     expect(query.order).toHaveBeenCalledWith('is_latest', { ascending: false });
     expect(query.order).toHaveBeenCalledWith('run_slot', { ascending: false });
-  });
-
-  it('queries the latest hot-news issue date from the latest reports view', async () => {
-    const query = createQuery({ data: [{ issue_date: '2026-05-08' }], error: null });
-    from.mockReturnValue({ select: query.select });
-
-    await expect(queryHotNewsLatestIssueDate()).resolves.toBe('2026-05-08');
-
-    expect(from).toHaveBeenCalledWith('toss_wts_hot_news_latest_reports');
-    expect(query.select).toHaveBeenCalledWith('issue_date');
-    expect(query.order).toHaveBeenCalledWith('issue_date', { ascending: false });
-    expect(query.limit).toHaveBeenCalledWith(1);
   });
 });

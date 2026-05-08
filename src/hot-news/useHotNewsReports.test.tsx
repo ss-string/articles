@@ -34,8 +34,28 @@ describe('useHotNewsReports', () => {
 
     await waitFor(() => expect(result.current.status).toBe('success'));
     expect(result.current.reports.map((report) => report.title)).toEqual(['2026-05-04 조선 에너지 수주']);
+    expect(queryRows).toHaveBeenCalledWith(undefined);
+    expect(result.current.issueDate).toBeNull();
+    expect(result.current.isFallback).toBe(false);
+  });
+
+  it('loads today reports only when the today scope is selected', async () => {
+    const queryRows = vi.fn().mockResolvedValue([
+      {
+        id: 1,
+        issue_date: '2026-05-08',
+        title: '2026-05-08 AI 인프라',
+        perspective: 'AI 인프라',
+      },
+    ]);
+
+    const { result } = renderHook(() => useHotNewsReports({ scope: 'today', today: '2026-05-08', queryRows }));
+
+    await waitFor(() => expect(result.current.status).toBe('success'));
+    expect(queryRows).toHaveBeenCalledWith('2026-05-08');
     expect(result.current.issueDate).toBe('2026-05-08');
     expect(result.current.isFallback).toBe(false);
+    expect(result.current.reports.map((report) => report.title)).toEqual(['2026-05-08 AI 인프라']);
   });
 
   it('returns an error when the query fails', async () => {
@@ -47,73 +67,39 @@ describe('useHotNewsReports', () => {
     expect(result.current.error).toBe('network failed');
   });
 
-  it('falls back to the latest issue date when today has no reports', async () => {
-    const queryRows = vi
-      .fn()
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([
-        {
-          id: 1,
-          issue_date: '2026-05-07',
-          title: '2026-05-07 AI 인프라',
-          perspective: 'AI 인프라',
-        },
-      ]);
-    const queryLatestIssueDate = vi.fn().mockResolvedValue('2026-05-07');
-
-    const { result } = renderHook(() =>
-      useHotNewsReports({
-        today: '2026-05-08',
-        queryRows,
-        queryLatestIssueDate,
-      }),
-    );
-
-    await waitFor(() => expect(result.current.status).toBe('success'));
-    expect(queryRows).toHaveBeenNthCalledWith(1, '2026-05-08');
-    expect(queryRows).toHaveBeenNthCalledWith(2, '2026-05-07');
-    expect(result.current.issueDate).toBe('2026-05-07');
-    expect(result.current.isFallback).toBe(true);
-    expect(result.current.reports.map((report) => report.title)).toEqual(['2026-05-07 AI 인프라']);
-  });
-
-  it('returns empty success without fallback when latest issue date is null', async () => {
+  it('returns empty success without fallback when today scope has no reports', async () => {
     const queryRows = vi.fn().mockResolvedValue([]);
-    const queryLatestIssueDate = vi.fn().mockResolvedValue(null);
 
     const { result } = renderHook(() =>
       useHotNewsReports({
+        scope: 'today',
         today: '2026-05-08',
         queryRows,
-        queryLatestIssueDate,
       }),
     );
 
     await waitFor(() => expect(result.current.status).toBe('success'));
     expect(queryRows).toHaveBeenCalledTimes(1);
     expect(queryRows).toHaveBeenCalledWith('2026-05-08');
-    expect(queryLatestIssueDate).toHaveBeenCalledTimes(1);
     expect(result.current.reports).toEqual([]);
     expect(result.current.issueDate).toBe('2026-05-08');
     expect(result.current.isFallback).toBe(false);
   });
 
-  it('returns empty success without fallback when latest issue date is today', async () => {
+  it('does not query a fallback date when today scope has no reports', async () => {
     const queryRows = vi.fn().mockResolvedValue([]);
-    const queryLatestIssueDate = vi.fn().mockResolvedValue('2026-05-08');
 
     const { result } = renderHook(() =>
       useHotNewsReports({
+        scope: 'today',
         today: '2026-05-08',
         queryRows,
-        queryLatestIssueDate,
       }),
     );
 
     await waitFor(() => expect(result.current.status).toBe('success'));
     expect(queryRows).toHaveBeenCalledTimes(1);
     expect(queryRows).toHaveBeenCalledWith('2026-05-08');
-    expect(queryLatestIssueDate).toHaveBeenCalledTimes(1);
     expect(result.current.reports).toEqual([]);
     expect(result.current.issueDate).toBe('2026-05-08');
     expect(result.current.isFallback).toBe(false);
@@ -128,20 +114,18 @@ describe('useHotNewsReports', () => {
         perspective: 'AI 인프라',
       },
     ]);
-    const queryLatestIssueDate = vi.fn().mockResolvedValue('2026-05-07');
 
     const { result } = renderHook(() =>
       useHotNewsReports({
+        scope: 'today',
         today: '2026-05-08',
         queryRows,
-        queryLatestIssueDate,
       }),
     );
 
     await waitFor(() => expect(result.current.status).toBe('success'));
     expect(queryRows).toHaveBeenCalledTimes(1);
     expect(queryRows).toHaveBeenCalledWith('2026-05-08');
-    expect(queryLatestIssueDate).not.toHaveBeenCalled();
     expect(result.current.issueDate).toBe('2026-05-08');
     expect(result.current.isFallback).toBe(false);
   });

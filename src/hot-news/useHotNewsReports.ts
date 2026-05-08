@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { queryHotNewsLatestIssueDate, queryHotNewsReportHistoryRows, queryHotNewsReportRows } from './api';
+import { queryHotNewsReportHistoryRows, queryHotNewsReportRows } from './api';
 import { buildHotNewsReports, type HotNewsReport, type RawHotNewsReportRow } from './model';
+
+export type HotNewsReportScope = 'today' | 'all';
 
 type HotNewsReportsState =
   | { status: 'loading'; reports: HotNewsReport[]; error: null; issueDate: string | null; isFallback: boolean }
@@ -8,9 +10,9 @@ type HotNewsReportsState =
   | { status: 'error'; reports: HotNewsReport[]; error: string; issueDate: string | null; isFallback: boolean };
 
 type UseHotNewsReportsOptions = {
+  scope?: HotNewsReportScope;
   today?: string;
   queryRows?: (issueDate?: string) => Promise<RawHotNewsReportRow[]>;
-  queryLatestIssueDate?: () => Promise<string | null>;
 };
 
 type HotNewsReportHistoryState =
@@ -38,6 +40,7 @@ export function getTodayInSeoul() {
 }
 
 export function useHotNewsReports(options: UseHotNewsReportsOptions = {}): HotNewsReportsState {
+  const scope = options.scope ?? 'all';
   const today = options.today ?? getTodayInSeoul();
   const [state, setState] = useState<HotNewsReportsState>({
     status: 'loading',
@@ -50,39 +53,17 @@ export function useHotNewsReports(options: UseHotNewsReportsOptions = {}): HotNe
   useEffect(() => {
     let isMounted = true;
     const loadRows = options.queryRows ?? queryHotNewsReportRows;
-    const loadLatestIssueDate = options.queryLatestIssueDate ?? queryHotNewsLatestIssueDate;
+    const issueDate = scope === 'today' ? today : undefined;
 
     async function load() {
       setState({ status: 'loading', reports: [], error: null, issueDate: null, isFallback: false });
 
       try {
-        const todayRows = await loadRows(today);
-
-        if (todayRows.length > 0) {
-          const reports = buildHotNewsReports(todayRows);
-
-          if (isMounted) {
-            setState({ status: 'success', reports, error: null, issueDate: today, isFallback: false });
-          }
-
-          return;
-        }
-
-        const latestIssueDate = await loadLatestIssueDate();
-
-        if (!latestIssueDate || latestIssueDate === today) {
-          if (isMounted) {
-            setState({ status: 'success', reports: [], error: null, issueDate: today, isFallback: false });
-          }
-
-          return;
-        }
-
-        const fallbackRows = await loadRows(latestIssueDate);
-        const reports = buildHotNewsReports(fallbackRows);
+        const rows = await loadRows(issueDate);
+        const reports = buildHotNewsReports(rows);
 
         if (isMounted) {
-          setState({ status: 'success', reports, error: null, issueDate: latestIssueDate, isFallback: true });
+          setState({ status: 'success', reports, error: null, issueDate: issueDate ?? null, isFallback: false });
         }
       } catch (error) {
         if (isMounted) {
@@ -102,7 +83,7 @@ export function useHotNewsReports(options: UseHotNewsReportsOptions = {}): HotNe
     return () => {
       isMounted = false;
     };
-  }, [options.queryRows, options.queryLatestIssueDate, today]);
+  }, [options.queryRows, scope, today]);
 
   return state;
 }

@@ -35,22 +35,6 @@ export async function queryHotNewsReportRows(issueDate?: string): Promise<RawHot
   return data ?? [];
 }
 
-export async function queryHotNewsLatestIssueDate(): Promise<string | null> {
-  const { url, publishableKey } = getHotNewsSupabaseConfig();
-  const supabase = createClient(url, publishableKey);
-  const { data, error } = await supabase
-    .from(latestReportsViewName)
-    .select('issue_date')
-    .order('issue_date', { ascending: false })
-    .limit(1);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return typeof data?.[0]?.issue_date === 'string' ? data[0].issue_date : null;
-}
-
 export async function queryHotNewsReportHistoryRows(
   issueDate: string,
   perspectiveKey: string,

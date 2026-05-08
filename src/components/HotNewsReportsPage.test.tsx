@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { vi } from 'vitest';
 import { HotNewsReportsPage } from './HotNewsReportsPage';
 
 function createReportRow(overrides: Record<string, unknown> = {}) {
@@ -45,12 +46,11 @@ function createReportRow(overrides: Record<string, unknown> = {}) {
 const rows = [createReportRow()];
 
 describe('HotNewsReportsPage', () => {
-  it('renders fallback notice, displayTitle cards, update time, and debug status only in the modal footer', async () => {
-    const queryRows = async (issueDate?: string) => (issueDate === '2026-05-07' ? rows : []);
+  it('renders all-scope displayTitle cards, update time, and debug status only in the modal footer', async () => {
+    const queryRows = async (issueDate?: string) => (issueDate === undefined ? rows : []);
 
     render(
       <HotNewsReportsPage
-        queryLatestIssueDate={async () => '2026-05-07'}
         queryHistoryRows={async () => []}
         queryRows={queryRows}
         today="2026-05-08"
@@ -61,7 +61,10 @@ describe('HotNewsReportsPage', () => {
     expect(
       screen.getByText('토스증권 주요 뉴스 묶음을 카드로 훑고, 선택한 이슈의 리포트를 팝업에서 확인합니다.'),
     ).toBeInTheDocument();
-    expect(screen.getByText('최신 2026.05.07 리포트를 표시합니다.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '오늘' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: '전체' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByText(/최신 .* 리포트를 표시합니다/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/오늘 업데이트된 리포트입니다/)).not.toBeInTheDocument();
     expect(screen.getByText('AI 인프라 리포트')).toBeInTheDocument();
     expect(screen.queryByText('2026-05-07 AI 인프라 리포트')).not.toBeInTheDocument();
     expect(screen.getByText('업데이트 2026-05-07 10:30')).toBeInTheDocument();
@@ -91,6 +94,37 @@ describe('HotNewsReportsPage', () => {
     expect(within(debugSection as HTMLElement).getByText('종목 코드')).toBeInTheDocument();
     expect(within(debugSection as HTMLElement).getByText('A010140')).toBeInTheDocument();
     expect(screen.getAllByText('초기 문서')).toHaveLength(1);
+  });
+
+  it('switches between today issue-date rows and all latest rows without fallback notice', async () => {
+    const user = userEvent.setup();
+    const queryRows = vi.fn(async (issueDate?: string) => (issueDate === undefined ? rows : []));
+
+    render(
+      <HotNewsReportsPage
+        queryHistoryRows={async () => []}
+        queryRows={queryRows}
+        today="2026-05-08"
+      />,
+    );
+
+    expect(await screen.findByRole('button', { name: /AI 인프라 리포트/ })).toBeInTheDocument();
+    expect(queryRows).toHaveBeenLastCalledWith(undefined);
+
+    await user.click(screen.getByRole('button', { name: '오늘' }));
+
+    expect(await screen.findByText('표시할 핫뉴스 리포트가 없습니다.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '오늘' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: '전체' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.queryByRole('button', { name: /AI 인프라 리포트/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/최신 .* 리포트를 표시합니다/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/오늘 업데이트된 리포트입니다/)).not.toBeInTheDocument();
+    expect(queryRows).toHaveBeenLastCalledWith('2026-05-08');
+
+    await user.click(screen.getByRole('button', { name: '전체' }));
+
+    expect(await screen.findByRole('button', { name: /AI 인프라 리포트/ })).toBeInTheDocument();
+    expect(queryRows).toHaveBeenLastCalledWith(undefined);
   });
 
   it('opens a displayTitle modal and keeps report sections and bull tone styling', async () => {
@@ -272,15 +306,12 @@ describe('HotNewsReportsPage', () => {
   });
 
   it('renders empty and error states', async () => {
-    const { rerender } = render(
-      <HotNewsReportsPage queryLatestIssueDate={async () => null} queryRows={async () => []} />,
-    );
+    const { rerender } = render(<HotNewsReportsPage queryRows={async () => []} />);
 
     expect(await screen.findByText('표시할 핫뉴스 리포트가 없습니다.')).toBeInTheDocument();
 
     rerender(
       <HotNewsReportsPage
-        queryLatestIssueDate={async () => null}
         queryRows={async () => Promise.reject(new Error('network failed'))}
       />,
     );
@@ -350,13 +381,13 @@ describe('HotNewsReportsPage', () => {
   it('queries history with the selected report issueDate instead of the page issueDate', async () => {
     const user = userEvent.setup();
     const historyCalls: Array<[string, string]> = [];
-    const fallbackRows = [
+    const allRows = [
       createReportRow({
         issue_date: '2026-05-06',
         title: '2026-05-06 AI 인프라 리포트',
       }),
     ];
-    const queryRows = async (issueDate?: string) => (issueDate === '2026-05-07' ? fallbackRows : []);
+    const queryRows = async (issueDate?: string) => (issueDate === undefined ? allRows : []);
 
     render(
       <HotNewsReportsPage
@@ -364,7 +395,6 @@ describe('HotNewsReportsPage', () => {
           historyCalls.push([issueDate, perspectiveKey]);
           return [];
         }}
-        queryLatestIssueDate={async () => '2026-05-07'}
         queryRows={queryRows}
         today="2026-05-08"
       />,
