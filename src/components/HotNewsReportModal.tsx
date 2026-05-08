@@ -39,10 +39,17 @@ function getHistoryStatusText(historyState: HotNewsReportHistoryState) {
   }
 }
 
+function formatDebugList(values: string[]) {
+  return values.length > 0 ? values.join(', ') : '없음';
+}
+
 export function HotNewsReportModal({ historyState, report, onClose }: HotNewsReportModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   const deduplicatedReports = historyState.reports.filter((historyReport) => historyReport.changeStatus === 'deduplicated');
+  const materialChangeReports = historyState.reports.filter(
+    (historyReport) => historyReport.changeStatus === 'material_change',
+  );
   const updatedMeta = report.displayUpdatedAt ? `업데이트 ${report.displayUpdatedAt}` : report.displayDate;
 
   useEffect(() => {
@@ -250,6 +257,45 @@ export function HotNewsReportModal({ historyState, report, onClose }: HotNewsRep
                 </ul>
               </div>
             ) : null}
+            {materialChangeReports.length > 0 ? (
+              <div className="hot-news-debug-history">
+                <strong>중요 변경 이력</strong>
+                <ul>
+                  {materialChangeReports.map((historyReport) => (
+                    <li key={historyReport.id}>
+                      <span>{historyReport.displayUpdatedAt ?? historyReport.displayDate}</span>
+                      {historyReport.changeReason ? <p>{historyReport.changeReason}</p> : null}
+                      {historyReport.tldr.length > 0 ? <p>{historyReport.tldr.join(' ')}</p> : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            <details className="hot-news-debug-details">
+              <summary>원본 추적 필드</summary>
+              <dl className="hot-news-debug-list">
+                <div>
+                  <dt>관점 키</dt>
+                  <dd>{report.perspectiveKey ?? '없음'}</dd>
+                </div>
+                <div>
+                  <dt>실행 슬롯</dt>
+                  <dd>{report.runSlot ?? '없음'}</dd>
+                </div>
+                <div>
+                  <dt>뉴스 ID</dt>
+                  <dd>{formatDebugList(report.sourceNewsIds)}</dd>
+                </div>
+                <div>
+                  <dt>종목 코드</dt>
+                  <dd>{formatDebugList(report.companyCodes)}</dd>
+                </div>
+                <div>
+                  <dt>포지션 맵</dt>
+                  <dd>{Object.keys(report.positionMap).length > 0 ? JSON.stringify(report.positionMap) : '없음'}</dd>
+                </div>
+              </dl>
+            </details>
           </section>
         </div>
       </section>

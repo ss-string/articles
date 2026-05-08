@@ -49,7 +49,7 @@ describe('hot-news api', () => {
     expect(query.order).toHaveBeenCalledWith('perspective_key', { ascending: true });
   });
 
-  it('queries hot-news report history by issue date, perspective key, latest status, and run slot order', async () => {
+  it('queries hot-news report history by issue date, perspective key, latest status, and latest run slot order', async () => {
     const query = createQuery({ data: [], error: null });
     from.mockReturnValue({ select: query.select });
 
@@ -60,7 +60,7 @@ describe('hot-news api', () => {
     expect(query.eq).toHaveBeenCalledWith('issue_date', '2026-05-07');
     expect(query.eq).toHaveBeenCalledWith('perspective_key', 'ai_infra');
     expect(query.order).toHaveBeenCalledWith('is_latest', { ascending: false });
-    expect(query.order).toHaveBeenCalledWith('run_slot', { ascending: true });
+    expect(query.order).toHaveBeenCalledWith('run_slot', { ascending: false });
   });
 
   it('queries the latest hot-news issue date from the latest reports view', async () => {

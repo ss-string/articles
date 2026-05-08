@@ -63,7 +63,7 @@ export async function queryHotNewsReportHistoryRows(
     .eq('issue_date', issueDate)
     .eq('perspective_key', perspectiveKey)
     .order('is_latest', { ascending: false })
-    .order('run_slot', { ascending: true });
+    .order('run_slot', { ascending: false });
 
   if (error) {
     throw new Error(error.message);

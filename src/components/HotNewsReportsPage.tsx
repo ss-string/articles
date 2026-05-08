@@ -73,9 +73,6 @@ export function HotNewsReportsPage({
                 <span className="hot-news-card-date">
                   {report.displayUpdatedAt ? `업데이트 ${report.displayUpdatedAt}` : report.displayDate}
                 </span>
-                {report.changeStatus === 'material_change' ? (
-                  <span className="hot-news-change-badge">중요 변경</span>
-                ) : null}
                 <strong>{report.displayTitle}</strong>
                 {report.tldr[0] ? <span className="hot-news-card-summary">{report.tldr[0]}</span> : null}
               </button>

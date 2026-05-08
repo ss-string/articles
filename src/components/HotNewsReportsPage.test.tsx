@@ -9,8 +9,12 @@ function createReportRow(overrides: Record<string, unknown> = {}) {
     title: '2026-05-07 AI 인프라 리포트',
     perspective: 'AI 반도체 인프라',
     perspective_key: 'ai_infra',
+    run_slot: 'latest',
     change_status: 'initial',
     updated_at: '2026-05-07T10:30:00+09:00',
+    source_news_ids: ['news-1', 'news-2'],
+    company_codes: ['A010140'],
+    position_map: { A010140: 'bull' },
     tldr: [
       '국내 AI 인프라 기업의 수주 뉴스가 집중',
       '데이터센터 전력망과 반도체 장비 투자가 핵심',
@@ -63,6 +67,7 @@ describe('HotNewsReportsPage', () => {
     expect(screen.getByText('업데이트 2026-05-07 10:30')).toBeInTheDocument();
     expect(screen.getByText('국내 AI 인프라 기업의 수주 뉴스가 집중')).toBeInTheDocument();
     expect(screen.queryByText('AI 반도체 인프라')).not.toBeInTheDocument();
+    expect(screen.queryByText('ai_infra')).not.toBeInTheDocument();
     expect(screen.queryByText('초기 문서')).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /AI 인프라 리포트/ }));
@@ -78,6 +83,13 @@ describe('HotNewsReportsPage', () => {
     expect(within(debugSection as HTMLElement).getByText('초기 문서')).toBeInTheDocument();
     expect(within(debugSection as HTMLElement).getByText('업데이트 2026-05-07 10:30')).toBeInTheDocument();
     expect(within(debugSection as HTMLElement).getByText('이력 조회 성공')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('원본 추적 필드')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('관점 키')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('ai_infra')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('뉴스 ID')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('news-1, news-2')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('종목 코드')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('A010140')).toBeInTheDocument();
     expect(screen.getAllByText('초기 문서')).toHaveLength(1);
   });
 
@@ -276,18 +288,35 @@ describe('HotNewsReportsPage', () => {
     expect(await screen.findByText('network failed')).toBeInTheDocument();
   });
 
-  it('renders a material change badge on the report card', async () => {
-    render(<HotNewsReportsPage queryRows={async () => [createReportRow({ change_status: 'material_change' })]} />);
-
-    const card = await screen.findByRole('button', { name: /AI 인프라 리포트/ });
-    expect(within(card).getByText('중요 변경')).toBeInTheDocument();
-  });
-
-  it('does not render a material change badge for non-material report cards', async () => {
-    render(<HotNewsReportsPage queryRows={async () => [createReportRow({ change_status: 'refresh' })]} />);
+  it('keeps material change status out of the card and shows it only in modal debug', async () => {
+    const user = userEvent.setup();
+    render(
+      <HotNewsReportsPage
+        queryHistoryRows={async () => [
+          createReportRow({
+            id: 2,
+            change_reason: '새 기사 2건과 종목 코드 변화',
+            change_status: 'material_change',
+            tldr: ['중요 변경 이력 요약'],
+            updated_at: '2026-05-07T11:20:00+09:00',
+          }),
+        ]}
+        queryRows={async () => [createReportRow({ change_status: 'material_change' })]}
+      />,
+    );
 
     const card = await screen.findByRole('button', { name: /AI 인프라 리포트/ });
     expect(within(card).queryByText('중요 변경')).not.toBeInTheDocument();
+    expect(screen.queryByText('중요 변경 업데이트')).not.toBeInTheDocument();
+
+    await user.click(card);
+
+    const dialog = screen.getByRole('dialog', { name: 'AI 인프라 리포트' });
+    const debugSection = within(dialog).getByRole('heading', { name: '디버그 상태' }).closest('section');
+    expect(await within(debugSection as HTMLElement).findByText('중요 변경 업데이트')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('중요 변경 이력')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('새 기사 2건과 종목 코드 변화')).toBeInTheDocument();
+    expect(within(debugSection as HTMLElement).getByText('중요 변경 이력 요약')).toBeInTheDocument();
   });
 
   it('keeps deduplicated history rows out of the card list and shows them only in modal debug', async () => {
