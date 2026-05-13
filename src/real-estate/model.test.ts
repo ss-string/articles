@@ -324,6 +324,111 @@ describe('buildRealEstateDashboard', () => {
     expect(dashboard.targets[0]?.currentArticles.map((article) => article.articleNo)).toEqual(['b', 'c']);
     expect(dashboard.targets[0]?.belowMedianArticles.map((article) => article.articleNo)).toEqual(['b']);
   });
+
+  it('merges pyeong chart data and active current sale listings at the complex level', () => {
+    const dashboard = buildRealEstateDashboard({
+      interestTargets: [
+        { complex_id: '103797', pyeong_type: '3', display_order: 5, display_pyeong_name: '84C' },
+        { complex_id: '103797', pyeong_type: '1', display_order: 6, display_pyeong_name: '85A' },
+        { complex_id: '103797', pyeong_type: '2', display_order: 7, display_pyeong_name: '85B' },
+      ],
+      complexes: [{ complex_id: '103797', complex_name: '래미안크레시티' }],
+      pyeongOptions: [
+        { complex_id: '103797', pyeong_type: '1', pyeong_name: '85A', exclusive_space: 59.99 },
+        { complex_id: '103797', pyeong_type: '2', pyeong_name: '85B', exclusive_space: 59.99 },
+        { complex_id: '103797', pyeong_type: '3', pyeong_name: '84C', exclusive_space: 59.99 },
+      ],
+      articles: [
+        {
+          article_number: 'active-a',
+          complex_id: '103797',
+          pyeong_type: '1',
+          trade_type_name: '매매',
+          deal_price: 1520000000,
+          is_active: true,
+          removed_at: null,
+        },
+        {
+          article_number: 'removed-b',
+          complex_id: '103797',
+          pyeong_type: '2',
+          trade_type_name: '매매',
+          deal_price: 1590000000,
+          is_active: false,
+          removed_at: '2026-04-01T00:00:00Z',
+        },
+        {
+          article_number: 'active-c',
+          complex_id: '103797',
+          pyeong_type: '2',
+          trade_type_name: '매매',
+          deal_price: 1650000000,
+          is_active: true,
+          removed_at: null,
+        },
+        {
+          article_number: 'lease-d',
+          complex_id: '103797',
+          pyeong_type: '1',
+          trade_type_name: '전세',
+          deal_price: 800000000,
+          is_active: true,
+          removed_at: null,
+        },
+      ],
+      priceMetrics: [
+        {
+          complex_id: '103797',
+          pyeong_type: '1',
+          trade_type: 'A1',
+          window_months: 3,
+          chart_data: {
+            series: [
+              { trade_date: '2026-02-24', deal_price: 1600000000 },
+              { tradeDate: '2026-03-28', dealPrice: 1620000000 },
+              { tradeDate: '2026-04-14', dealPrice: 1540000000 },
+            ],
+            activeListingRange: { count: 1, minPrice: 1520000000, maxPrice: 1520000000 },
+          },
+          updated_at: '2026-04-20T00:00:00Z',
+        },
+        {
+          complex_id: '103797',
+          pyeong_type: '2',
+          trade_type: 'A1',
+          window_months: 3,
+          chart_data: {
+            series: [
+              { trade_date: '2026-03-28', deal_price: 1620000000 },
+              { trade_date: '2026-04-14', deal_price: 1550000000 },
+            ],
+            active_listing_range: { count: 1, min_price: 1650000000, max_price: 1650000000 },
+          },
+          updated_at: '2026-04-21T00:00:00Z',
+        },
+      ],
+    });
+
+    const target = dashboard.targets[0];
+
+    expect(dashboard.targets).toHaveLength(1);
+    expect(target?.id).toBe('103797');
+    expect(target?.pyeongName).toBe('84C / 85A / 85B');
+    expect(target?.chartSeries).toEqual([
+      { tradeDate: '2026-02-24', dealPrice: 1600000000 },
+      { tradeDate: '2026-03-28', dealPrice: 1620000000 },
+      { tradeDate: '2026-04-14', dealPrice: 1540000000 },
+      { tradeDate: '2026-04-14', dealPrice: 1550000000 },
+    ]);
+    expect(target?.latestRealPrice).toBe(1550000000);
+    expect(target?.highestRealPrice).toBe(1620000000);
+    expect(target?.activeListingRange).toEqual({
+      count: 2,
+      minPrice: 1520000000,
+      maxPrice: 1650000000,
+    });
+    expect(target?.currentArticles.map((article) => article.articleNo)).toEqual(['active-a', 'active-c']);
+  });
 });
 
 describe('formatKoreanHousePrice', () => {
