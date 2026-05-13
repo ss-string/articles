@@ -217,12 +217,12 @@ describe('RealEstateTransactionsPage', () => {
     const { container } = render(<RealEstateTransactionsPage queryTables={async () => tables} />);
 
     expect(await screen.findByRole('heading', { name: '관심 단지 가격 흐름' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /약수하이츠/ })).toHaveClass('active');
+    expect(screen.getByRole('button', { name: /^80형/ })).toHaveClass('active');
     expect(screen.getByRole('link', { name: '약수하이츠 네이버 부동산 열기' })).toHaveAttribute(
       'href',
       'https://fin.land.naver.com/complexes/c1?tab=article',
     );
-    expect(screen.getByRole('button', { name: '약수하이츠 관심 단지 선택' })).toHaveTextContent('활성 매물 2건');
+    expect(screen.getByRole('button', { name: /^80형/ })).toHaveTextContent('활성 매물 2건');
     expect(screen.getByText('최신 실거래')).toBeInTheDocument();
     expect(screen.getByText('최고 실거래')).toBeInTheDocument();
     expect(within(container.querySelector('.real-estate-summary-grid')!).getByText('현재 활성 매물')).toBeInTheDocument();
@@ -267,7 +267,7 @@ describe('RealEstateTransactionsPage', () => {
   it('renders merged complex chart display from chart_data and active listing range', async () => {
     render(<RealEstateTransactionsPage queryTables={async () => mergedComplexTables} />);
 
-    expect(await screen.findByRole('button', { name: '래미안크레시티 관심 단지 선택' })).toHaveTextContent('84C / 85A / 85B');
+    expect(await screen.findByRole('button', { name: /^84C \/ 85A \/ 85B/ })).toHaveTextContent('84C / 85A / 85B');
     expect(screen.getByRole('heading', { name: '래미안크레시티 84C / 85A / 85B 실거래 흐름' })).toBeInTheDocument();
     expect(screen.getByText('활성 매물 가격범위')).toBeInTheDocument();
     const chart = screen.getByRole('group', { name: '래미안크레시티 84C / 85A / 85B 최근 90일 실거래 그래프' });
@@ -288,9 +288,9 @@ describe('RealEstateTransactionsPage', () => {
     const user = userEvent.setup();
     const { container } = render(<RealEstateTransactionsPage queryTables={async () => tables} />);
 
-    await user.click(await screen.findByRole('button', { name: /신당삼성/ }));
+    await user.click(await screen.findByRole('button', { name: /^84A형/ }));
 
-    expect(screen.getByRole('button', { name: /신당삼성/ })).toHaveClass('active');
+    expect(screen.getByRole('button', { name: /^84A형/ })).toHaveClass('active');
     expect(within(container.querySelector('.real-estate-summary-grid')!).getAllByText('12.3억')).toHaveLength(2);
     expect(screen.getByRole('group', { name: '신당삼성 84A형 최근 90일 실거래 그래프' })).toBeInTheDocument();
     expect(screen.getByText('매물번호 b1')).toBeInTheDocument();
@@ -299,7 +299,7 @@ describe('RealEstateTransactionsPage', () => {
   it('uses current active article rows for visible listing counts even when range data exists', async () => {
     const { container } = render(<RealEstateTransactionsPage queryTables={async () => rangeOnlyTables} />);
 
-    expect(await screen.findByRole('button', { name: '범위단지 관심 단지 선택' })).toHaveTextContent('활성 매물 0건');
+    expect(await screen.findByRole('button', { name: /^84형/ })).toHaveTextContent('활성 매물 0건');
     expect(within(container.querySelector('.real-estate-summary-grid')!).getByText('0건')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: '현재 활성 매물' })).toHaveTextContent('현재 활성 매물 없음');
     expect(screen.getByRole('group', { name: '범위단지 84형 최근 90일 실거래 그래프' })).toHaveAccessibleDescription(

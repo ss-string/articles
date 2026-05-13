@@ -444,7 +444,7 @@ describe('buildRealEstateDashboard', () => {
               { trade_date: '2026-03-28', deal_price: 1620000000 },
               { trade_date: '2026-04-14', deal_price: 1550000000 },
             ],
-            active_listing_range: { count: 1, min_price: 1650000000, max_price: 1650000000 },
+            activeListingRange: { count: 1, minDealPrice: 1510000000, maxDealPrice: 1700000000 },
           },
           updated_at: '2026-04-21T00:00:00Z',
         },
@@ -466,8 +466,8 @@ describe('buildRealEstateDashboard', () => {
     expect(target?.highestRealPrice).toBe(1620000000);
     expect(target?.activeListingRange).toEqual({
       count: 2,
-      minPrice: 1520000000,
-      maxPrice: 1650000000,
+      minPrice: 1510000000,
+      maxPrice: 1700000000,
     });
     expect(target?.currentArticles.map((article) => article.articleNo)).toEqual(['active-a', 'active-c']);
   });

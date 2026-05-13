@@ -270,8 +270,8 @@ function normalizeActiveListingRange(value: unknown): RealEstateActiveListingRan
 
   const row = value as Record<string, unknown>;
   const count = parseNumber(row.count);
-  const minPrice = parseNumber(row.minPrice ?? row.min_price);
-  const maxPrice = parseNumber(row.maxPrice ?? row.max_price);
+  const minPrice = parseNumber(row.minDealPrice ?? row.min_deal_price ?? row.minPrice ?? row.min_price);
+  const maxPrice = parseNumber(row.maxDealPrice ?? row.max_deal_price ?? row.maxPrice ?? row.max_price);
 
   if (count === null && minPrice === null && maxPrice === null) {
     return null;
@@ -507,15 +507,16 @@ function mergeActiveListingRanges(
   articles: RealEstateArticle[],
   chartRanges: Array<RealEstateActiveListingRange | null>,
 ): RealEstateActiveListingRange | null {
+  const ranges = chartRanges.filter((range): range is RealEstateActiveListingRange => range !== null);
+
   if (articles.length > 0) {
     return {
       count: articles.length,
-      minPrice: minNumber(articles.map((article) => article.price)),
-      maxPrice: maxNumber(articles.map((article) => article.price)),
+      minPrice: minNumber([...articles.map((article) => article.price), ...ranges.map((range) => range.minPrice)]),
+      maxPrice: maxNumber([...articles.map((article) => article.price), ...ranges.map((range) => range.maxPrice)]),
     };
   }
 
-  const ranges = chartRanges.filter((range): range is RealEstateActiveListingRange => range !== null);
   if (ranges.length === 0) {
     return null;
   }

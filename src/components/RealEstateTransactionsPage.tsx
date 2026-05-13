@@ -451,7 +451,6 @@ export function RealEstateTransactionsPage({ queryTables }: RealEstateTransactio
                     {target.complexName}
                   </a>
                   <button
-                    aria-label={`${target.complexName} 관심 단지 선택`}
                     className={['real-estate-target-select', isActive ? 'active' : ''].filter(Boolean).join(' ')}
                     type="button"
                     onClick={() => setSelectedTargetId(target.id)}
