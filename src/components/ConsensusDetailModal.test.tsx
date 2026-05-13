@@ -179,10 +179,12 @@ describe('ConsensusDetailModal', () => {
     expect(link).toHaveAttribute('href', 'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf');
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noreferrer');
+    expect(link).toHaveClass('firm-row', 'firm-row-link');
     expect(link).toHaveTextContent('삼성증권');
     expect(link).toHaveTextContent('170,000원');
     expect(link).toHaveTextContent('BUY · 2건');
     expect(link).toHaveTextContent('보조 링크');
+    expect(screen.getByText('보조 링크')).toHaveClass('firm-link-badge');
     expect(screen.getByText('링크없는증권').closest('a')).not.toBeInTheDocument();
     expect(screen.queryByText('출처 미확인 analysis 항목')).not.toBeInTheDocument();
     expect(screen.queryByText('공식 출처')).not.toBeInTheDocument();

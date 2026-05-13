@@ -1263,6 +1263,42 @@ h3 {
   background: #f8fafc;
 }
 
+.firm-row-link {
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.firm-row-link:hover {
+  border-color: #b9d6d2;
+  background: #eef7f6;
+}
+
+.firm-row-link:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+
+.firm-row .firm-link-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  grid-column: 1 / -1;
+  justify-self: start;
+  min-height: 24px;
+  padding: 4px 8px;
+  border: 1px solid #b9d6d2;
+  border-radius: 8px;
+  background: #eef7f6;
+  color: #0f766e;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
 .range-grid span,
 .firm-row span,
 .firm-row em {
@@ -1335,7 +1371,7 @@ h3 {
 
 .firm-row {
   display: grid;
-  grid-template-columns: minmax(82px, 0.9fr) minmax(92px, 0.9fr) minmax(68px, 0.62fr);
+  grid-template-columns: minmax(76px, 0.9fr) minmax(86px, 0.8fr) minmax(64px, 0.62fr);
   gap: 6px;
   align-items: center;
 }
