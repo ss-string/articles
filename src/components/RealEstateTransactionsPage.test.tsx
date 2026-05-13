@@ -192,6 +192,26 @@ const mergedComplexTables: RawRealEstateTables = {
   ],
 };
 
+const rangeOnlyTables: RawRealEstateTables = {
+  interestTargets: [{ complex_id: 'range-only', pyeong_type: '84', sort_order: 1 }],
+  complexes: [{ complex_id: 'range-only', complex_name: '범위단지', households: 100 }],
+  pyeongOptions: [{ complex_id: 'range-only', pyeong_type: '84', display_pyeong_name: '84형' }],
+  articles: [],
+  priceMetrics: [
+    {
+      complex_id: 'range-only',
+      pyeong_type: '84',
+      trade_type: 'A1',
+      window_months: 3,
+      metric_date: '2026-05-13',
+      chart_data: {
+        series: [{ tradeDate: '2026-05-01', dealPrice: 1480000000 }],
+        activeListingRange: { count: 2, minPrice: 1520000000, maxPrice: 1650000000 },
+      },
+    },
+  ],
+};
+
 describe('RealEstateTransactionsPage', () => {
   it('renders the active interest target summary, 90-day chart, and active listings', async () => {
     const { container } = render(<RealEstateTransactionsPage queryTables={async () => tables} />);
@@ -205,12 +225,12 @@ describe('RealEstateTransactionsPage', () => {
     expect(screen.getByRole('button', { name: '약수하이츠 관심 단지 선택' })).toHaveTextContent('활성 매물 2건');
     expect(screen.getByText('최신 실거래')).toBeInTheDocument();
     expect(screen.getByText('최고 실거래')).toBeInTheDocument();
-    expect(screen.getAllByText('현재 활성 매물')).not.toHaveLength(0);
+    expect(within(container.querySelector('.real-estate-summary-grid')!).getByText('현재 활성 매물')).toBeInTheDocument();
     expect(container.querySelector('.real-estate-summary-grid')).not.toHaveTextContent('호가 평균');
-    expect(screen.getAllByText('14.8억')).not.toHaveLength(0);
+    expect(within(container.querySelector('.real-estate-summary-grid')!).getAllByText('14.8억')).toHaveLength(2);
     expect(screen.getByRole('heading', { name: '약수하이츠 80형 실거래 흐름' })).toBeInTheDocument();
     expect(screen.getByText('최근 90일 · 매매')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: '약수하이츠 80형 최근 90일 실거래 그래프' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: '약수하이츠 80형 최근 90일 실거래 그래프' })).toBeInTheDocument();
 
     const activeListingsRegion = screen.getByRole('region', { name: '현재 활성 매물' });
     expect(within(activeListingsRegion).getByRole('link', { name: '약수하이츠 매물 a1 네이버 부동산 열기' })).toHaveAttribute(
@@ -232,13 +252,26 @@ describe('RealEstateTransactionsPage', () => {
     expect(overlay).toHaveTextContent('구분 매매');
   });
 
+  it('exposes chart summary text without putting focusable controls inside an image role', async () => {
+    render(<RealEstateTransactionsPage queryTables={async () => mergedComplexTables} />);
+
+    const chart = await screen.findByRole('group', { name: '래미안크레시티 84C / 85A / 85B 최근 90일 실거래 그래프' });
+
+    expect(screen.queryByRole('img', { name: /최근 90일 실거래 그래프/ })).not.toBeInTheDocument();
+    expect(chart).toHaveAccessibleDescription(
+      '최신 실거래 15.5억. 최고 실거래 16.2억. 활성 매물 가격범위 15.2억-16.5억.',
+    );
+    expect(within(chart).getByRole('button', { name: '2026-04-14 실거래 보기' })).toBeInTheDocument();
+  });
+
   it('renders merged complex chart display from chart_data and active listing range', async () => {
     render(<RealEstateTransactionsPage queryTables={async () => mergedComplexTables} />);
 
     expect(await screen.findByRole('button', { name: '래미안크레시티 관심 단지 선택' })).toHaveTextContent('84C / 85A / 85B');
     expect(screen.getByRole('heading', { name: '래미안크레시티 84C / 85A / 85B 실거래 흐름' })).toBeInTheDocument();
     expect(screen.getByText('활성 매물 가격범위')).toBeInTheDocument();
-    expect(screen.getAllByText('15.2억-16.5억')).not.toHaveLength(0);
+    const chart = screen.getByRole('group', { name: '래미안크레시티 84C / 85A / 85B 최근 90일 실거래 그래프' });
+    expect(within(chart).getByText('15.2억-16.5억')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '1년' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '3년' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '5년' })).not.toBeInTheDocument();
@@ -253,14 +286,25 @@ describe('RealEstateTransactionsPage', () => {
 
   it('updates the active card, summary, chart, and articles when selecting another target', async () => {
     const user = userEvent.setup();
-    render(<RealEstateTransactionsPage queryTables={async () => tables} />);
+    const { container } = render(<RealEstateTransactionsPage queryTables={async () => tables} />);
 
     await user.click(await screen.findByRole('button', { name: /신당삼성/ }));
 
     expect(screen.getByRole('button', { name: /신당삼성/ })).toHaveClass('active');
-    expect(screen.getAllByText('12.3억')).not.toHaveLength(0);
-    expect(screen.getByRole('img', { name: '신당삼성 84A형 최근 90일 실거래 그래프' })).toBeInTheDocument();
+    expect(within(container.querySelector('.real-estate-summary-grid')!).getAllByText('12.3억')).toHaveLength(2);
+    expect(screen.getByRole('group', { name: '신당삼성 84A형 최근 90일 실거래 그래프' })).toBeInTheDocument();
     expect(screen.getByText('매물번호 b1')).toBeInTheDocument();
+  });
+
+  it('uses current active article rows for visible listing counts even when range data exists', async () => {
+    const { container } = render(<RealEstateTransactionsPage queryTables={async () => rangeOnlyTables} />);
+
+    expect(await screen.findByRole('button', { name: '범위단지 관심 단지 선택' })).toHaveTextContent('활성 매물 0건');
+    expect(within(container.querySelector('.real-estate-summary-grid')!).getByText('0건')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: '현재 활성 매물' })).toHaveTextContent('현재 활성 매물 없음');
+    expect(screen.getByRole('group', { name: '범위단지 84형 최근 90일 실거래 그래프' })).toHaveAccessibleDescription(
+      '최신 실거래 14.8억. 최고 실거래 14.8억. 활성 매물 가격범위 15.2억-16.5억.',
+    );
   });
 
   it('keeps the graph area when there are no recent real transactions or active listings', async () => {
@@ -276,7 +320,7 @@ describe('RealEstateTransactionsPage', () => {
       />,
     );
 
-    expect(await screen.findByRole('img', { name: '빈단지 84형 최근 90일 실거래 그래프' })).toBeInTheDocument();
+    expect(await screen.findByRole('group', { name: '빈단지 84형 최근 90일 실거래 그래프' })).toBeInTheDocument();
     expect(screen.getByText('최근 90일 실거래 없음')).toBeInTheDocument();
     expect(screen.getAllByText('현재 활성 매물 없음')).not.toHaveLength(0);
     expect(screen.queryByText('활성 매물 가격범위')).not.toBeInTheDocument();

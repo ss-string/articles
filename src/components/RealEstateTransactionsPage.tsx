@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState, type CSSProperties } from 'react';
 import {
   formatKoreanHousePrice,
   type RawRealEstateTables,
@@ -34,6 +34,18 @@ const chartSize = {
 
 const dayMs = 24 * 60 * 60 * 1000;
 
+const visuallyHiddenStyle: CSSProperties = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+};
+
 function getDisplayPyeongName(target: RealEstateInterestTarget) {
   return target.pyeongName ?? target.pyeongType;
 }
@@ -66,11 +78,11 @@ function getRangeMax(range: RealEstateInterestTarget['activeListingRange']) {
 }
 
 function getActiveListingCount(target: RealEstateInterestTarget) {
-  return target.activeListingRange?.count ?? target.currentArticles.length;
+  return target.currentArticles.length;
 }
 
 function hasActiveListingRange(target: RealEstateInterestTarget) {
-  const count = getActiveListingCount(target);
+  const count = target.activeListingRange?.count ?? 0;
   return count > 0 && getRangeMin(target.activeListingRange) !== null && getRangeMax(target.activeListingRange) !== null;
 }
 
@@ -79,6 +91,21 @@ function formatActiveListingRange(target: RealEstateInterestTarget) {
   const maxPrice = getRangeMax(target.activeListingRange);
 
   if (getActiveListingCount(target) === 0 || minPrice === null || maxPrice === null) {
+    return '현재 활성 매물 없음';
+  }
+
+  if (minPrice === maxPrice) {
+    return formatEokPrice(minPrice);
+  }
+
+  return `${formatEokPrice(minPrice)}-${formatEokPrice(maxPrice)}`;
+}
+
+function formatRangeMarkerValue(target: RealEstateInterestTarget) {
+  const minPrice = getRangeMin(target.activeListingRange);
+  const maxPrice = getRangeMax(target.activeListingRange);
+
+  if (!hasActiveListingRange(target) || minPrice === null || maxPrice === null) {
     return '현재 활성 매물 없음';
   }
 
@@ -218,7 +245,18 @@ function buildChartView(target: RealEstateInterestTarget) {
   };
 }
 
+function buildChartDescription(target: RealEstateInterestTarget, chartView: ReturnType<typeof buildChartView>) {
+  const parts = [
+    chartView.latestViewPoint ? `최신 실거래 ${formatEokPrice(chartView.latestViewPoint.point.dealPrice)}` : '최근 90일 실거래 없음',
+    chartView.highestViewPoint ? `최고 실거래 ${formatEokPrice(chartView.highestViewPoint.point.dealPrice)}` : null,
+    hasActiveListingRange(target) ? `활성 매물 가격범위 ${formatRangeMarkerValue(target)}` : '현재 활성 매물 없음',
+  ].filter((part): part is string => part !== null);
+
+  return `${parts.join('. ')}.`;
+}
+
 function PriceChart({ target }: { target: RealEstateInterestTarget }) {
+  const chartDescriptionId = useId();
   const [activePointIndex, setActivePointIndex] = useState<number | null>(null);
   const chartView = useMemo(() => buildChartView(target), [target]);
   const displayPyeongName = getDisplayPyeongName(target);
@@ -232,9 +270,13 @@ function PriceChart({ target }: { target: RealEstateInterestTarget }) {
   return (
     <div
       className="real-estate-chart"
-      role="img"
       aria-label={`${target.complexName} ${displayPyeongName} 최근 90일 실거래 그래프`}
+      aria-describedby={chartDescriptionId}
+      role="group"
     >
+      <p id={chartDescriptionId} style={visuallyHiddenStyle}>
+        {buildChartDescription(target, chartView)}
+      </p>
       <svg aria-hidden="true" viewBox={`0 0 ${chartSize.width} ${chartSize.height}`} focusable="false">
         <line className="real-estate-chart-grid" x1="24" x2="496" y1="58" y2="58" />
         <line className="real-estate-chart-grid" x1="24" x2="496" y1="133" y2="133" />
@@ -310,7 +352,7 @@ function PriceChart({ target }: { target: RealEstateInterestTarget }) {
               x={chartView.activeRangeBox.x + 8}
               y={chartView.activeRangeBox.y + 34}
             >
-              {formatActiveListingRange(target)}
+              {formatRangeMarkerValue(target)}
             </text>
           </g>
         ) : null}
