@@ -529,7 +529,8 @@ function mergeActiveListingRanges(
 
 function latestText(values: Array<string | null>) {
   const texts = values.filter((value): value is string => value !== null);
-  return texts.length === 0 ? null : [...texts].sort().at(-1) ?? null;
+  const sortedTexts = [...texts].sort();
+  return sortedTexts.length === 0 ? null : sortedTexts[sortedTexts.length - 1] ?? null;
 }
 
 export function buildRealEstateDashboard(tables: RawRealEstateTables): RealEstateDashboard {
