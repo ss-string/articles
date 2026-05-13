@@ -2568,13 +2568,13 @@ h3 {
 
 .real-estate-range-marker-label {
   fill: #0f766e;
-  font-size: 0.72rem;
+  font-size: 8px;
   font-weight: 850;
 }
 
 .real-estate-range-marker-value {
   fill: #152238;
-  font-size: 0.72rem;
+  font-size: 12px;
   font-weight: 850;
 }
 

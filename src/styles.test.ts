@@ -47,7 +47,9 @@ describe('styles.css layout regressions', () => {
     expectRuleDeclaration('.real-estate-current-guide', 'stroke: #334155;');
     expectRuleDeclaration('.real-estate-range-marker-box', 'fill: rgba(34, 197, 94, 0.18);');
     expectRuleDeclaration('.real-estate-range-marker-label', 'fill: #0f766e;');
+    expectRuleDeclaration('.real-estate-range-marker-label', 'font-size: 8px;');
     expectRuleDeclaration('.real-estate-range-marker-value', 'fill: #152238;');
+    expectRuleDeclaration('.real-estate-range-marker-value', 'font-size: 12px;');
     expect(styles).toContain('@media (max-width: 900px)');
   });
 });
