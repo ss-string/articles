@@ -2323,6 +2323,7 @@ h3 {
 
 .real-estate-target-list {
   display: grid;
+  align-content: start;
   gap: 10px;
   max-height: calc(100vh - 250px);
   min-width: 0;
@@ -2552,6 +2553,29 @@ h3 {
 
 .real-estate-chart-line.asking {
   stroke: #2563eb;
+}
+
+.real-estate-current-guide {
+  stroke: #334155;
+  stroke-width: 1.5;
+}
+
+.real-estate-range-marker-box {
+  fill: rgba(34, 197, 94, 0.18);
+  stroke: #22c55e;
+  stroke-width: 2;
+}
+
+.real-estate-range-marker-label {
+  fill: #0f766e;
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.real-estate-range-marker-value {
+  fill: #152238;
+  font-size: 0.72rem;
+  font-weight: 850;
 }
 
 .real-estate-chart-dot {

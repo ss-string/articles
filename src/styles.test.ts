@@ -40,9 +40,14 @@ describe('styles.css layout regressions', () => {
   });
 
   it('keeps real estate dashboard layout and chart selectors stable', () => {
-    expect(styles).toContain('.real-estate-layout');
+    expectRuleDeclaration('.real-estate-layout', 'align-items: start;');
     expect(styles).toContain('grid-template-columns: 270px minmax(0, 1fr)');
+    expectRuleDeclaration('.real-estate-target-list', 'align-content: start;');
     expect(styles).toContain('.real-estate-chart-line.actual');
+    expectRuleDeclaration('.real-estate-current-guide', 'stroke: #334155;');
+    expectRuleDeclaration('.real-estate-range-marker-box', 'fill: rgba(34, 197, 94, 0.18);');
+    expectRuleDeclaration('.real-estate-range-marker-label', 'fill: #0f766e;');
+    expectRuleDeclaration('.real-estate-range-marker-value', 'fill: #152238;');
     expect(styles).toContain('@media (max-width: 900px)');
   });
 });
