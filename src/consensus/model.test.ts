@@ -225,6 +225,45 @@ describe('consensus model', () => {
     expect(findFirmSupportingLink(null, '삼성증권')).toBeNull();
   });
 
+  it('skips unsupported supporting URL schemes when finding a firm link', () => {
+    const report = buildRankingRowsWithReports(
+      [
+        {
+          stock_name: 'LG전자',
+          current_price: 114000,
+          target_price: 170000,
+          fnguide_code: 'A066570',
+        },
+      ],
+      [
+        {
+          gicode: 'A066570',
+          analysis: {
+            excludedReports: [
+              {
+                firm: '삼성증권',
+                title: '위험한 링크',
+                reason: '비허용 스킴',
+                supportingUrls: ['javascript:alert(1)', 'data:text/html,hello'],
+              },
+              {
+                firm: '삼성증권',
+                title: 'LG전자-AI 생태계의 하드웨어 파트너',
+                reason: '보조 링크 존재',
+                supportingUrls: ['https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf'],
+              },
+            ],
+          },
+        },
+      ],
+    )[0]?.summaryReport;
+
+    expect(findFirmSupportingLink(report, '삼성증권')).toMatchObject({
+      url: 'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf',
+      title: 'LG전자-AI 생태계의 하드웨어 파트너',
+    });
+  });
+
   it('keeps rows without matching AI reports and adds the current price checkpoint', () => {
     const rows = buildRankingRowsWithReports(
       [

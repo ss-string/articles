@@ -221,6 +221,15 @@ function calculateChangePercent(current: number, previous: number | null): numbe
   return ((current - previous) / previous) * 100;
 }
 
+function isSupportedLinkUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 export function normalizeSummaryReport(row: RawSummaryReportRow): ConsensusSummaryReport | null {
   const gicode = parseText(row.gicode);
   const analysis = parseRecord(row.analysis);
@@ -257,16 +266,22 @@ export function findFirmSupportingLink(
     return null;
   }
 
-  const excludedReport = report.excludedReports.find(
-    (item) => item.firm === firmName && item.supportingUrls.length > 0,
+  const excludedReport = report.excludedReports.find((item) =>
+    item.firm === firmName && item.supportingUrls.some(isSupportedLinkUrl),
   );
 
   if (!excludedReport) {
     return null;
   }
 
+  const supportedUrl = excludedReport.supportingUrls.find(isSupportedLinkUrl);
+
+  if (!supportedUrl) {
+    return null;
+  }
+
   return {
-    url: excludedReport.supportingUrls[0],
+    url: supportedUrl,
     title: excludedReport.title,
     firm: excludedReport.firm,
     publishedDate: excludedReport.publishedDate,
