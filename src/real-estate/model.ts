@@ -396,7 +396,7 @@ function normalizeArticle(row: RawRealEstateRow, latestMedianPrice: number | nul
     !pyeongType ||
     price === null ||
     !isSaleTradeType(tradeType) ||
-    isActive === false ||
+    isActive !== true ||
     removedAt !== null
   ) {
     return null;

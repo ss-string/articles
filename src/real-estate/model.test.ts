@@ -26,7 +26,7 @@ describe('buildRealEstateDashboard', () => {
         { complex_id: 'c2', pyeong_type: '59', display_pyeong_name: '24평' },
       ],
       articles: [
-        { article_no: 'a2', complex_id: 'c1', pyeong_type: '80', trade_type: '매매', price: 1550000000 },
+        { article_no: 'a2', complex_id: 'c1', pyeong_type: '80', trade_type: '매매', price: 1550000000, is_active: true },
         {
           article_number: 'a1',
           complex_id: 'c1',
@@ -35,11 +35,12 @@ describe('buildRealEstateDashboard', () => {
           price: 1320000000,
           building_name: '116동',
           floor_info: '저/18',
+          is_active: true,
         },
-        { article_number: 'median', complex_id: 'c1', pyeong_type: '80', trade_type: '매매', price: 1470000000 },
-        { article_no: 'lease1', complex_id: 'c1', pyeong_type: '80', trade_type: '전세', price: 900000000 },
-        { article_no: 'unknown1', complex_id: 'c1', pyeong_type: '80', trade_type: null, price: 1420000000 },
-        { article_no: 'a3', complex_id: 'c1', pyeong_type: '80', trade_type: '매매', price: 1420000000 },
+        { article_number: 'median', complex_id: 'c1', pyeong_type: '80', trade_type: '매매', price: 1470000000, is_active: true },
+        { article_no: 'lease1', complex_id: 'c1', pyeong_type: '80', trade_type: '전세', price: 900000000, is_active: true },
+        { article_no: 'unknown1', complex_id: 'c1', pyeong_type: '80', trade_type: null, price: 1420000000, is_active: true },
+        { article_no: 'a3', complex_id: 'c1', pyeong_type: '80', trade_type: '매매', price: 1420000000, is_active: true },
       ],
       priceMetrics: [
         {
@@ -105,6 +106,7 @@ describe('buildRealEstateDashboard', () => {
           deal_price: 1320000000,
           dong_name: '116동',
           floor_info: '저/18',
+          is_active: true,
         },
         {
           article_number: 'lease1',
@@ -112,12 +114,14 @@ describe('buildRealEstateDashboard', () => {
           pyeong_type: '80',
           trade_type_name: '전세',
           deal_price: 700000000,
+          is_active: true,
         },
         {
           article_number: 'unknown1',
           complex_id: 'c1',
           pyeong_type: '80',
           deal_price: 1200000000,
+          is_active: true,
         },
       ],
       priceMetrics: [
@@ -193,6 +197,7 @@ describe('buildRealEstateDashboard', () => {
           pyeong_type: '3',
           trade_type_name: '매매',
           deal_price: 1520000000,
+          is_active: true,
         },
         {
           article_number: 'a-high',
@@ -200,6 +205,7 @@ describe('buildRealEstateDashboard', () => {
           pyeong_type: '1',
           trade_type_name: '매매',
           deal_price: 1600000000,
+          is_active: true,
         },
         {
           article_number: 'b-high',
@@ -207,6 +213,7 @@ describe('buildRealEstateDashboard', () => {
           pyeong_type: '2',
           trade_type_name: '매매',
           deal_price: 1640000000,
+          is_active: true,
         },
       ],
       priceMetrics: [
@@ -289,8 +296,8 @@ describe('buildRealEstateDashboard', () => {
         { complex_id: '100692', pyeong_type: '4', pyeong_name: '4', exclusive_space: null },
       ],
       articles: [
-        { article_number: 'b', complex_id: '100692', pyeong_type: '2', trade_type_name: '매매', deal_price: 1500000000 },
-        { article_number: 'c', complex_id: '100692', pyeong_type: '3', trade_type_name: '매매', deal_price: 1600000000 },
+        { article_number: 'b', complex_id: '100692', pyeong_type: '2', trade_type_name: '매매', deal_price: 1500000000, is_active: true },
+        { article_number: 'c', complex_id: '100692', pyeong_type: '3', trade_type_name: '매매', deal_price: 1600000000, is_active: true },
       ],
       priceMetrics: [
         {
@@ -373,6 +380,41 @@ describe('buildRealEstateDashboard', () => {
           trade_type_name: '전세',
           deal_price: 800000000,
           is_active: true,
+          removed_at: null,
+        },
+        {
+          article_number: 'missing-active-e',
+          complex_id: '103797',
+          pyeong_type: '1',
+          trade_type_name: '매매',
+          deal_price: 1530000000,
+          removed_at: null,
+        },
+        {
+          article_number: 'string-false-f',
+          complex_id: '103797',
+          pyeong_type: '1',
+          trade_type_name: '매매',
+          deal_price: 1540000000,
+          is_active: 'false',
+          removed_at: null,
+        },
+        {
+          article_number: 'null-active-g',
+          complex_id: '103797',
+          pyeong_type: '1',
+          trade_type_name: '매매',
+          deal_price: 1560000000,
+          is_active: null,
+          removed_at: null,
+        },
+        {
+          article_number: 'invalid-active-h',
+          complex_id: '103797',
+          pyeong_type: '2',
+          trade_type_name: '매매',
+          deal_price: 1570000000,
+          is_active: 'unknown',
           removed_at: null,
         },
       ],
