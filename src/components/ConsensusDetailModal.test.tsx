@@ -39,6 +39,7 @@ function makeRow(overrides: Partial<ConsensusRankingRow> = {}): ConsensusRanking
         { name: '메리츠증권', reportCount: 1, targetPrices: [620000], recommendations: ['BUY'] },
         { name: '다올투자증권', reportCount: 1, targetPrices: [720000], recommendations: ['BUY'] },
       ],
+      excludedReports: [],
     },
     ...overrides,
   };

@@ -1,6 +1,7 @@
 import {
   buildRankingRowsWithReports,
   buildRankingRows,
+  findFirmSupportingLink,
   formatPercent,
   formatWon,
   normalizeConsensusRow,
@@ -74,6 +75,154 @@ describe('consensus model', () => {
         ],
       },
     });
+  });
+
+  it('normalizes excluded report supporting links and ignores sourceReports', () => {
+    const rows = buildRankingRowsWithReports(
+      [
+        {
+          stock_code: '066570',
+          stock_name: 'LG전자',
+          current_price_value: 114000,
+          fnguide_code: 'A066570',
+          report_count: 18,
+          target_price_value: 170000,
+        },
+      ],
+      [
+        {
+          gicode: 'A066570',
+          co_nm: 'LG전자',
+          updated_at: '2026-05-13T05:34:56.566415+00:00',
+          analysis: {
+            'tl;dr': 'LG전자 컨센서스 요약',
+            sourceReports: [
+              {
+                firm: '삼성증권',
+                primaryReportUrl: 'https://www.samsungpop.com/not-used',
+              },
+            ],
+            excludedReports: [
+              {
+                firm: '삼성증권',
+                title: 'LG전자-AI 생태계의 하드웨어 파트너',
+                reason: '공식 원문 검증 실패',
+                bulletNo: '758321',
+                publishedDate: '2026-04-30',
+                supportingUrls: [
+                  'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf',
+                  'https://news.example.com/not-first',
+                ],
+              },
+              {
+                firm: '교보증권',
+                title: 'LG전자-1Q26 Review 한 분기 만에 OPM 복귀',
+                reason: '공식 원문 검증 실패',
+                bulletNo: '758405',
+                publishedDate: '2026-04-30',
+                supportingUrls: ['https://www.iprovest.com/upload/research/report/cominf/20260430/report.pdf'],
+              },
+              {
+                firm: '링크없는증권',
+                title: '링크 없음',
+                reason: 'supportingUrls 없음',
+                bulletNo: '758000',
+                publishedDate: '2026-04-30',
+                supportingUrls: [],
+              },
+            ],
+            securitiesFirms: [
+              { name: '삼성증권', reportCount: 2, targetPrices: [170000], recommendations: ['BUY'] },
+              { name: '교보증권', reportCount: 1, targetPrices: [180000], recommendations: ['BUY'] },
+            ],
+          },
+        },
+      ],
+    );
+
+    expect(rows[0]?.summaryReport?.excludedReports).toEqual([
+      {
+        firm: '삼성증권',
+        title: 'LG전자-AI 생태계의 하드웨어 파트너',
+        reason: '공식 원문 검증 실패',
+        bulletNo: '758321',
+        publishedDate: '2026-04-30',
+        supportingUrls: ['https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf', 'https://news.example.com/not-first'],
+      },
+      {
+        firm: '교보증권',
+        title: 'LG전자-1Q26 Review 한 분기 만에 OPM 복귀',
+        reason: '공식 원문 검증 실패',
+        bulletNo: '758405',
+        publishedDate: '2026-04-30',
+        supportingUrls: ['https://www.iprovest.com/upload/research/report/cominf/20260430/report.pdf'],
+      },
+      {
+        firm: '링크없는증권',
+        title: '링크 없음',
+        reason: 'supportingUrls 없음',
+        bulletNo: '758000',
+        publishedDate: '2026-04-30',
+        supportingUrls: [],
+      },
+    ]);
+    expect(rows[0]?.summaryReport).not.toHaveProperty('sourceReports');
+  });
+
+  it('finds the first excluded report supporting URL for a securities firm', () => {
+    const report = buildRankingRowsWithReports(
+      [
+        {
+          stock_name: 'LG전자',
+          current_price: 114000,
+          target_price: 170000,
+          fnguide_code: 'A066570',
+        },
+      ],
+      [
+        {
+          gicode: 'A066570',
+          analysis: {
+            excludedReports: [
+              {
+                firm: '삼성증권',
+                title: '링크 없는 삼성증권 리포트',
+                reason: '링크 없음',
+                supportingUrls: [],
+              },
+              {
+                firm: '삼성증권',
+                title: 'LG전자-AI 생태계의 하드웨어 파트너',
+                reason: '보조 링크 존재',
+                bulletNo: '758321',
+                publishedDate: '2026-04-30',
+                supportingUrls: [
+                  'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf',
+                  'https://news.example.com/samsung-secondary',
+                ],
+              },
+              {
+                firm: '교보증권',
+                title: 'LG전자-1Q26 Review 한 분기 만에 OPM 복귀',
+                reason: '보조 링크 존재',
+                supportingUrls: ['https://www.iprovest.com/upload/research/report/cominf/20260430/report.pdf'],
+              },
+            ],
+          },
+        },
+      ],
+    )[0]?.summaryReport;
+
+    expect(findFirmSupportingLink(report, '삼성증권')).toEqual({
+      url: 'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf',
+      title: 'LG전자-AI 생태계의 하드웨어 파트너',
+      firm: '삼성증권',
+      publishedDate: '2026-04-30',
+      bulletNo: '758321',
+      reason: '보조 링크 존재',
+    });
+    expect(findFirmSupportingLink(report, '미래에셋증권')).toBeNull();
+    expect(findFirmSupportingLink(null, '삼성증권')).toBeNull();
   });
 
   it('keeps rows without matching AI reports and adds the current price checkpoint', () => {
