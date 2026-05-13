@@ -142,4 +142,49 @@ describe('ConsensusDetailModal', () => {
 
     expect(screen.getByText(/AI 리포트 업데이트 -/)).toBeInTheDocument();
   });
+
+  it('links a firm target row to the first excluded report supporting URL', () => {
+    render(
+      <ConsensusDetailModal
+        row={makeRow({
+          name: 'LG전자',
+          code: '066570',
+          gicode: 'A066570',
+          summaryReport: {
+            ...makeRow().summaryReport!,
+            gicode: 'A066570',
+            companyName: 'LG전자',
+            securitiesFirms: [
+              { name: '삼성증권', reportCount: 2, targetPrices: [170000], recommendations: ['BUY'] },
+              { name: '링크없는증권', reportCount: 1, targetPrices: [150000], recommendations: ['BUY'] },
+            ],
+            excludedReports: [
+              {
+                firm: '삼성증권',
+                title: 'LG전자-AI 생태계의 하드웨어 파트너',
+                reason: '공식 원문 검증 실패',
+                bulletNo: '758321',
+                publishedDate: '2026-04-30',
+                supportingUrls: ['https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf'],
+              },
+            ],
+          },
+        })}
+        onClose={() => undefined}
+      />,
+    );
+
+    const link = screen.getByRole('link', { name: /삼성증권 보조 링크 열기/ });
+
+    expect(link).toHaveAttribute('href', 'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noreferrer');
+    expect(link).toHaveTextContent('삼성증권');
+    expect(link).toHaveTextContent('170,000원');
+    expect(link).toHaveTextContent('BUY · 2건');
+    expect(link).toHaveTextContent('보조 링크');
+    expect(screen.getByText('링크없는증권').closest('a')).not.toBeInTheDocument();
+    expect(screen.queryByText('출처 미확인 analysis 항목')).not.toBeInTheDocument();
+    expect(screen.queryByText('공식 출처')).not.toBeInTheDocument();
+  });
 });
