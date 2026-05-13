@@ -24,8 +24,24 @@ describe('useRealEstateTransactions', () => {
       complexes: [{ complex_id: 'c1', complex_name: '약수하이츠' }],
       pyeongOptions: [{ complex_id: 'c1', pyeong_type: '80', display_pyeong_name: '32평' }],
       articles: [
-        { article_no: 'a1', complex_id: 'c1', pyeong_type: '80', trade_type: '매매', price: 1320000000 },
-        { article_no: 'a2', complex_id: 'c1', pyeong_type: '80', trade_type: '매매', price: 1550000000 },
+        {
+          article_no: 'a1',
+          complex_id: 'c1',
+          pyeong_type: '80',
+          trade_type: '매매',
+          price: 1320000000,
+          is_active: true,
+          removed_at: null,
+        },
+        {
+          article_no: 'a2',
+          complex_id: 'c1',
+          pyeong_type: '80',
+          trade_type: '매매',
+          price: 1550000000,
+          is_active: true,
+          removed_at: null,
+        },
       ],
       priceMetrics: [
         { complex_id: 'c1', pyeong_type: '80', metric_date: '2026-05-01', actual_median_price: 1470000000 },
