@@ -1,5 +1,12 @@
 import { useEffect } from 'react';
-import { formatPercent, formatWon, type ConsensusRankingRow, type SecuritiesFirmSummary } from '../consensus/model';
+import {
+  findFirmSupportingLink,
+  formatPercent,
+  formatWon,
+  type ConsensusFirmSupportingLink,
+  type ConsensusRankingRow,
+  type SecuritiesFirmSummary,
+} from '../consensus/model';
 import { ConsensusTrendLine } from './ConsensusTrendLine';
 
 type ConsensusDetailModalProps = {
@@ -46,6 +53,39 @@ function formatUpdatedAt(value: string | null) {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(date);
+}
+
+type FirmRowProps = {
+  firm: SecuritiesFirmSummary;
+  supportingLink: ConsensusFirmSupportingLink | null;
+};
+
+function FirmRow({ firm, supportingLink }: FirmRowProps) {
+  const content = (
+    <>
+      <span>{firm.name}</span>
+      <strong>{formatWon(firm.targetPrices[0] ?? null)}</strong>
+      <em>{formatRecommendation(firm)}</em>
+      {supportingLink ? <span className="firm-link-badge">보조 링크</span> : null}
+    </>
+  );
+
+  if (!supportingLink) {
+    return <div className="firm-row">{content}</div>;
+  }
+
+  return (
+    <a
+      aria-label={`${firm.name} 보조 링크 열기`}
+      className="firm-row firm-row-link"
+      href={supportingLink.url}
+      rel="noreferrer"
+      target="_blank"
+      title={supportingLink.title ?? undefined}
+    >
+      {content}
+    </a>
+  );
 }
 
 export function ConsensusDetailModal({ row, onClose }: ConsensusDetailModalProps) {
@@ -178,11 +218,7 @@ export function ConsensusDetailModal({ row, onClose }: ConsensusDetailModalProps
                 <h3>증권사별 목표가</h3>
                 <div className="firm-list">
                   {report.securitiesFirms.map((firm) => (
-                    <div className="firm-row" key={firm.name}>
-                      <span>{firm.name}</span>
-                      <strong>{formatWon(firm.targetPrices[0] ?? null)}</strong>
-                      <em>{formatRecommendation(firm)}</em>
-                    </div>
+                    <FirmRow firm={firm} key={firm.name} supportingLink={findFirmSupportingLink(report, firm.name)} />
                   ))}
                 </div>
               </article>
