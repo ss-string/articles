@@ -8,6 +8,22 @@ export type RawRealEstateTables = {
   priceMetrics: RawRealEstateRow[];
 };
 
+export type RealEstateChartPoint = {
+  tradeDate: string;
+  dealPrice: number;
+};
+
+export type RealEstateActiveListingRange = {
+  count: number;
+  minPrice: number | null;
+  maxPrice: number | null;
+};
+
+export type RealEstateChartData = {
+  series: RealEstateChartPoint[];
+  activeListingRange: RealEstateActiveListingRange | null;
+};
+
 export type RealEstatePriceMetric = {
   complexId: string;
   pyeongType: string;
@@ -19,6 +35,7 @@ export type RealEstatePriceMetric = {
   actualMedianPrice: number | null;
   minPrice: number | null;
   maxPrice: number | null;
+  chartData: RealEstateChartData | null;
 };
 
 export type RealEstateArticle = {
@@ -49,6 +66,11 @@ export type RealEstateInterestTarget = {
   belowMedianArticles: RealEstateArticle[];
   metricsSeries: RealEstatePriceMetric[];
   latestMetric: RealEstatePriceMetric | null;
+  chartSeries: RealEstateChartPoint[];
+  latestRealPrice: number | null;
+  highestRealPrice: number | null;
+  activeListingRange: RealEstateActiveListingRange | null;
+  updatedAt: string | null;
 };
 
 export type RealEstateDashboard = {
@@ -82,6 +104,8 @@ const columnCandidates = {
   actualMedianPrice: ['actual_median_price', 'median_deal_price', 'median_price', 'trade_median_price'],
   minPrice: ['min_price', 'min_deal_price', 'actual_min_price', 'asking_min_price'],
   maxPrice: ['max_price', 'max_deal_price', 'actual_max_price', 'asking_max_price'],
+  isActive: ['is_active', 'isActive'],
+  removedAt: ['removed_at', 'removedAt'],
 } as const;
 
 function readValue(row: RawRealEstateRow, candidates: readonly string[]) {
@@ -121,6 +145,28 @@ function parseNumber(value: unknown): number | null {
   return null;
 }
 
+function parseBoolean(value: unknown): boolean | null {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'number') {
+    return value === 1 ? true : value === 0 ? false : null;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (['true', 't', '1', 'yes', 'y'].includes(normalized)) {
+      return true;
+    }
+    if (['false', 'f', '0', 'no', 'n'].includes(normalized)) {
+      return false;
+    }
+  }
+
+  return null;
+}
+
 function parseComplexId(row: RawRealEstateRow): string | null {
   return parseText(readValue(row, columnCandidates.complexId));
 }
@@ -151,6 +197,11 @@ function mergeKey(complexId: string | null) {
 
 function sortByMetricDateAsc(left: RealEstatePriceMetric, right: RealEstatePriceMetric) {
   return (left.metricDate ?? '').localeCompare(right.metricDate ?? '');
+}
+
+function sortChartPointAsc(left: RealEstateChartPoint, right: RealEstateChartPoint) {
+  const dateOrder = left.tradeDate.localeCompare(right.tradeDate);
+  return dateOrder !== 0 ? dateOrder : left.dealPrice - right.dealPrice;
 }
 
 function isSaleTradeType(value: string | null) {
@@ -200,6 +251,56 @@ function parseRawRealPriceAverage(row: RawRealEstateRow): number | null {
   );
 }
 
+function normalizeChartPoint(value: unknown): RealEstateChartPoint | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const row = value as Record<string, unknown>;
+  const tradeDate = parseText(row.tradeDate ?? row.trade_date);
+  const dealPrice = parseNumber(row.dealPrice ?? row.deal_price);
+
+  return tradeDate && dealPrice !== null ? { tradeDate, dealPrice } : null;
+}
+
+function normalizeActiveListingRange(value: unknown): RealEstateActiveListingRange | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const row = value as Record<string, unknown>;
+  const count = parseNumber(row.count);
+  const minPrice = parseNumber(row.minDealPrice ?? row.min_deal_price ?? row.minPrice ?? row.min_price);
+  const maxPrice = parseNumber(row.maxDealPrice ?? row.max_deal_price ?? row.maxPrice ?? row.max_price);
+
+  if (count === null && minPrice === null && maxPrice === null) {
+    return null;
+  }
+
+  return {
+    count: count ?? 0,
+    minPrice,
+    maxPrice,
+  };
+}
+
+function normalizeChartData(value: unknown): RealEstateChartData | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const row = value as Record<string, unknown>;
+  const rawSeries = Array.isArray(row.series) ? row.series : [];
+  const series = rawSeries.map(normalizeChartPoint).filter((point): point is RealEstateChartPoint => point !== null);
+  const activeListingRange = normalizeActiveListingRange(row.activeListingRange ?? row.active_listing_range);
+
+  if (series.length === 0 && activeListingRange === null) {
+    return null;
+  }
+
+  return { series, activeListingRange };
+}
+
 function normalizeMetric(row: RawRealEstateRow): RealEstatePriceMetric | null {
   const complexId = parseComplexId(row);
   const pyeongType = parsePyeongType(row);
@@ -221,6 +322,7 @@ function normalizeMetric(row: RawRealEstateRow): RealEstatePriceMetric | null {
     actualMedianPrice,
     minPrice: parseNumber(readValue(row, columnCandidates.minPrice)),
     maxPrice: parseNumber(readValue(row, columnCandidates.maxPrice)),
+    chartData: normalizeChartData(row.chart_data ?? row.chartData),
   };
 }
 
@@ -274,6 +376,7 @@ function aggregateMetrics(metrics: RealEstatePriceMetric[]): RealEstatePriceMetr
         actualMedianPrice: averageNumbers(items.map((item) => item.actualMedianPrice)),
         minPrice: minNumber(items.map((item) => item.minPrice)),
         maxPrice: maxNumber(items.map((item) => item.maxPrice)),
+        chartData: mergeChartData(items.map((item) => item.chartData)),
       };
     })
     .sort(sortByMetricDateAsc);
@@ -285,7 +388,17 @@ function normalizeArticle(row: RawRealEstateRow, latestMedianPrice: number | nul
   const price = parseNumber(readValue(row, columnCandidates.price));
   const tradeType = parseText(readValue(row, columnCandidates.tradeType));
 
-  if (!complexId || !pyeongType || price === null || !isSaleTradeType(tradeType)) {
+  const isActive = parseBoolean(readValue(row, columnCandidates.isActive));
+  const removedAt = parseText(readValue(row, columnCandidates.removedAt));
+
+  if (
+    !complexId ||
+    !pyeongType ||
+    price === null ||
+    !isSaleTradeType(tradeType) ||
+    isActive !== true ||
+    removedAt !== null
+  ) {
     return null;
   }
 
@@ -335,6 +448,90 @@ function mapByKey<T>(items: T[], getKey: (item: T) => string | null) {
   }
 
   return mapped;
+}
+
+function mergeChartData(chartDataItems: Array<RealEstateChartData | null>): RealEstateChartData | null {
+  const pointByKey = new Map<string, RealEstateChartPoint>();
+  const ranges: RealEstateActiveListingRange[] = [];
+
+  for (const chartData of chartDataItems) {
+    if (!chartData) {
+      continue;
+    }
+
+    for (const point of chartData.series) {
+      pointByKey.set(`${point.tradeDate}:${point.dealPrice}`, point);
+    }
+
+    if (chartData.activeListingRange) {
+      ranges.push(chartData.activeListingRange);
+    }
+  }
+
+  const series = Array.from(pointByKey.values()).sort(sortChartPointAsc);
+  const activeListingRange = mergeActiveListingRanges([], ranges);
+
+  if (series.length === 0 && activeListingRange === null) {
+    return null;
+  }
+
+  return { series, activeListingRange };
+}
+
+function mergeChartSeries(metrics: RealEstatePriceMetric[]) {
+  const pointByKey = new Map<string, RealEstateChartPoint>();
+
+  for (const metric of metrics) {
+    for (const point of metric.chartData?.series ?? []) {
+      pointByKey.set(`${point.tradeDate}:${point.dealPrice}`, point);
+    }
+  }
+
+  return Array.from(pointByKey.values()).sort(sortChartPointAsc);
+}
+
+function getLatestRealPrice(series: RealEstateChartPoint[]) {
+  const latest = [...series].sort((left, right) => {
+    const dateOrder = right.tradeDate.localeCompare(left.tradeDate);
+    return dateOrder !== 0 ? dateOrder : right.dealPrice - left.dealPrice;
+  })[0];
+
+  return latest?.dealPrice ?? null;
+}
+
+function getHighestRealPrice(series: RealEstateChartPoint[]) {
+  return maxNumber(series.map((point) => point.dealPrice));
+}
+
+function mergeActiveListingRanges(
+  articles: RealEstateArticle[],
+  chartRanges: Array<RealEstateActiveListingRange | null>,
+): RealEstateActiveListingRange | null {
+  const ranges = chartRanges.filter((range): range is RealEstateActiveListingRange => range !== null);
+
+  if (articles.length > 0) {
+    return {
+      count: articles.length,
+      minPrice: minNumber([...articles.map((article) => article.price), ...ranges.map((range) => range.minPrice)]),
+      maxPrice: maxNumber([...articles.map((article) => article.price), ...ranges.map((range) => range.maxPrice)]),
+    };
+  }
+
+  if (ranges.length === 0) {
+    return null;
+  }
+
+  return {
+    count: ranges.reduce((sum, range) => sum + range.count, 0),
+    minPrice: minNumber(ranges.map((range) => range.minPrice)),
+    maxPrice: maxNumber(ranges.map((range) => range.maxPrice)),
+  };
+}
+
+function latestText(values: Array<string | null>) {
+  const texts = values.filter((value): value is string => value !== null);
+  const sortedTexts = [...texts].sort();
+  return sortedTexts.length === 0 ? null : sortedTexts[sortedTexts.length - 1] ?? null;
 }
 
 export function buildRealEstateDashboard(tables: RawRealEstateTables): RealEstateDashboard {
@@ -408,6 +605,11 @@ export function buildRealEstateDashboard(tables: RawRealEstateTables): RealEstat
         askingAveragePrice: metric.askingAveragePrice ?? articleAskingAverage,
       }));
       const latestMetric = metricsSeriesWithAsking.length > 0 ? metricsSeriesWithAsking[metricsSeriesWithAsking.length - 1] : null;
+      const chartSeries = mergeChartSeries(metricsSeriesWithAsking);
+      const activeListingRange = mergeActiveListingRanges(
+        currentArticles,
+        metricsSeriesWithAsking.map((metric) => metric.chartData?.activeListingRange ?? null),
+      );
       const pyeongNames = sortedTargets
         .map(
           (target) =>
@@ -440,6 +642,11 @@ export function buildRealEstateDashboard(tables: RawRealEstateTables): RealEstat
             : currentArticles.filter((article) => article.price <= latestMedianPrice).sort((left, right) => left.price - right.price),
         metricsSeries: metricsSeriesWithAsking,
         latestMetric,
+        chartSeries,
+        latestRealPrice: getLatestRealPrice(chartSeries),
+        highestRealPrice: getHighestRealPrice(chartSeries),
+        activeListingRange,
+        updatedAt: latestText(metricsSeriesWithAsking.map((metric) => metric.metricDate)),
       };
     })
     .filter((target): target is RealEstateInterestTarget => target !== null)

@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState, type CSSProperties } from 'react';
 import {
   formatKoreanHousePrice,
   type RawRealEstateTables,
-  type RealEstateInterestTarget,
   type RealEstateArticle,
-  type RealEstatePriceMetric,
+  type RealEstateChartPoint,
+  type RealEstateInterestTarget,
 } from '../real-estate/model';
 import { useRealEstateTransactions } from '../real-estate/useRealEstateTransactions';
 
@@ -12,13 +12,39 @@ type RealEstateTransactionsPageProps = {
   queryTables?: () => Promise<RawRealEstateTables>;
 };
 
-type ChartPoint = {
-  x: number;
-  actualY: number | null;
-  askingY: number | null;
+type CompatibleActiveListingRange = NonNullable<RealEstateInterestTarget['activeListingRange']> & {
+  minDealPrice?: number | null;
+  maxDealPrice?: number | null;
 };
 
-type ArticleFilter = 'belowMedian' | 'all';
+type ChartViewPoint = {
+  point: RealEstateChartPoint;
+  x: number;
+  y: number;
+};
+
+const chartSize = {
+  width: 520,
+  height: 242,
+  paddingLeft: 42,
+  paddingRight: 106,
+  paddingTop: 58,
+  paddingBottom: 34,
+};
+
+const dayMs = 24 * 60 * 60 * 1000;
+
+const visuallyHiddenStyle: CSSProperties = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+};
 
 function getDisplayPyeongName(target: RealEstateInterestTarget) {
   return target.pyeongName ?? target.pyeongType;
@@ -32,149 +58,338 @@ function formatCount(value: number | null) {
   return value === null ? '-' : value.toLocaleString('ko-KR');
 }
 
-function formatPercent(value: number | null) {
-  return value === null || !Number.isFinite(value) ? '-' : `${value.toFixed(1)}%`;
-}
-
-function formatSignedPercent(value: number | null) {
+function formatEokPrice(value: number | null) {
   if (value === null || !Number.isFinite(value)) {
     return '-';
   }
 
-  const sign = value > 0 ? '+' : '';
-  return `${sign}${value.toFixed(1)}%`;
+  const eok = value / 100000000;
+  return `${eok.toLocaleString('ko-KR', { maximumFractionDigits: 1 })}억`;
 }
 
-function formatSignedKoreanHousePrice(value: number | null) {
-  if (value === null || !Number.isFinite(value)) {
-    return '-';
-  }
-
-  if (value === 0) {
-    return '0';
-  }
-
-  const sign = value > 0 ? '+' : '-';
-  return `${sign}${formatKoreanHousePrice(Math.abs(value))}`;
+function getRangeMin(range: RealEstateInterestTarget['activeListingRange']) {
+  const compatibleRange = range as CompatibleActiveListingRange | null;
+  return compatibleRange?.minPrice ?? compatibleRange?.minDealPrice ?? null;
 }
 
-function getMetricValues(metric: RealEstatePriceMetric) {
-  return [metric.actualAveragePrice, metric.askingAveragePrice].filter(
-    (value): value is number => value !== null && Number.isFinite(value),
-  );
+function getRangeMax(range: RealEstateInterestTarget['activeListingRange']) {
+  const compatibleRange = range as CompatibleActiveListingRange | null;
+  return compatibleRange?.maxPrice ?? compatibleRange?.maxDealPrice ?? null;
 }
 
-function buildChartPoints(metrics: RealEstatePriceMetric[]): ChartPoint[] {
-  const width = 520;
-  const height = 220;
-  const paddingX = 48;
-  const paddingY = 44;
-  const values = metrics.flatMap(getMetricValues);
+function getActiveListingCount(target: RealEstateInterestTarget) {
+  return target.currentArticles.length;
+}
 
-  if (metrics.length === 0 || values.length === 0) {
-    return [];
+function hasActiveListingRange(target: RealEstateInterestTarget) {
+  const count = target.activeListingRange?.count ?? 0;
+  return count > 0 && getRangeMin(target.activeListingRange) !== null && getRangeMax(target.activeListingRange) !== null;
+}
+
+function formatActiveListingRange(target: RealEstateInterestTarget) {
+  const minPrice = getRangeMin(target.activeListingRange);
+  const maxPrice = getRangeMax(target.activeListingRange);
+
+  if (getActiveListingCount(target) === 0 || minPrice === null || maxPrice === null) {
+    return '현재 활성 매물 없음';
   }
 
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max === min ? Math.max(max * 0.06, 1) : max - min;
-  const domainMin = min - range * 0.12;
-  const domainMax = max + range * 0.12;
+  if (minPrice === maxPrice) {
+    return formatEokPrice(minPrice);
+  }
+
+  return `${formatEokPrice(minPrice)}-${formatEokPrice(maxPrice)}`;
+}
+
+function formatRangeMarkerValue(target: RealEstateInterestTarget) {
+  const minPrice = getRangeMin(target.activeListingRange);
+  const maxPrice = getRangeMax(target.activeListingRange);
+
+  if (!hasActiveListingRange(target) || minPrice === null || maxPrice === null) {
+    return '현재 활성 매물 없음';
+  }
+
+  if (minPrice === maxPrice) {
+    return formatEokPrice(minPrice);
+  }
+
+  return `${formatEokPrice(minPrice)}-${formatEokPrice(maxPrice)}`;
+}
+
+function parseDateMs(value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function sortChartPointsByDate(points: RealEstateChartPoint[]) {
+  return [...points].sort((left, right) => {
+    const dateOrder = left.tradeDate.localeCompare(right.tradeDate);
+    return dateOrder !== 0 ? dateOrder : left.dealPrice - right.dealPrice;
+  });
+}
+
+function getLatestPoint(target: RealEstateInterestTarget) {
+  const sortedPoints = sortChartPointsByDate(target.chartSeries);
+  const pointsByRecentDate = [...sortedPoints].sort((left, right) => {
+    const dateOrder = right.tradeDate.localeCompare(left.tradeDate);
+    return dateOrder !== 0 ? dateOrder : right.dealPrice - left.dealPrice;
+  });
+
+  if (target.latestRealPrice !== null) {
+    return pointsByRecentDate.find((point) => point.dealPrice === target.latestRealPrice) ?? pointsByRecentDate[0] ?? null;
+  }
+
+  return pointsByRecentDate[0] ?? null;
+}
+
+function getHighestPoint(target: RealEstateInterestTarget) {
+  if (target.highestRealPrice !== null) {
+    return (
+      [...target.chartSeries]
+        .filter((point) => point.dealPrice === target.highestRealPrice)
+        .sort((left, right) => right.tradeDate.localeCompare(left.tradeDate))[0] ?? null
+    );
+  }
+
+  return [...target.chartSeries].sort((left, right) => right.dealPrice - left.dealPrice)[0] ?? null;
+}
+
+function getReferenceDateMs(target: RealEstateInterestTarget, latestPoint: RealEstateChartPoint | null) {
+  return parseDateMs(target.updatedAt) ?? parseDateMs(latestPoint?.tradeDate) ?? Date.now();
+}
+
+function getArticlePyeongName(target: RealEstateInterestTarget, article: RealEstateArticle) {
+  const pyeongTypes = target.pyeongType.split(',');
+  const pyeongNames = (target.pyeongName ?? '').split(' / ');
+  const articleIndex = pyeongTypes.indexOf(article.pyeongType);
+
+  return pyeongNames[articleIndex] ?? target.pyeongName ?? article.pyeongType;
+}
+
+function buildArticleMeta(target: RealEstateInterestTarget, article: RealEstateArticle) {
+  return [getArticlePyeongName(target, article), article.buildingName, article.floorInfo].filter(Boolean).join(' · ');
+}
+
+function buildChartView(target: RealEstateInterestTarget) {
+  const latestPoint = getLatestPoint(target);
+  const referenceDateMs = getReferenceDateMs(target, latestPoint);
+  const windowStartMs = referenceDateMs - 90 * dayMs;
+  const plotWidth = chartSize.width - chartSize.paddingLeft - chartSize.paddingRight;
+  const plotHeight = chartSize.height - chartSize.paddingTop - chartSize.paddingBottom;
+  const rangeMin = getRangeMin(target.activeListingRange);
+  const rangeMax = getRangeMax(target.activeListingRange);
+  const domainValues = [
+    ...target.chartSeries.map((point) => point.dealPrice),
+    ...(rangeMin === null ? [] : [rangeMin]),
+    ...(rangeMax === null ? [] : [rangeMax]),
+  ].filter((value) => Number.isFinite(value));
+  const rawMin = domainValues.length > 0 ? Math.min(...domainValues) : 0;
+  const rawMax = domainValues.length > 0 ? Math.max(...domainValues) : 1;
+  const rawRange = rawMax === rawMin ? Math.max(rawMax * 0.04, 1) : rawMax - rawMin;
+  const domainMin = rawMin - rawRange * 0.12;
+  const domainMax = rawMax + rawRange * 0.16;
   const domainRange = domainMax - domainMin;
 
-  function getX(index: number) {
-    if (metrics.length === 1) {
-      return width / 2;
+  function getX(tradeDate: string) {
+    const parsed = parseDateMs(tradeDate);
+    if (parsed === null) {
+      return chartSize.paddingLeft;
     }
 
-    return paddingX + (index / (metrics.length - 1)) * (width - paddingX * 2);
+    const ratio = (parsed - windowStartMs) / (referenceDateMs - windowStartMs);
+    const clampedRatio = Math.min(1, Math.max(0, ratio));
+    return chartSize.paddingLeft + clampedRatio * plotWidth;
   }
 
-  function getY(value: number | null) {
-    if (value === null) {
-      return null;
-    }
-
-    return height - paddingY - ((value - domainMin) / domainRange) * (height - paddingY * 2);
+  function getY(price: number) {
+    return chartSize.height - chartSize.paddingBottom - ((price - domainMin) / domainRange) * plotHeight;
   }
 
-  return metrics.map((metric, index) => ({
-    x: getX(index),
-    actualY: getY(metric.actualAveragePrice),
-    askingY: getY(metric.askingAveragePrice),
+  const viewPoints = sortChartPointsByDate(target.chartSeries).map((point) => ({
+    point,
+    x: getX(point.tradeDate),
+    y: getY(point.dealPrice),
   }));
+  const pointKey = (point: RealEstateChartPoint) => `${point.tradeDate}:${point.dealPrice}`;
+  const viewPointByKey = new Map(viewPoints.map((viewPoint) => [pointKey(viewPoint.point), viewPoint]));
+  const currentGuideX = chartSize.width - chartSize.paddingRight;
+  const activeRangeExists = hasActiveListingRange(target);
+  const activeRangeBox =
+    activeRangeExists && rangeMin !== null && rangeMax !== null
+      ? (() => {
+          const topY = Math.min(getY(rangeMin), getY(rangeMax));
+          const bottomY = Math.max(getY(rangeMin), getY(rangeMax));
+          const height = Math.max(bottomY - topY, 42);
+          const y = Math.min(chartSize.height - chartSize.paddingBottom - height, Math.max(chartSize.paddingTop + 2, topY));
+
+          return {
+            x: currentGuideX + 8,
+            y,
+            width: 88,
+            height,
+          };
+        })()
+      : null;
+
+  return {
+    viewPoints,
+    polyline: viewPoints.map((point) => `${point.x},${point.y}`).join(' '),
+    latestViewPoint: latestPoint ? viewPointByKey.get(pointKey(latestPoint)) ?? null : null,
+    highestViewPoint: getHighestPoint(target) ? viewPointByKey.get(pointKey(getHighestPoint(target)!)) ?? null : null,
+    currentGuideX,
+    activeRangeBox,
+  };
 }
 
-function pointsToPolyline(points: ChartPoint[], key: 'actualY' | 'askingY') {
-  return points
-    .filter((point) => point[key] !== null)
-    .map((point) => `${point.x},${point[key]}`)
-    .join(' ');
+function buildChartDescription(target: RealEstateInterestTarget, chartView: ReturnType<typeof buildChartView>) {
+  const parts = [
+    chartView.latestViewPoint ? `최신 실거래 ${formatEokPrice(chartView.latestViewPoint.point.dealPrice)}` : '최근 90일 실거래 없음',
+    chartView.highestViewPoint ? `최고 실거래 ${formatEokPrice(chartView.highestViewPoint.point.dealPrice)}` : null,
+    hasActiveListingRange(target) ? `활성 매물 가격범위 ${formatRangeMarkerValue(target)}` : '현재 활성 매물 없음',
+  ].filter((part): part is string => part !== null);
+
+  return `${parts.join('. ')}.`;
 }
 
 function PriceChart({ target }: { target: RealEstateInterestTarget }) {
+  const chartDescriptionId = useId();
   const [activePointIndex, setActivePointIndex] = useState<number | null>(null);
-  const chartPoints = useMemo(() => buildChartPoints(target.metricsSeries), [target.metricsSeries]);
-  const actualPoints = pointsToPolyline(chartPoints, 'actualY');
-  const askingPoints = pointsToPolyline(chartPoints, 'askingY');
+  const chartView = useMemo(() => buildChartView(target), [target]);
   const displayPyeongName = getDisplayPyeongName(target);
-  const activeMetric = activePointIndex === null ? null : target.metricsSeries[activePointIndex];
-  const activePoint = activePointIndex === null ? null : chartPoints[activePointIndex];
+  const activeViewPoint = activePointIndex === null ? null : chartView.viewPoints[activePointIndex] ?? null;
+  const activeRangeExists = hasActiveListingRange(target);
+  const emptyMessages = [
+    chartView.viewPoints.length === 0 ? '최근 90일 실거래 없음' : null,
+    chartView.viewPoints.length === 0 && !activeRangeExists ? '현재 활성 매물 없음' : null,
+  ].filter((message): message is string => message !== null);
 
   return (
     <div
       className="real-estate-chart"
-      role="img"
-      aria-label={`${target.complexName} ${displayPyeongName} 가격 비교 그래프`}
+      aria-label={`${target.complexName} ${displayPyeongName} 최근 90일 실거래 그래프`}
+      aria-describedby={chartDescriptionId}
+      role="group"
     >
-      {chartPoints.length > 0 ? (
-        <svg aria-hidden="true" viewBox="0 0 520 220" focusable="false">
-          <line className="real-estate-chart-grid" x1="24" x2="496" y1="44" y2="44" />
-          <line className="real-estate-chart-grid" x1="24" x2="496" y1="110" y2="110" />
-          <line className="real-estate-chart-grid" x1="24" x2="496" y1="176" y2="176" />
-          {actualPoints ? <polyline className="real-estate-chart-line actual" points={actualPoints} /> : null}
-          {askingPoints ? <polyline className="real-estate-chart-line asking" points={askingPoints} /> : null}
-          {chartPoints.map((point, index) => (
-            <g key={`${target.id}-${index}`}>
-              {point.actualY !== null ? <circle className="real-estate-chart-dot actual" cx={point.x} cy={point.actualY} r="4" /> : null}
-              {point.askingY !== null ? <circle className="real-estate-chart-dot asking" cx={point.x} cy={point.askingY} r="4" /> : null}
-            </g>
-          ))}
-        </svg>
-      ) : (
-        <div className="real-estate-chart-empty">표시할 가격 흐름이 없습니다.</div>
-      )}
-      {chartPoints.map((point, index) => {
-        const metric = target.metricsSeries[index];
-        const top = Math.min(point.actualY ?? 110, point.askingY ?? 110);
-
-        return (
-          <button
-            aria-label={`${metric.metricDate ?? `${index + 1}번째`} 가격 보기`}
-            className="real-estate-chart-hit-area"
-            key={`${target.id}-hit-${index}`}
-            style={{ left: `${(point.x / 520) * 100}%`, top: `${(top / 220) * 100}%` }}
-            type="button"
-            onBlur={() => setActivePointIndex(null)}
-            onFocus={() => setActivePointIndex(index)}
-            onMouseEnter={() => setActivePointIndex(index)}
-            onMouseLeave={() => setActivePointIndex(null)}
+      <p id={chartDescriptionId} style={visuallyHiddenStyle}>
+        {buildChartDescription(target, chartView)}
+      </p>
+      <svg aria-hidden="true" viewBox={`0 0 ${chartSize.width} ${chartSize.height}`} focusable="false">
+        <line className="real-estate-chart-grid" x1="24" x2="496" y1="58" y2="58" />
+        <line className="real-estate-chart-grid" x1="24" x2="496" y1="133" y2="133" />
+        <line className="real-estate-chart-grid" x1="24" x2="496" y1="208" y2="208" />
+        <line
+          className="real-estate-current-guide"
+          x1={chartView.currentGuideX}
+          x2={chartView.currentGuideX}
+          y1={chartSize.paddingTop}
+          y2={chartSize.height - chartSize.paddingBottom}
+          stroke="#94a3b8"
+          strokeDasharray="4 4"
+        />
+        {chartView.polyline ? <polyline className="real-estate-chart-line actual" points={chartView.polyline} /> : null}
+        {chartView.viewPoints.map((viewPoint, index) => (
+          <circle
+            className="real-estate-chart-dot actual"
+            cx={viewPoint.x}
+            cy={viewPoint.y}
+            key={`${viewPoint.point.tradeDate}-${viewPoint.point.dealPrice}-${index}`}
+            r="4"
           />
-        );
-      })}
-      {activeMetric && activePoint ? (
+        ))}
+        {chartView.latestViewPoint ? (
+          <g>
+            <circle className="real-estate-chart-dot actual latest" cx={chartView.latestViewPoint.x} cy={chartView.latestViewPoint.y} r="6" />
+            <text x={chartView.latestViewPoint.x + 8} y={Math.max(18, chartView.latestViewPoint.y - 8)} fill="#0f766e" fontSize="11" fontWeight="800">
+              최신 {formatEokPrice(chartView.latestViewPoint.point.dealPrice)}
+            </text>
+          </g>
+        ) : null}
+        {chartView.highestViewPoint ? (
+          <g>
+            <circle className="real-estate-chart-dot actual highest" cx={chartView.highestViewPoint.x} cy={chartView.highestViewPoint.y} r="5" />
+            <text
+              x={chartView.highestViewPoint.x + 8}
+              y={Math.min(chartSize.height - 12, chartView.highestViewPoint.y + 18)}
+              fill="#047857"
+              fontSize="11"
+              fontWeight="800"
+            >
+              최고 {formatEokPrice(chartView.highestViewPoint.point.dealPrice)}
+            </text>
+          </g>
+        ) : null}
+        {chartView.activeRangeBox ? (
+          <g>
+            <rect
+              className="real-estate-range-marker-box"
+              fill="#dcfce7"
+              height={chartView.activeRangeBox.height}
+              rx="6"
+              stroke="#16a34a"
+              width={chartView.activeRangeBox.width}
+              x={chartView.activeRangeBox.x}
+              y={chartView.activeRangeBox.y}
+            />
+            <text
+              className="real-estate-range-marker-label"
+              fill="#166534"
+              fontSize="8"
+              fontWeight="850"
+              x={chartView.activeRangeBox.x + 8}
+              y={chartView.activeRangeBox.y + 17}
+            >
+              활성 매물 가격범위
+            </text>
+            <text
+              className="real-estate-range-marker-value"
+              fill="#14532d"
+              fontSize="12"
+              fontWeight="900"
+              x={chartView.activeRangeBox.x + 8}
+              y={chartView.activeRangeBox.y + 34}
+            >
+              {formatRangeMarkerValue(target)}
+            </text>
+          </g>
+        ) : null}
+      </svg>
+      {emptyMessages.length > 0 ? (
+        <div className="real-estate-chart-empty" style={{ position: 'absolute', inset: 0 }}>
+          {emptyMessages.map((message) => (
+            <span key={message}>{message}</span>
+          ))}
+        </div>
+      ) : null}
+      {chartView.viewPoints.map((viewPoint, index) => (
+        <button
+          aria-label={`${viewPoint.point.tradeDate} 실거래 보기`}
+          className="real-estate-chart-hit-area"
+          key={`${target.id}-hit-${viewPoint.point.tradeDate}-${viewPoint.point.dealPrice}-${index}`}
+          style={{ left: `${(viewPoint.x / chartSize.width) * 100}%`, top: `${(viewPoint.y / chartSize.height) * 100}%` }}
+          type="button"
+          onBlur={() => setActivePointIndex(null)}
+          onFocus={() => setActivePointIndex(index)}
+          onMouseEnter={() => setActivePointIndex(index)}
+          onMouseLeave={() => setActivePointIndex(null)}
+        />
+      ))}
+      {activeViewPoint ? (
         <div
-          aria-label={`${activeMetric.metricDate ?? '선택 지점'} 가격`}
+          aria-label={`${activeViewPoint.point.tradeDate} 실거래`}
           className="real-estate-chart-tooltip"
           role="status"
           style={{
-            left: `${(activePoint.x / 520) * 100}%`,
-            top: `${(Math.min(activePoint.actualY ?? 110, activePoint.askingY ?? 110) / 220) * 100}%`,
+            left: `${(activeViewPoint.x / chartSize.width) * 100}%`,
+            top: `${(activeViewPoint.y / chartSize.height) * 100}%`,
           }}
         >
-          <strong>{activeMetric.metricDate ?? '가격'}</strong>
-          <span>실거래 {formatKoreanHousePrice(activeMetric.actualAveragePrice)}</span>
-          <span>호가 {formatKoreanHousePrice(activeMetric.askingAveragePrice)}</span>
+          <strong>{activeViewPoint.point.tradeDate}</strong>
+          <span>실거래 {formatEokPrice(activeViewPoint.point.dealPrice)}</span>
+          <span>구분 매매</span>
         </div>
       ) : null}
     </div>
@@ -185,7 +400,6 @@ export function RealEstateTransactionsPage({ queryTables }: RealEstateTransactio
   const state = useRealEstateTransactions({ queryTables });
   const targets = state.dashboard.targets;
   const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
-  const [articleFilter, setArticleFilter] = useState<ArticleFilter>('belowMedian');
 
   useEffect(() => {
     if (targets.length === 0) {
@@ -199,15 +413,7 @@ export function RealEstateTransactionsPage({ queryTables }: RealEstateTransactio
   }, [targets]);
 
   const selectedTarget = targets.find((target) => target.id === selectedTargetId) ?? targets[0] ?? null;
-  const visibleArticles =
-    articleFilter === 'all' ? selectedTarget?.currentArticles ?? [] : selectedTarget?.belowMedianArticles ?? [];
-  const articleSectionTitle = articleFilter === 'all' ? '전체 매물' : '중위값 이하 매물';
-  const latestActualAverage = selectedTarget?.latestMetric?.actualAveragePrice ?? null;
-  const latestAskingAverage = selectedTarget?.latestMetric?.askingAveragePrice ?? null;
-  const askingGap =
-    latestActualAverage === null || latestAskingAverage === null ? null : latestAskingAverage - latestActualAverage;
-  const askingGapPercent =
-    askingGap === null || latestActualAverage === null || latestActualAverage <= 0 ? null : (askingGap / latestActualAverage) * 100;
+  const visibleArticles = selectedTarget?.currentArticles ?? [];
 
   return (
     <section className="dashboard-section real-estate-section" aria-labelledby="real-estate-title">
@@ -228,6 +434,7 @@ export function RealEstateTransactionsPage({ queryTables }: RealEstateTransactio
             {targets.map((target) => {
               const displayPyeongName = getDisplayPyeongName(target);
               const isActive = selectedTarget.id === target.id;
+              const activeListingCount = getActiveListingCount(target);
 
               return (
                 <article
@@ -244,7 +451,6 @@ export function RealEstateTransactionsPage({ queryTables }: RealEstateTransactio
                     {target.complexName}
                   </a>
                   <button
-                    aria-label={`${target.complexName} 관심 단지 선택`}
                     className={['real-estate-target-select', isActive ? 'active' : ''].filter(Boolean).join(' ')}
                     type="button"
                     onClick={() => setSelectedTargetId(target.id)}
@@ -252,9 +458,8 @@ export function RealEstateTransactionsPage({ queryTables }: RealEstateTransactio
                     <span className="real-estate-card-meta">{displayPyeongName}</span>
                     <span>{formatCount(target.households)}세대</span>
                     <span>사용승인 {target.approvedAt ?? '-'}</span>
-                    <span>중위값 이하 {target.belowMedianArticles.length.toLocaleString('ko-KR')}건</span>
-                    <span>전체 매물 {target.currentArticles.length.toLocaleString('ko-KR')}건</span>
-                    <em>호가 {formatKoreanHousePrice(target.latestMetric?.askingAveragePrice ?? null)}</em>
+                    <span>활성 매물 {activeListingCount.toLocaleString('ko-KR')}건</span>
+                    <em>{formatActiveListingRange(target)}</em>
                   </button>
                 </article>
               );
@@ -264,57 +469,37 @@ export function RealEstateTransactionsPage({ queryTables }: RealEstateTransactio
           <div className="real-estate-main">
             <div className="summary-grid real-estate-summary-grid">
               <article className="summary-card">
-                <span>실거래 평균</span>
-                <strong>{formatKoreanHousePrice(selectedTarget.latestMetric?.actualAveragePrice ?? null)}</strong>
+                <span>최신 실거래</span>
+                <strong>{formatEokPrice(selectedTarget.latestRealPrice)}</strong>
               </article>
               <article className="summary-card">
-                <span>호가 평균</span>
-                <strong>{formatKoreanHousePrice(selectedTarget.latestMetric?.askingAveragePrice ?? null)}</strong>
-                <em className="real-estate-gap-label">
-                  갭 {formatSignedKoreanHousePrice(askingGap)} ({formatSignedPercent(askingGapPercent)})
-                </em>
+                <span>최고 실거래</span>
+                <strong>{formatEokPrice(selectedTarget.highestRealPrice)}</strong>
               </article>
               <article className="summary-card">
-                <span>현재 매물</span>
-                <strong>{selectedTarget.currentArticles.length.toLocaleString('ko-KR')}건</strong>
+                <span>현재 활성 매물</span>
+                <strong>{getActiveListingCount(selectedTarget).toLocaleString('ko-KR')}건</strong>
               </article>
             </div>
 
             <section className="real-estate-panel">
               <header className="real-estate-panel-header">
                 <div>
-                  <span>{getDisplayPyeongName(selectedTarget)}</span>
-                  <h3>{selectedTarget.complexName} 가격 비교</h3>
+                  <span>최근 90일 · 매매</span>
+                  <h3>{selectedTarget.complexName} {getDisplayPyeongName(selectedTarget)} 실거래 흐름</h3>
                 </div>
                 <div className="real-estate-chart-legend" aria-hidden="true">
                   <span className="actual">실거래</span>
-                  <span className="asking">호가</span>
                 </div>
               </header>
               <PriceChart target={selectedTarget} />
             </section>
 
-            <section className="real-estate-panel" aria-label={articleSectionTitle}>
+            <section className="real-estate-panel" aria-label="현재 활성 매물">
               <header className="real-estate-panel-header">
                 <div>
-                  <span>{articleFilter === 'all' ? 'All Articles' : 'Below Median Articles'}</span>
-                  <h3>{articleSectionTitle}</h3>
-                </div>
-                <div className="real-estate-article-filter" role="group" aria-label="매물 표시 범위">
-                  <button
-                    className={articleFilter === 'belowMedian' ? 'active' : ''}
-                    type="button"
-                    onClick={() => setArticleFilter('belowMedian')}
-                  >
-                    중위값 이하
-                  </button>
-                  <button
-                    className={articleFilter === 'all' ? 'active' : ''}
-                    type="button"
-                    onClick={() => setArticleFilter('all')}
-                  >
-                    전체 매물
-                  </button>
+                  <span>Active Listings</span>
+                  <h3>현재 활성 매물</h3>
                 </div>
               </header>
               {visibleArticles.length > 0 ? (
@@ -336,23 +521,16 @@ export function RealEstateTransactionsPage({ queryTables }: RealEstateTransactio
                           <strong>{getArticleTitle(article)}</strong>
                         )}
                         {article.articleName ? <span>매물번호 {article.articleNo}</span> : null}
-                        {article.buildingName || article.floorInfo ? (
-                          <span>
-                            {[article.buildingName, article.floorInfo].filter(Boolean).join(' · ')}
-                          </span>
-                        ) : null}
+                        <span>{buildArticleMeta(selectedTarget, article)}</span>
                       </div>
                       <div>
                         <strong>{formatKoreanHousePrice(article.price)}</strong>
-                        <em className={article.priceGapPercentFromMedian !== null && article.priceGapPercentFromMedian < 0 ? 'below-average' : ''}>
-                          {formatPercent(article.priceGapPercentFromMedian)}
-                        </em>
                       </div>
                     </article>
                   ))}
                 </div>
               ) : (
-                <div className="state-panel">{articleSectionTitle}이 없습니다.</div>
+                <div className="state-panel">현재 활성 매물 없음</div>
               )}
             </section>
           </div>

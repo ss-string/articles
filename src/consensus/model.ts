@@ -20,6 +20,24 @@ export type SecuritiesFirmSummary = {
   recommendations: string[];
 };
 
+export type ConsensusExcludedReport = {
+  firm: string;
+  title: string | null;
+  reason: string | null;
+  bulletNo: string | null;
+  publishedDate: string | null;
+  supportingUrls: string[];
+};
+
+export type ConsensusFirmSupportingLink = {
+  url: string;
+  title: string | null;
+  firm: string;
+  publishedDate: string | null;
+  bulletNo: string | null;
+  reason: string | null;
+};
+
 export type ConsensusSummaryReport = {
   gicode: string;
   companyName: string | null;
@@ -30,6 +48,7 @@ export type ConsensusSummaryReport = {
   targetPriceRange: TargetPriceRange;
   securitiesFirmCount: number | null;
   securitiesFirms: SecuritiesFirmSummary[];
+  excludedReports: ConsensusExcludedReport[];
 };
 
 export type ConsensusRankingRow = {
@@ -168,12 +187,47 @@ function parseSecuritiesFirms(value: unknown): SecuritiesFirmSummary[] {
   });
 }
 
+function parseExcludedReports(value: unknown): ConsensusExcludedReport[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((item) => {
+    const record = parseRecord(item);
+    const firm = parseText(record?.firm);
+
+    if (!record || !firm) {
+      return [];
+    }
+
+    return [
+      {
+        firm,
+        title: parseText(record.title),
+        reason: parseText(record.reason),
+        bulletNo: parseText(record.bulletNo),
+        publishedDate: parseText(record.publishedDate),
+        supportingUrls: parseTextArray(record.supportingUrls),
+      },
+    ];
+  });
+}
+
 function calculateChangePercent(current: number, previous: number | null): number | null {
   if (previous === null || previous <= 0) {
     return null;
   }
 
   return ((current - previous) / previous) * 100;
+}
+
+function isSupportedLinkUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
 }
 
 export function normalizeSummaryReport(row: RawSummaryReportRow): ConsensusSummaryReport | null {
@@ -200,6 +254,39 @@ export function normalizeSummaryReport(row: RawSummaryReportRow): ConsensusSumma
     },
     securitiesFirmCount: parseNumber(analysis?.securitiesFirmCount),
     securitiesFirms: parseSecuritiesFirms(analysis?.securitiesFirms),
+    excludedReports: parseExcludedReports(analysis?.excludedReports),
+  };
+}
+
+export function findFirmSupportingLink(
+  report: ConsensusSummaryReport | null | undefined,
+  firmName: string,
+): ConsensusFirmSupportingLink | null {
+  if (!report) {
+    return null;
+  }
+
+  const excludedReport = report.excludedReports.find((item) =>
+    item.firm === firmName && item.supportingUrls.some(isSupportedLinkUrl),
+  );
+
+  if (!excludedReport) {
+    return null;
+  }
+
+  const supportedUrl = excludedReport.supportingUrls.find(isSupportedLinkUrl);
+
+  if (!supportedUrl) {
+    return null;
+  }
+
+  return {
+    url: supportedUrl,
+    title: excludedReport.title,
+    firm: excludedReport.firm,
+    publishedDate: excludedReport.publishedDate,
+    bulletNo: excludedReport.bulletNo,
+    reason: excludedReport.reason,
   };
 }
 

@@ -38,8 +38,8 @@ export async function queryRealEstateTables(): Promise<RawRealEstateTables> {
       .order('display_order', { ascending: true }),
     supabase.from(tableNames.complexes).select('*'),
     supabase.from(tableNames.pyeongOptions).select('*'),
-    supabase.from(tableNames.articles).select('*'),
-    supabase.from(tableNames.priceMetrics).select('*'),
+    supabase.from(tableNames.articles).select('*').eq('is_active', true).order('deal_price', { ascending: true }),
+    supabase.from(tableNames.priceMetrics).select('*').eq('trade_type', 'A1').eq('window_months', 3),
   ]);
 
   assertNoQueryError(interestTargets.error);
