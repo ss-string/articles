@@ -15,7 +15,7 @@ type AiAnalysisReportsPageProps = {
 
 const scoreCards: Array<{ key: AiReportScoreKey; label: string; getValue: (report: AiInvestmentReport) => number | null }> =
   [
-    { key: 'total', label: 'totalScore', getValue: (report) => report.totalScore },
+    { key: 'total', label: '종합', getValue: (report) => report.totalScore },
     { key: 'momentum', label: 'momentum', getValue: (report) => report.momentumScore },
     { key: 'technical', label: 'technical', getValue: (report) => report.technicalScore },
     { key: 'valuation', label: 'valuation', getValue: (report) => report.valuationScore },
@@ -157,7 +157,7 @@ function AiReportSearch({
         />
         <button type="submit">검색</button>
       </form>
-      {!hasSearchQuery ? <p className="ai-report-search-helper">totalScore 상위 추천</p> : null}
+      {!hasSearchQuery ? <p className="ai-report-search-helper">점수 상위 추천</p> : null}
       <div className="ai-report-search-results" aria-label="검색 결과">
         {filteredReports.map((report) => (
           <button
@@ -170,7 +170,7 @@ function AiReportSearch({
               onQueryChange(report.stockName);
             }}
           >
-            {report.stockName} {report.stockCode} · totalScore {getScoreLabel(report.totalScore)} · {report.historyCount}건
+            {report.stockName} {report.stockCode} · {getScoreLabel(report.totalScore)} · {report.historyCount}건
           </button>
         ))}
       </div>
@@ -208,7 +208,7 @@ function ReportHistoryList({
             <span>{history.indexOf(historyReport) === 0 ? '최신 리포트' : '과거 리포트'}</span>
             <span>발행일 {historyReport.issueDate ?? '-'}</span>
             <span>{historyReport.recommendation ?? '추천 없음'}</span>
-            <span>totalScore {getScoreLabel(historyReport.totalScore)}</span>
+            <span>{getScoreLabel(historyReport.totalScore)}</span>
             <small>
               momentum {getScoreLabel(historyReport.momentumScore)} · technical {getScoreLabel(historyReport.technicalScore)} ·
               valuation {getScoreLabel(historyReport.valuationScore)}
@@ -255,7 +255,7 @@ function RecommendationPanel({ report }: { report: AiInvestmentReport }) {
   return (
     <section className="ai-report-recommendation" aria-label="추천 의견">
       <strong>{report.recommendation ?? '추천 없음'}</strong>
-      <span>totalScore {getScoreLabel(report.totalScore)}</span>
+      <span>{getScoreLabel(report.totalScore)}</span>
     </section>
   );
 }

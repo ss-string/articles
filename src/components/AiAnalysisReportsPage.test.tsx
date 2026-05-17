@@ -160,19 +160,19 @@ describe('AiAnalysisReportsPage', () => {
     const searchInput = within(search).getByRole('searchbox', { name: '종목명 또는 종목코드 검색' });
 
     expect(searchInput).toHaveValue('');
-    expect(within(search).getByText('totalScore 상위 추천')).toBeInTheDocument();
+    expect(within(search).getByText('점수 상위 추천')).toBeInTheDocument();
     expect(within(search).getAllByRole('button').map((button) => button.textContent)).toEqual([
       '검색',
-      '삼성전자 005930 · totalScore 95 · 2건',
-      '추천종목2 100002 · totalScore 92 · 1건',
-      '추천종목3 100003 · totalScore 88 · 1건',
-      '추천종목4 100004 · totalScore 79 · 1건',
-      '추천종목5 100005 · totalScore 78 · 1건',
-      '추천종목6 100006 · totalScore 77 · 1건',
-      '추천종목7 100007 · totalScore 76 · 1건',
-      '추천종목8 100008 · totalScore 75 · 1건',
-      '추천종목9 100009 · totalScore 74 · 1건',
-      '추천종목10 100010 · totalScore 73 · 1건',
+      '삼성전자 005930 · 95 · 2건',
+      '추천종목2 100002 · 92 · 1건',
+      '추천종목3 100003 · 88 · 1건',
+      '추천종목4 100004 · 79 · 1건',
+      '추천종목5 100005 · 78 · 1건',
+      '추천종목6 100006 · 77 · 1건',
+      '추천종목7 100007 · 76 · 1건',
+      '추천종목8 100008 · 75 · 1건',
+      '추천종목9 100009 · 74 · 1건',
+      '추천종목10 100010 · 73 · 1건',
     ]);
     expect(within(search).queryByRole('button', { name: /추천종목1 100001/ })).not.toBeInTheDocument();
     expect(within(search).queryByRole('button', { name: /추천종목11 100011/ })).not.toBeInTheDocument();
@@ -205,7 +205,7 @@ describe('AiAnalysisReportsPage', () => {
     const search = await screen.findByRole('search', { name: 'AI 분석 리포트 검색' });
     const searchInput = within(search).getByRole('searchbox', { name: '종목명 또는 종목코드 검색' });
     expect(searchInput).toHaveValue('');
-    const latestSamsungSearchButton = within(search).getByRole('button', { name: /삼성전자 005930 · totalScore 69/ });
+    const latestSamsungSearchButton = within(search).getByRole('button', { name: /삼성전자 005930 · 69/ });
     expect(latestSamsungSearchButton).not.toHaveClass('active');
     expect(latestSamsungSearchButton).toHaveAttribute('aria-pressed', 'false');
     expect(within(search).getByRole('button', { name: /LG화학 051910/ })).toBeInTheDocument();
@@ -217,7 +217,7 @@ describe('AiAnalysisReportsPage', () => {
     expect(searchInput).toHaveValue('삼성전자');
     expect(within(search).getByRole('button', { name: /삼성전자 005930/ })).toHaveClass('active');
     expect(within(search).getByRole('button', { name: /삼성전자 005930/ })).toHaveAttribute('aria-pressed', 'true');
-    expect(within(search).queryByText('totalScore 상위 추천')).not.toBeInTheDocument();
+    expect(within(search).queryByText('점수 상위 추천')).not.toBeInTheDocument();
     expect(within(search).queryByRole('button', { name: /LG화학 051910/ })).not.toBeInTheDocument();
 
     let history = screen.getByRole('region', { name: '삼성전자 리포트 이력' });
@@ -232,8 +232,8 @@ describe('AiAnalysisReportsPage', () => {
     expect(screen.queryByText('LG화학 리포트 이력')).not.toBeInTheDocument();
 
     let scoreSelector = screen.getByRole('group', { name: '점수 선택' });
-    expect(within(scoreSelector).getByRole('button', { name: 'totalScore 69' })).toHaveClass('active');
-    expect(within(scoreSelector).getByRole('button', { name: 'totalScore 69' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(scoreSelector).getByRole('button', { name: '종합 69' })).toHaveClass('active');
+    expect(within(scoreSelector).getByRole('button', { name: '종합 69' })).toHaveAttribute('aria-pressed', 'true');
     expect(within(scoreSelector).getByRole('button', { name: 'momentum 78' })).toHaveAttribute('aria-pressed', 'false');
     const hero = screen.getByRole('region', { name: '선택 리포트 분석 결과' });
     expect(within(hero).getByRole('heading', { name: '삼성전자' })).toBeInTheDocument();
@@ -260,7 +260,7 @@ describe('AiAnalysisReportsPage', () => {
 
     const recommendation = screen.getByRole('region', { name: '추천 의견' });
     expect(within(recommendation).getByText('매수')).toBeInTheDocument();
-    expect(within(recommendation).getByText('totalScore 69')).toBeInTheDocument();
+    expect(within(recommendation).getByText('69')).toBeInTheDocument();
     expect(within(recommendation).queryByText(/DB recommendation/i)).not.toBeInTheDocument();
 
     const actionPlan = screen.getByRole('region', { name: '액션 플랜' });
@@ -279,7 +279,7 @@ describe('AiAnalysisReportsPage', () => {
 
     await user.click(within(scoreSelector).getByRole('button', { name: 'momentum 78' }));
 
-    expect(within(scoreSelector).getByRole('button', { name: 'totalScore 69' })).toHaveAttribute('aria-pressed', 'false');
+    expect(within(scoreSelector).getByRole('button', { name: '종합 69' })).toHaveAttribute('aria-pressed', 'false');
     expect(within(scoreSelector).getByRole('button', { name: 'momentum 78' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('heading', { name: 'Momentum Agent' })).toBeInTheDocument();
     expect(container.querySelector('.ai-report-agent-view')).toBeInTheDocument();
@@ -311,7 +311,7 @@ describe('AiAnalysisReportsPage', () => {
     await user.click(historyButtons[1]);
 
     scoreSelector = screen.getByRole('group', { name: '점수 선택' });
-    expect(within(scoreSelector).getByRole('button', { name: 'totalScore 61' })).toHaveClass('active');
+    expect(within(scoreSelector).getByRole('button', { name: '종합 61' })).toHaveClass('active');
     expect(historyButtons[0]).toHaveAttribute('aria-pressed', 'false');
     expect(historyButtons[1]).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('heading', { name: '이전 투자 의견' })).toBeInTheDocument();
@@ -332,7 +332,7 @@ describe('AiAnalysisReportsPage', () => {
     expect(within(history).getAllByRole('button')).toHaveLength(1);
     expect(screen.queryByRole('region', { name: '삼성전자 리포트 이력' })).not.toBeInTheDocument();
     expect(within(screen.getByRole('region', { name: '추천 의견' })).getByText('중립')).toBeInTheDocument();
-    expect(within(screen.getByRole('region', { name: '추천 의견' })).getByText('totalScore 55')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: '추천 의견' })).getByText('55')).toBeInTheDocument();
   });
 
   it('falls back to report payload content when selected agent output is missing', async () => {
