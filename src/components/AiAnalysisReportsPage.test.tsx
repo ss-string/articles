@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { RawAiInvestmentReportRow } from '../ai-reports/model';
 import { AiAnalysisReportsPage } from './AiAnalysisReportsPage';
@@ -152,6 +152,7 @@ describe('AiAnalysisReportsPage', () => {
     const searchInput = within(search).getByRole('searchbox', { name: '종목명 또는 종목코드 검색' });
 
     expect(searchInput).toHaveValue('');
+    expect(within(search).getByText('totalScore 상위 추천')).toBeInTheDocument();
     expect(within(search).getAllByRole('button').map((button) => button.textContent)).toEqual([
       '검색',
       '추천종목2 100002 · 1건',
@@ -196,6 +197,7 @@ describe('AiAnalysisReportsPage', () => {
     const searchInput = within(search).getByRole('searchbox', { name: '종목명 또는 종목코드 검색' });
     expect(searchInput).toHaveValue('');
     expect(within(search).getByRole('button', { name: /삼성전자 005930/ })).not.toHaveClass('active');
+    expect(within(search).getByRole('button', { name: /삼성전자 005930/ })).toHaveAttribute('aria-pressed', 'false');
     expect(within(search).getByRole('button', { name: /LG화학 051910/ })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: '종목 대표 목록' })).not.toBeInTheDocument();
     expect(screen.queryByRole('region', { name: '삼성전자 리포트 이력' })).not.toBeInTheDocument();
@@ -204,11 +206,15 @@ describe('AiAnalysisReportsPage', () => {
 
     expect(searchInput).toHaveValue('삼성전자');
     expect(within(search).getByRole('button', { name: /삼성전자 005930/ })).toHaveClass('active');
+    expect(within(search).getByRole('button', { name: /삼성전자 005930/ })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(search).queryByText('totalScore 상위 추천')).not.toBeInTheDocument();
     expect(within(search).queryByRole('button', { name: /LG화학 051910/ })).not.toBeInTheDocument();
 
     let history = screen.getByRole('region', { name: '삼성전자 리포트 이력' });
     const historyButtons = within(history).getAllByRole('button');
     expect(historyButtons).toHaveLength(2);
+    expect(historyButtons[0]).toHaveAttribute('aria-pressed', 'true');
+    expect(historyButtons[1]).toHaveAttribute('aria-pressed', 'false');
     expect(historyButtons[0]).toHaveTextContent('업데이트 2026-05-17 18:26');
     expect(historyButtons[1]).toHaveTextContent('업데이트 2026-05-10 18:00');
     expect(historyButtons[0]).toHaveTextContent('최신 리포트');
@@ -217,6 +223,8 @@ describe('AiAnalysisReportsPage', () => {
 
     let scoreSelector = screen.getByRole('group', { name: '점수 선택' });
     expect(within(scoreSelector).getByRole('button', { name: 'totalScore 69' })).toHaveClass('active');
+    expect(within(scoreSelector).getByRole('button', { name: 'totalScore 69' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(scoreSelector).getByRole('button', { name: 'momentum 78' })).toHaveAttribute('aria-pressed', 'false');
     const hero = screen.getByRole('region', { name: '선택 리포트 분석 결과' });
     expect(within(hero).getByRole('heading', { name: '삼성전자' })).toBeInTheDocument();
     expect(within(hero).queryByRole('heading', { name: /매수/ })).not.toBeInTheDocument();
@@ -261,6 +269,8 @@ describe('AiAnalysisReportsPage', () => {
 
     await user.click(within(scoreSelector).getByRole('button', { name: 'momentum 78' }));
 
+    expect(within(scoreSelector).getByRole('button', { name: 'totalScore 69' })).toHaveAttribute('aria-pressed', 'false');
+    expect(within(scoreSelector).getByRole('button', { name: 'momentum 78' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('heading', { name: 'Momentum Agent' })).toBeInTheDocument();
     expect(container.querySelector('.ai-report-agent-view')).toBeInTheDocument();
     expect(screen.getByText('모멘텀은 우호적입니다.')).toBeInTheDocument();
@@ -292,6 +302,8 @@ describe('AiAnalysisReportsPage', () => {
 
     scoreSelector = screen.getByRole('group', { name: '점수 선택' });
     expect(within(scoreSelector).getByRole('button', { name: 'totalScore 61' })).toHaveClass('active');
+    expect(historyButtons[0]).toHaveAttribute('aria-pressed', 'false');
+    expect(historyButtons[1]).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('heading', { name: '이전 투자 의견' })).toBeInTheDocument();
     expect(screen.getByText('250,000원')).toBeInTheDocument();
     expect(screen.getByText('추가 진입 보류')).toBeInTheDocument();
@@ -332,7 +344,7 @@ describe('AiAnalysisReportsPage', () => {
     expect(screen.getByText('agent_outputs가 없어 상세 limitations가 없습니다.')).toBeInTheDocument();
   });
 
-  it('returns to an unselected state when a selected stock disappears after reload', async () => {
+  it('does not silently reselect a selected stock after it disappears and reappears after reload', async () => {
     const user = userEvent.setup();
     const { rerender } = render(<AiAnalysisReportsPage queryRows={async () => [latestSamsungRow, lgChemRow]} />);
 
@@ -345,5 +357,47 @@ describe('AiAnalysisReportsPage', () => {
     expect(await screen.findByText('선택된 종목이 없습니다.')).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'LG화학 리포트 이력' })).not.toBeInTheDocument();
     expect(screen.queryByRole('region', { name: '삼성전자 리포트 이력' })).not.toBeInTheDocument();
+
+    rerender(<AiAnalysisReportsPage queryRows={async () => [latestSamsungRow, lgChemRow]} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('선택된 종목이 없습니다.')).toBeInTheDocument();
+    });
+    expect(screen.queryByRole('region', { name: '삼성전자 리포트 이력' })).not.toBeInTheDocument();
+    expect(within(screen.getByRole('search', { name: 'AI 분석 리포트 검색' })).getByRole('button', { name: /삼성전자 005930/ })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+  });
+
+  it('does not reserve the TLDR grid slot when the selected report has no investment thesis', async () => {
+    const user = userEvent.setup();
+    const noThesisRow = createSamsungRow({
+      report_payload: {
+        actionPlan: {
+          hold: '보유자는 유지',
+          entry: '분할 진입',
+          exitOrReview: '리스크 재점검',
+        },
+        bullFindings: ['목표주가 상향'],
+        bearFindings: ['파운드리 적자'],
+        riskChecklist: ['환율 변동'],
+      },
+    });
+    const { container } = render(<AiAnalysisReportsPage queryRows={async () => [noThesisRow]} />);
+
+    const search = await screen.findByRole('search', { name: 'AI 분석 리포트 검색' });
+    await user.click(within(search).getByRole('button', { name: /삼성전자 005930/ }));
+
+    expect(screen.queryByRole('region', { name: 'TL;DR' })).not.toBeInTheDocument();
+    expect(container.querySelector('.ai-report-total-view')).toHaveClass('no-tldr');
+    expect(Array.from(container.querySelector('.ai-report-total-view')?.children ?? []).map((child) => child.getAttribute('aria-label'))).toEqual([
+      '투자위원회 의견',
+      '액션 플랜',
+      '강세 근거',
+      '약세 근거',
+      '리스크 체크리스트',
+      'DB row 매핑',
+    ]);
   });
 });

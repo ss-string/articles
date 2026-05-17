@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
   selectReportHistory,
   type AgentKey,
@@ -156,9 +156,11 @@ function AiReportSearch({
         />
         <button type="submit">검색</button>
       </form>
+      {!hasSearchQuery ? <p className="ai-report-search-helper">totalScore 상위 추천</p> : null}
       <div className="ai-report-search-results" aria-label="검색 결과">
         {filteredReports.map((report) => (
           <button
+            aria-pressed={activeStockCode === report.stockCode}
             className={`ai-report-search-chip ${activeStockCode === report.stockCode ? 'active' : ''}`}
             key={report.stockCode}
             type="button"
@@ -195,6 +197,7 @@ function ReportHistoryList({
       <div className="ai-report-history-list">
         {history.map((historyReport) => (
           <button
+            aria-pressed={selectedReportId === historyReport.id}
             className={`ai-report-history-card ${selectedReportId === historyReport.id ? 'active' : ''}`}
             key={historyReport.id}
             type="button"
@@ -232,6 +235,7 @@ function ScoreSelector({
         return (
           <button
             aria-label={`${score.label} ${getScoreLabel(value)}`}
+            aria-pressed={selectedScore === score.key}
             className={`ai-report-score-card ${selectedScore === score.key ? 'active' : ''}`}
             key={score.key}
             type="button"
@@ -256,9 +260,11 @@ function RecommendationPanel({ report }: { report: AiInvestmentReport }) {
 }
 
 function TotalReportView({ report }: { report: AiInvestmentReport }) {
+  const hasTldr = Boolean(report.investmentThesis);
+
   return (
-    <div className="ai-report-total-view">
-      {report.investmentThesis ? (
+    <div className={`ai-report-total-view ${hasTldr ? '' : 'no-tldr'}`}>
+      {hasTldr ? (
         <section className="ai-report-content-card ai-report-tldr-card" aria-label="TL;DR">
           <h3>TL;DR</h3>
           <p>{report.investmentThesis}</p>
@@ -448,6 +454,14 @@ export function AiAnalysisReportsPage({ queryRows }: AiAnalysisReportsPageProps)
   const displayedSearchQuery = searchQuery ?? '';
   const history = useMemo(() => (activeStockCode ? selectReportHistory(reports, activeStockCode) : []), [activeStockCode, reports]);
   const selectedReport = activeStockCode ? history.find((report) => report.id === selectedReportId) ?? history[0] ?? null : null;
+
+  useEffect(() => {
+    if (state.status === 'success' && selectedStockCode && !selectedRepresentativeExists) {
+      setSelectedStockCode(null);
+      setSelectedReportId(null);
+      setSelectedScore('total');
+    }
+  }, [selectedRepresentativeExists, selectedStockCode, state.status]);
 
   function handleSelectStock(stockCode: string) {
     setSelectedStockCode(stockCode);

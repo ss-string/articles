@@ -649,6 +649,13 @@ h3 {
   gap: 8px;
 }
 
+.ai-report-search-helper {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 .ai-report-search-chip {
   display: inline-flex;
   min-height: 30px;
@@ -833,6 +840,15 @@ h3 {
     "committee risk"
     "debug debug";
   align-items: start;
+}
+
+.ai-report-total-view.no-tldr {
+  grid-template-areas:
+    "committee action"
+    "committee bull"
+    "committee bear"
+    "committee risk"
+    "debug debug";
 }
 
 .ai-report-agent-view {
@@ -3174,6 +3190,16 @@ h3 {
   .ai-report-total-view {
     grid-template-areas:
       "tldr"
+      "committee"
+      "action"
+      "bull"
+      "bear"
+      "risk"
+      "debug";
+  }
+
+  .ai-report-total-view.no-tldr {
+    grid-template-areas:
       "committee"
       "action"
       "bull"
