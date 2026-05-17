@@ -285,8 +285,13 @@ describe('App routing', () => {
 
     expect(window.location.pathname).toBe('/articles/finance/ai-reports');
     expect(screen.getByRole('heading', { level: 1, name: 'AI 분석 리포트' })).toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name: '삼성전자' })).toBeInTheDocument();
-    expect(screen.getAllByText('totalScore 69').length).toBeGreaterThan(0);
+    const aiSearch = await screen.findByRole('search', { name: 'AI 분석 리포트 검색' });
+    expect(within(aiSearch).getByRole('searchbox', { name: '종목명 또는 종목코드 검색' })).toHaveValue('');
+    expect(within(aiSearch).getByRole('button', { name: /삼성전자 005930/ })).toBeInTheDocument();
+    expect(screen.getByText('선택된 종목이 없습니다.')).toBeInTheDocument();
+    expect(screen.getByText('리포트를 선택해 분석 내용을 확인하세요.')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: '삼성전자 리포트 이력' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: '선택 리포트 분석 결과' })).not.toBeInTheDocument();
   });
 
   it('keeps base-prefixed browser paths when navigating finance tabs', async () => {
