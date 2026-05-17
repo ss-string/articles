@@ -31,6 +31,32 @@ function getScoreLabel(value: number | null) {
   return value === null ? '-' : String(value);
 }
 
+function compareSearchReportEntries(
+  left: { report: SearchReport; index: number },
+  right: { report: SearchReport; index: number },
+) {
+  const leftScore = left.report.totalScore;
+  const rightScore = right.report.totalScore;
+
+  if (leftScore !== null && rightScore === null) {
+    return -1;
+  }
+
+  if (leftScore === null && rightScore !== null) {
+    return 1;
+  }
+
+  if (leftScore !== null && rightScore !== null && rightScore !== leftScore) {
+    return rightScore - leftScore;
+  }
+
+  if (right.report.sortTimestamp !== left.report.sortTimestamp) {
+    return right.report.sortTimestamp - left.report.sortTimestamp;
+  }
+
+  return left.index - right.index;
+}
+
 function getReportSummary(report: AiInvestmentReport) {
   if (report.investmentThesis) {
     return report.investmentThesis;
@@ -81,53 +107,28 @@ type SearchReport = AiInvestmentReport & { historyCount: number };
 
 function AiReportSearch({
   reports,
-  activeStockCode,
+  emptyReports,
+  activeReportId,
   query,
   onQueryChange,
   onSelect,
 }: {
   reports: SearchReport[];
-  activeStockCode: string | null;
+  emptyReports: SearchReport[];
+  activeReportId: string | null;
   query: string;
   onQueryChange: (query: string) => void;
-  onSelect: (stockCode: string) => void;
+  onSelect: (stockCode: string, reportId?: string) => void;
 }) {
   const normalizedQuery = query.trim().toLowerCase();
   const hasSearchQuery = normalizedQuery.length > 0;
-  const indexedReports = reports.map((report, index) => ({ report, index }));
   const filteredReports = hasSearchQuery
-    ? indexedReports
-        .filter(
-          ({ report }) =>
-            report.stockName.toLowerCase().includes(normalizedQuery) ||
-            report.stockCode.toLowerCase().includes(normalizedQuery),
-        )
-        .map(({ report }) => report)
-    : [...indexedReports]
-        .sort((left, right) => {
-          const leftScore = left.report.totalScore;
-          const rightScore = right.report.totalScore;
-
-          if (leftScore !== null && rightScore === null) {
-            return -1;
-          }
-
-          if (leftScore === null && rightScore !== null) {
-            return 1;
-          }
-
-          if (leftScore !== null && rightScore !== null && rightScore !== leftScore) {
-            return rightScore - leftScore;
-          }
-
-          if (right.report.sortTimestamp !== left.report.sortTimestamp) {
-            return right.report.sortTimestamp - left.report.sortTimestamp;
-          }
-
-          return left.index - right.index;
-        })
-        .slice(0, 10)
-        .map(({ report }) => report);
+    ? reports.filter(
+        (report) =>
+          report.stockName.toLowerCase().includes(normalizedQuery) ||
+          report.stockCode.toLowerCase().includes(normalizedQuery),
+      )
+    : emptyReports;
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -138,7 +139,7 @@ function AiReportSearch({
 
     const firstReport = filteredReports[0];
     if (firstReport) {
-      onSelect(firstReport.stockCode);
+      onSelect(firstReport.stockCode, firstReport.id);
       onQueryChange(firstReport.stockName);
     }
   }
@@ -160,16 +161,16 @@ function AiReportSearch({
       <div className="ai-report-search-results" aria-label="검색 결과">
         {filteredReports.map((report) => (
           <button
-            aria-pressed={activeStockCode === report.stockCode}
-            className={`ai-report-search-chip ${activeStockCode === report.stockCode ? 'active' : ''}`}
-            key={report.stockCode}
+            aria-pressed={activeReportId === report.id}
+            className={`ai-report-search-chip ${activeReportId === report.id ? 'active' : ''}`}
+            key={report.id}
             type="button"
             onClick={() => {
-              onSelect(report.stockCode);
+              onSelect(report.stockCode, report.id);
               onQueryChange(report.stockName);
             }}
           >
-            {report.stockName} {report.stockCode} · {report.historyCount}건
+            {report.stockName} {report.stockCode} · totalScore {getScoreLabel(report.totalScore)} · {report.historyCount}건
           </button>
         ))}
       </div>
@@ -441,13 +442,36 @@ export function AiAnalysisReportsPage({ queryRows }: AiAnalysisReportsPageProps)
 
   const reports = state.status === 'success' ? state.catalog.reports : [];
   const representatives = state.status === 'success' ? state.catalog.representativeReports : [];
+  const historyCountsByStockCode = useMemo(
+    () =>
+      reports.reduce((counts, report) => {
+        counts.set(report.stockCode, (counts.get(report.stockCode) ?? 0) + 1);
+        return counts;
+      }, new Map<string, number>()),
+    [reports],
+  );
   const representativeSearchReports = useMemo<SearchReport[]>(
     () =>
       representatives.map((report) => ({
         ...report,
-        historyCount: selectReportHistory(reports, report.stockCode).length,
+        historyCount: historyCountsByStockCode.get(report.stockCode) ?? 0,
       })),
-    [representatives, reports],
+    [historyCountsByStockCode, representatives],
+  );
+  const emptySearchReports = useMemo<SearchReport[]>(
+    () =>
+      reports
+        .map((report, index) => ({
+          report: {
+            ...report,
+            historyCount: historyCountsByStockCode.get(report.stockCode) ?? 0,
+          },
+          index,
+        }))
+        .sort(compareSearchReportEntries)
+        .slice(0, 10)
+        .map(({ report }) => report),
+    [historyCountsByStockCode, reports],
   );
   const selectedRepresentativeExists = representatives.some((report) => report.stockCode === selectedStockCode);
   const activeStockCode = selectedRepresentativeExists ? selectedStockCode : null;
@@ -463,9 +487,9 @@ export function AiAnalysisReportsPage({ queryRows }: AiAnalysisReportsPageProps)
     }
   }, [selectedRepresentativeExists, selectedStockCode, state.status]);
 
-  function handleSelectStock(stockCode: string) {
+  function handleSelectStock(stockCode: string, reportId?: string) {
     setSelectedStockCode(stockCode);
-    setSelectedReportId(null);
+    setSelectedReportId(reportId ?? null);
     setSelectedScore('total');
   }
 
@@ -489,7 +513,8 @@ export function AiAnalysisReportsPage({ queryRows }: AiAnalysisReportsPageProps)
       {state.status === 'success' && representatives.length > 0 ? (
         <>
           <AiReportSearch
-            activeStockCode={activeStockCode}
+            activeReportId={selectedReport?.id ?? null}
+            emptyReports={emptySearchReports}
             query={displayedSearchQuery}
             reports={representativeSearchReports}
             onQueryChange={setSearchQuery}

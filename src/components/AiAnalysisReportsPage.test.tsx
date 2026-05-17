@@ -131,7 +131,15 @@ describe('AiAnalysisReportsPage', () => {
   });
 
   it('starts with an empty search input, no selected stock, and top total-score recommendations', async () => {
+    const highScoreOlderSamsungRow = createSamsungRow({
+      id: 'samsung-high-score-older',
+      issue_date: '2026-05-09',
+      total_score: 95,
+      updated_at: '2026-05-09T09:00:00+00:00',
+    });
     const rows = [
+      latestSamsungRow,
+      highScoreOlderSamsungRow,
       createRecommendationRow(1, 41, 17),
       createRecommendationRow(2, 92, 10),
       createRecommendationRow(3, 88, 11),
@@ -155,18 +163,19 @@ describe('AiAnalysisReportsPage', () => {
     expect(within(search).getByText('totalScore 상위 추천')).toBeInTheDocument();
     expect(within(search).getAllByRole('button').map((button) => button.textContent)).toEqual([
       '검색',
-      '추천종목2 100002 · 1건',
-      '추천종목3 100003 · 1건',
-      '추천종목4 100004 · 1건',
-      '추천종목5 100005 · 1건',
-      '추천종목6 100006 · 1건',
-      '추천종목7 100007 · 1건',
-      '추천종목8 100008 · 1건',
-      '추천종목9 100009 · 1건',
-      '추천종목10 100010 · 1건',
-      '추천종목11 100011 · 1건',
+      '삼성전자 005930 · totalScore 95 · 2건',
+      '추천종목2 100002 · totalScore 92 · 1건',
+      '추천종목3 100003 · totalScore 88 · 1건',
+      '추천종목4 100004 · totalScore 79 · 1건',
+      '추천종목5 100005 · totalScore 78 · 1건',
+      '추천종목6 100006 · totalScore 77 · 1건',
+      '추천종목7 100007 · totalScore 76 · 1건',
+      '추천종목8 100008 · totalScore 75 · 1건',
+      '추천종목9 100009 · totalScore 74 · 1건',
+      '추천종목10 100010 · totalScore 73 · 1건',
     ]);
     expect(within(search).queryByRole('button', { name: /추천종목1 100001/ })).not.toBeInTheDocument();
+    expect(within(search).queryByRole('button', { name: /추천종목11 100011/ })).not.toBeInTheDocument();
     expect(within(search).queryByRole('button', { name: /추천종목12 100012/ })).not.toBeInTheDocument();
     expect(screen.getByText('선택된 종목이 없습니다.')).toBeInTheDocument();
     expect(screen.getByText('리포트를 선택해 분석 내용을 확인하세요.')).toBeInTheDocument();
@@ -196,13 +205,14 @@ describe('AiAnalysisReportsPage', () => {
     const search = await screen.findByRole('search', { name: 'AI 분석 리포트 검색' });
     const searchInput = within(search).getByRole('searchbox', { name: '종목명 또는 종목코드 검색' });
     expect(searchInput).toHaveValue('');
-    expect(within(search).getByRole('button', { name: /삼성전자 005930/ })).not.toHaveClass('active');
-    expect(within(search).getByRole('button', { name: /삼성전자 005930/ })).toHaveAttribute('aria-pressed', 'false');
+    const latestSamsungSearchButton = within(search).getByRole('button', { name: /삼성전자 005930 · totalScore 69/ });
+    expect(latestSamsungSearchButton).not.toHaveClass('active');
+    expect(latestSamsungSearchButton).toHaveAttribute('aria-pressed', 'false');
     expect(within(search).getByRole('button', { name: /LG화학 051910/ })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: '종목 대표 목록' })).not.toBeInTheDocument();
     expect(screen.queryByRole('region', { name: '삼성전자 리포트 이력' })).not.toBeInTheDocument();
 
-    await user.click(within(search).getByRole('button', { name: /삼성전자 005930/ }));
+    await user.click(latestSamsungSearchButton);
 
     expect(searchInput).toHaveValue('삼성전자');
     expect(within(search).getByRole('button', { name: /삼성전자 005930/ })).toHaveClass('active');
