@@ -602,6 +602,371 @@ h3 {
   border-color: #fecdd3;
 }
 
+.ai-report-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.34fr) minmax(0, 1fr);
+  gap: 18px;
+}
+
+.ai-report-search-panel {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.ai-report-search-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.ai-report-search-form input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  border: 1px solid #d8dee8;
+  border-radius: 8px;
+  padding: 0 13px;
+  color: #172033;
+  font: inherit;
+  font-weight: 750;
+}
+
+.ai-report-search-form button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: #0f766e;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 850;
+  padding: 0 18px;
+}
+
+.ai-report-search-results {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ai-report-search-chip {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  border: 1px solid #d8dee8;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #465468;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 850;
+  padding: 0 10px;
+}
+
+.ai-report-search-chip.active {
+  border-color: #0f766e;
+  background: #eef7f6;
+  color: #0f766e;
+}
+
+.ai-report-sidebar,
+.ai-report-main,
+.ai-report-total-view,
+.ai-report-agent-view,
+.ai-report-history-list,
+.ai-report-finding-list {
+  display: grid;
+  gap: 12px;
+}
+
+.ai-report-panel,
+.ai-report-content-card,
+.ai-report-recommendation,
+.ai-report-score-card,
+.ai-report-history-card {
+  border: 1px solid #e3e7ee;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.ai-report-panel,
+.ai-report-content-card {
+  padding: 16px;
+}
+
+.ai-report-panel-title,
+.ai-report-agent-header,
+.ai-report-current-price,
+.ai-report-finding-card > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ai-report-panel-title {
+  margin-bottom: 12px;
+}
+
+.ai-report-panel-title span,
+.ai-report-detail-hero span,
+.ai-report-score-card span,
+.ai-report-muted,
+.ai-report-action-list dt {
+  color: #64748b;
+}
+
+.ai-report-history-card,
+.ai-report-score-card {
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ai-report-history-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.ai-report-history-card.active,
+.ai-report-score-card.active {
+  border-color: #0f766e;
+  background: #eef7f6;
+}
+
+.ai-report-detail-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 80px;
+  gap: 14px;
+  align-items: stretch;
+  border: 1px solid #e3e7ee;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 18px;
+}
+
+.ai-report-detail-hero h3,
+.ai-report-agent-header h3,
+.ai-report-markdown h3,
+.ai-report-markdown h4,
+.ai-report-content-card h3,
+.ai-report-content-card h4 {
+  margin: 0;
+  color: #152238;
+  letter-spacing: 0;
+}
+
+.ai-report-detail-hero p {
+  margin: 8px 0 0;
+  color: #465468;
+  line-height: 1.58;
+}
+
+.ai-report-recommendation {
+  display: grid;
+  width: 80px;
+  min-width: 0;
+  min-height: 88px;
+  place-items: center;
+  align-self: center;
+  justify-self: end;
+  gap: 4px;
+  padding: 8px;
+  border-color: #b9d6d2;
+  background: #eef7f6;
+  text-align: center;
+}
+
+.ai-report-recommendation strong {
+  color: #0f766e;
+  font-size: 1.15rem;
+}
+
+.ai-report-recommendation span {
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+.ai-report-score-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ai-report-score-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.ai-report-score-card strong {
+  color: #152238;
+  font-size: 1.5rem;
+}
+
+.ai-report-markdown,
+.ai-report-content-card {
+  overflow-wrap: anywhere;
+}
+
+.ai-report-content-card {
+  min-width: 0;
+}
+
+.ai-report-total-view {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    "tldr action"
+    "committee bull"
+    "committee bear"
+    "committee risk"
+    "debug debug";
+  align-items: start;
+}
+
+.ai-report-agent-view {
+  grid-template-columns: minmax(0, 1.12fr) minmax(330px, 0.88fr);
+  align-items: start;
+}
+
+.ai-report-content-md-card {
+  grid-area: committee;
+  color: #152238;
+  font-size: 0.88rem;
+  line-height: 1.62;
+}
+
+.ai-report-tldr-card {
+  grid-area: tldr;
+  background: #fbfdff;
+}
+
+.ai-report-action-card {
+  grid-area: action;
+}
+
+.ai-report-bull-card {
+  grid-area: bull;
+}
+
+.ai-report-bear-card {
+  grid-area: bear;
+}
+
+.ai-report-risk-card {
+  grid-area: risk;
+}
+
+.ai-report-debug-card {
+  grid-area: debug;
+}
+
+.ai-report-markdown {
+  display: grid;
+  gap: 14px;
+}
+
+.ai-report-markdown h3 {
+  font-size: 1.25rem;
+}
+
+.ai-report-markdown h4 {
+  margin-top: 6px;
+  font-size: 1.05rem;
+}
+
+.ai-report-markdown p,
+.ai-report-content-card p,
+.ai-report-content-card ul {
+  margin: 0;
+  color: #465468;
+}
+
+.ai-report-content-card ul {
+  padding-left: 18px;
+}
+
+.ai-report-current-price {
+  margin-top: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e3e7ee;
+}
+
+.ai-report-action-list {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 10px 12px;
+  margin: 0;
+}
+
+.ai-report-meta-list {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 8px 12px;
+  margin: 0;
+}
+
+.ai-report-meta-list dt {
+  color: #64748b;
+  font-weight: 800;
+}
+
+.ai-report-action-list dd,
+.ai-report-meta-list dd {
+  margin: 0;
+  color: #465468;
+  overflow-wrap: anywhere;
+}
+
+.ai-report-agent-header {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.ai-report-finding-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e3e7ee;
+  border-radius: 8px;
+  background: #f8fafc;
+  overflow-wrap: anywhere;
+}
+
+.ai-report-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #075985;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.ai-report-badge.bear {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.ai-report-badge.bull {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.ai-report-badge.confidence {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.ai-report-badge.missing {
+  background: #f1f5f9;
+  color: #475569;
+}
+
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2789,8 +3154,30 @@ h3 {
   .macro-regime-grid,
   .macro-modal-body,
   .volatility-modal-body,
-  .volatility-calendar-grid {
+  .volatility-calendar-grid,
+  .ai-report-layout,
+  .ai-report-total-view,
+  .ai-report-agent-view {
     grid-template-columns: 1fr;
+  }
+
+  .ai-report-total-view {
+    grid-template-areas:
+      "tldr"
+      "committee"
+      "action"
+      "bull"
+      "bear"
+      "risk"
+      "debug";
+  }
+
+  .ai-report-main {
+    order: 1;
+  }
+
+  .ai-report-sidebar {
+    order: 2;
   }
 
   .real-estate-layout {
@@ -2897,7 +3284,28 @@ h3 {
   .hot-news-grid,
   .price-compare,
   .detail-price-metrics,
-  .checkpoint-row {
+  .checkpoint-row,
+  .ai-report-search-form,
+  .ai-report-score-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-report-detail-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 80px;
+    align-items: center;
+  }
+
+  .ai-report-recommendation {
+    align-self: center;
+    justify-self: end;
+  }
+
+  .ai-report-action-list {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-report-meta-list {
     grid-template-columns: 1fr;
   }
 

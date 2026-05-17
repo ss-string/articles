@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { RawAiInvestmentReportRow } from './ai-reports/model';
 import type { RawConsensusRow, RawSummaryReportRow } from './consensus/model';
 import type { RawHotNewsReportRow } from './hot-news/model';
 import type { RawMacroRegimeRow } from './macro-regime/model';
@@ -21,6 +22,7 @@ type AppProps = {
   queryReports?: () => Promise<RawSummaryReportRow[]>;
   queryRealEstateTables?: () => Promise<RawRealEstateTables>;
   queryVolatilityRows?: () => Promise<RawVolatilityCalendarRow[]>;
+  queryAiInvestmentReportRows?: () => Promise<RawAiInvestmentReportRow[]>;
 };
 
 export default function App({
@@ -30,6 +32,7 @@ export default function App({
   queryReports,
   queryRealEstateTables,
   queryVolatilityRows,
+  queryAiInvestmentReportRows,
 }: AppProps) {
   const [activeRoute, setActiveRoute] = useState(() =>
     getActiveRouteForLocation(window.location.pathname, window.location.search),
@@ -61,7 +64,7 @@ export default function App({
     ) : activeRoute.path === '/finance/volatility-calendar' ? (
       <VolatilityCalendarPage queryRows={queryVolatilityRows} />
     ) : (
-      <AiAnalysisReportsPage />
+      <AiAnalysisReportsPage queryRows={queryAiInvestmentReportRows} />
     );
 
   return (

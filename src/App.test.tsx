@@ -1,6 +1,7 @@
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
+import type { RawAiInvestmentReportRow } from './ai-reports/model';
 import type { RawHotNewsReportRow } from './hot-news/model';
 import type { RawRealEstateTables } from './real-estate/model';
 import type { RawVolatilityCalendarRow } from './volatility-calendar/model';
@@ -87,6 +88,33 @@ const volatilityRows: RawVolatilityCalendarRow[] = [
         check_points: ['근원 CPI 전월비'],
       },
     ],
+  },
+];
+
+const aiInvestmentRows: RawAiInvestmentReportRow[] = [
+  {
+    id: 'samsung-ai-report',
+    market: 'KR',
+    stock_code: '005930',
+    stock_name: '삼성전자',
+    issue_date: '2026-05-17',
+    recommendation: '매수',
+    current_price: 273500,
+    total_score: 69,
+    momentum_score: 78,
+    technical_score: 74,
+    valuation_score: 56,
+    content_md: '## 투자 의견\n\n**매수** 관점입니다.',
+    report_payload: {
+      actionPlan: { hold: '보유자는 유지', entry: '분할 진입', exitOrReview: '리스크 재점검' },
+      bullFindings: ['목표주가 상향'],
+      bearFindings: ['파운드리 적자'],
+      riskChecklist: ['환율 변동'],
+      investmentThesis: 'AI 반도체 수요와 목표주가 상향이 핵심입니다.',
+    },
+    agent_outputs: {},
+    created_at: '2026-05-17T08:00:00+00:00',
+    updated_at: '2026-05-17T09:26:10.444135+00:00',
   },
 ];
 
@@ -248,6 +276,7 @@ describe('App routing', () => {
         queryHotNewsRows={async () => hotNewsRows}
         queryMacroRows={async () => macroRows}
         queryReports={async () => []}
+        queryAiInvestmentReportRows={async () => aiInvestmentRows}
       />,
     );
 
@@ -256,7 +285,8 @@ describe('App routing', () => {
 
     expect(window.location.pathname).toBe('/articles/finance/ai-reports');
     expect(screen.getByRole('heading', { level: 1, name: 'AI 분석 리포트' })).toBeInTheDocument();
-    expect(screen.getByText('표시할 AI 분석 리포트가 없습니다.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '삼성전자' })).toBeInTheDocument();
+    expect(screen.getAllByText('totalScore 69').length).toBeGreaterThan(0);
   });
 
   it('keeps base-prefixed browser paths when navigating finance tabs', async () => {
