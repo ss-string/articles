@@ -45,4 +45,12 @@ describe('styles.css layout regressions', () => {
     expect(styles).toContain('.real-estate-chart-line.actual');
     expect(styles).toContain('@media (max-width: 900px)');
   });
+
+  it('moves AI report history below details on mobile and keeps the recommendation badge on the right', () => {
+    expect(styles).toContain('.ai-report-main {\n    order: 1;\n  }');
+    expect(styles).toContain('.ai-report-sidebar {\n    order: 2;\n  }');
+    expect(styles).toContain('grid-template-columns: minmax(0, 1fr) 80px;');
+    expect(styles).toContain('justify-self: end;');
+    expect(styles).not.toContain('justify-self: center;');
+  });
 });
