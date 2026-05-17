@@ -107,6 +107,16 @@ const lgChemRow = createSamsungRow({
   updated_at: '2026-05-16T09:00:00+00:00',
 });
 
+function createRecommendationRow(index: number, totalScore: number, updatedDay: number) {
+  return createSamsungRow({
+    id: `recommendation-${index}`,
+    stock_code: String(100000 + index),
+    stock_name: `추천종목${index}`,
+    total_score: totalScore,
+    updated_at: `2026-05-${String(updatedDay).padStart(2, '0')}T09:00:00+00:00`,
+  });
+}
+
 describe('AiAnalysisReportsPage', () => {
   it('renders the loading state while reports are queried', () => {
     render(<AiAnalysisReportsPage queryRows={() => new Promise(() => undefined)} />);
@@ -120,16 +130,81 @@ describe('AiAnalysisReportsPage', () => {
     expect(await screen.findByText('표시할 AI 분석 리포트가 없습니다.')).toBeInTheDocument();
   });
 
+  it('starts with an empty search input, no selected stock, and top total-score recommendations', async () => {
+    const rows = [
+      createRecommendationRow(1, 41, 17),
+      createRecommendationRow(2, 92, 10),
+      createRecommendationRow(3, 88, 11),
+      createRecommendationRow(4, 79, 12),
+      createRecommendationRow(5, 78, 13),
+      createRecommendationRow(6, 77, 14),
+      createRecommendationRow(7, 76, 15),
+      createRecommendationRow(8, 75, 16),
+      createRecommendationRow(9, 74, 17),
+      createRecommendationRow(10, 73, 18),
+      createRecommendationRow(11, 72, 19),
+      createRecommendationRow(12, 71, 20),
+    ];
+
+    render(<AiAnalysisReportsPage queryRows={async () => rows} />);
+
+    const search = await screen.findByRole('search', { name: 'AI 분석 리포트 검색' });
+    const searchInput = within(search).getByRole('searchbox', { name: '종목명 또는 종목코드 검색' });
+
+    expect(searchInput).toHaveValue('');
+    expect(within(search).getAllByRole('button').map((button) => button.textContent)).toEqual([
+      '검색',
+      '추천종목2 100002 · 1건',
+      '추천종목3 100003 · 1건',
+      '추천종목4 100004 · 1건',
+      '추천종목5 100005 · 1건',
+      '추천종목6 100006 · 1건',
+      '추천종목7 100007 · 1건',
+      '추천종목8 100008 · 1건',
+      '추천종목9 100009 · 1건',
+      '추천종목10 100010 · 1건',
+      '추천종목11 100011 · 1건',
+    ]);
+    expect(within(search).queryByRole('button', { name: /추천종목1 100001/ })).not.toBeInTheDocument();
+    expect(within(search).queryByRole('button', { name: /추천종목12 100012/ })).not.toBeInTheDocument();
+    expect(screen.getByText('선택된 종목이 없습니다.')).toBeInTheDocument();
+    expect(screen.getByText('리포트를 선택해 분석 내용을 확인하세요.')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: /추천종목2 리포트 이력/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: '선택 리포트 분석 결과' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: '점수 선택' })).not.toBeInTheDocument();
+  });
+
+  it('does not auto-select the first recommendation when submitting an empty search', async () => {
+    const user = userEvent.setup();
+
+    render(<AiAnalysisReportsPage queryRows={async () => [latestSamsungRow, lgChemRow]} />);
+
+    const search = await screen.findByRole('search', { name: 'AI 분석 리포트 검색' });
+    await user.click(within(search).getByRole('button', { name: '검색' }));
+
+    expect(within(search).getByRole('searchbox', { name: '종목명 또는 종목코드 검색' })).toHaveValue('');
+    expect(screen.getByText('선택된 종목이 없습니다.')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: '삼성전자 리포트 이력' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: '선택 리포트 분석 결과' })).not.toBeInTheDocument();
+  });
+
   it('renders search entry, selected stock history, total report content, agent details, and selected history updates', async () => {
     const user = userEvent.setup();
     const { container } = render(<AiAnalysisReportsPage queryRows={async () => [olderSamsungRow, latestSamsungRow, lgChemRow]} />);
 
     const search = await screen.findByRole('search', { name: 'AI 분석 리포트 검색' });
     const searchInput = within(search).getByRole('searchbox', { name: '종목명 또는 종목코드 검색' });
+    expect(searchInput).toHaveValue('');
+    expect(within(search).getByRole('button', { name: /삼성전자 005930/ })).not.toHaveClass('active');
+    expect(within(search).getByRole('button', { name: /LG화학 051910/ })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: '종목 대표 목록' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: '삼성전자 리포트 이력' })).not.toBeInTheDocument();
+
+    await user.click(within(search).getByRole('button', { name: /삼성전자 005930/ }));
+
     expect(searchInput).toHaveValue('삼성전자');
     expect(within(search).getByRole('button', { name: /삼성전자 005930/ })).toHaveClass('active');
     expect(within(search).queryByRole('button', { name: /LG화학 051910/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: '종목 대표 목록' })).not.toBeInTheDocument();
 
     let history = screen.getByRole('region', { name: '삼성전자 리포트 이력' });
     const historyButtons = within(history).getAllByRole('button');
@@ -242,7 +317,10 @@ describe('AiAnalysisReportsPage', () => {
     const user = userEvent.setup();
     render(<AiAnalysisReportsPage queryRows={async () => [createSamsungRow({ agent_outputs: {} })]} />);
 
-    const scoreSelector = await screen.findByRole('group', { name: '점수 선택' });
+    const search = await screen.findByRole('search', { name: 'AI 분석 리포트 검색' });
+    await user.click(within(search).getByRole('button', { name: /삼성전자 005930/ }));
+
+    const scoreSelector = screen.getByRole('group', { name: '점수 선택' });
     await user.click(within(scoreSelector).getByRole('button', { name: 'momentum 78' }));
 
     expect(screen.getByRole('heading', { name: 'Momentum Agent' })).toBeInTheDocument();
@@ -254,7 +332,7 @@ describe('AiAnalysisReportsPage', () => {
     expect(screen.getByText('agent_outputs가 없어 상세 limitations가 없습니다.')).toBeInTheDocument();
   });
 
-  it('falls back to the latest available representative when a selected stock disappears after reload', async () => {
+  it('returns to an unselected state when a selected stock disappears after reload', async () => {
     const user = userEvent.setup();
     const { rerender } = render(<AiAnalysisReportsPage queryRows={async () => [latestSamsungRow, lgChemRow]} />);
 
@@ -264,7 +342,8 @@ describe('AiAnalysisReportsPage', () => {
 
     rerender(<AiAnalysisReportsPage queryRows={async () => [lgChemRow]} />);
 
-    expect(await screen.findByRole('region', { name: 'LG화학 리포트 이력' })).toBeInTheDocument();
+    expect(await screen.findByText('선택된 종목이 없습니다.')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'LG화학 리포트 이력' })).not.toBeInTheDocument();
     expect(screen.queryByRole('region', { name: '삼성전자 리포트 이력' })).not.toBeInTheDocument();
   });
 });

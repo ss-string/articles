@@ -93,15 +93,49 @@ function AiReportSearch({
   onSelect: (stockCode: string) => void;
 }) {
   const normalizedQuery = query.trim().toLowerCase();
-  const filteredReports = reports.filter(
-    (report) =>
-      normalizedQuery.length === 0 ||
-      report.stockName.toLowerCase().includes(normalizedQuery) ||
-      report.stockCode.toLowerCase().includes(normalizedQuery),
-  );
+  const hasSearchQuery = normalizedQuery.length > 0;
+  const indexedReports = reports.map((report, index) => ({ report, index }));
+  const filteredReports = hasSearchQuery
+    ? indexedReports
+        .filter(
+          ({ report }) =>
+            report.stockName.toLowerCase().includes(normalizedQuery) ||
+            report.stockCode.toLowerCase().includes(normalizedQuery),
+        )
+        .map(({ report }) => report)
+    : [...indexedReports]
+        .sort((left, right) => {
+          const leftScore = left.report.totalScore;
+          const rightScore = right.report.totalScore;
+
+          if (leftScore !== null && rightScore === null) {
+            return -1;
+          }
+
+          if (leftScore === null && rightScore !== null) {
+            return 1;
+          }
+
+          if (leftScore !== null && rightScore !== null && rightScore !== leftScore) {
+            return rightScore - leftScore;
+          }
+
+          if (right.report.sortTimestamp !== left.report.sortTimestamp) {
+            return right.report.sortTimestamp - left.report.sortTimestamp;
+          }
+
+          return left.index - right.index;
+        })
+        .slice(0, 10)
+        .map(({ report }) => report);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!hasSearchQuery) {
+      return;
+    }
+
     const firstReport = filteredReports[0];
     if (firstReport) {
       onSelect(firstReport.stockCode);
@@ -410,11 +444,10 @@ export function AiAnalysisReportsPage({ queryRows }: AiAnalysisReportsPageProps)
     [representatives, reports],
   );
   const selectedRepresentativeExists = representatives.some((report) => report.stockCode === selectedStockCode);
-  const activeStockCode = selectedRepresentativeExists ? selectedStockCode : representatives[0]?.stockCode ?? null;
-  const activeRepresentative = representatives.find((report) => report.stockCode === activeStockCode) ?? null;
-  const displayedSearchQuery = searchQuery ?? activeRepresentative?.stockName ?? '';
+  const activeStockCode = selectedRepresentativeExists ? selectedStockCode : null;
+  const displayedSearchQuery = searchQuery ?? '';
   const history = useMemo(() => (activeStockCode ? selectReportHistory(reports, activeStockCode) : []), [activeStockCode, reports]);
-  const selectedReport = history.find((report) => report.id === selectedReportId) ?? history[0] ?? null;
+  const selectedReport = activeStockCode ? history.find((report) => report.id === selectedReportId) ?? history[0] ?? null : null;
 
   function handleSelectStock(stockCode: string) {
     setSelectedStockCode(stockCode);
@@ -439,7 +472,7 @@ export function AiAnalysisReportsPage({ queryRows }: AiAnalysisReportsPageProps)
       {state.status === 'success' && representatives.length === 0 ? (
         <div className="state-panel">표시할 AI 분석 리포트가 없습니다.</div>
       ) : null}
-      {state.status === 'success' && selectedReport ? (
+      {state.status === 'success' && representatives.length > 0 ? (
         <>
           <AiReportSearch
             activeStockCode={activeStockCode}
@@ -449,36 +482,64 @@ export function AiAnalysisReportsPage({ queryRows }: AiAnalysisReportsPageProps)
             onSelect={handleSelectStock}
           />
 
-          <div className="ai-report-layout">
-            <div className="ai-report-sidebar">
-            <ReportHistoryList
-              history={history}
-              report={selectedReport}
-              selectedReportId={selectedReport.id}
-              onSelect={handleSelectReport}
-            />
-            </div>
-
-            <div className="ai-report-main">
-            <section className="ai-report-detail-hero" aria-label="선택 리포트 분석 결과">
-              <div>
-                <span>
-                  {selectedReport.stockCode} · {selectedReport.issueDate ?? selectedReport.displayUpdatedAt ?? '-'}
-                </span>
-                <h3>{selectedReport.stockName}</h3>
+          {selectedReport ? (
+            <div className="ai-report-layout">
+              <div className="ai-report-sidebar">
+                <ReportHistoryList
+                  history={history}
+                  report={selectedReport}
+                  selectedReportId={selectedReport.id}
+                  onSelect={handleSelectReport}
+                />
               </div>
-              <RecommendationPanel report={selectedReport} />
-            </section>
 
-            <ScoreSelector report={selectedReport} selectedScore={selectedScore} onSelect={setSelectedScore} />
+              <div className="ai-report-main">
+                <section className="ai-report-detail-hero" aria-label="선택 리포트 분석 결과">
+                  <div>
+                    <span>
+                      {selectedReport.stockCode} · {selectedReport.issueDate ?? selectedReport.displayUpdatedAt ?? '-'}
+                    </span>
+                    <h3>{selectedReport.stockName}</h3>
+                  </div>
+                  <RecommendationPanel report={selectedReport} />
+                </section>
 
-            {selectedScore === 'total' ? (
-              <TotalReportView report={selectedReport} />
-            ) : (
-              <AgentReportView report={selectedReport} scoreKey={selectedScore} />
-            )}
+                <ScoreSelector report={selectedReport} selectedScore={selectedScore} onSelect={setSelectedScore} />
+
+                {selectedScore === 'total' ? (
+                  <TotalReportView report={selectedReport} />
+                ) : (
+                  <AgentReportView report={selectedReport} scoreKey={selectedScore} />
+                )}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="ai-report-layout">
+              <div className="ai-report-sidebar">
+                <section className="ai-report-panel" aria-label="리포트 이력 미선택 상태">
+                  <div className="ai-report-panel-title">
+                    <span>리포트 이력</span>
+                    <strong>미선택</strong>
+                  </div>
+                  <p className="ai-report-muted">선택된 종목이 없습니다.</p>
+                </section>
+              </div>
+              <div className="ai-report-main">
+                <section className="ai-report-empty-detail state-panel" aria-label="상세 미선택 상태">
+                  <strong>리포트를 선택해 분석 내용을 확인하세요.</strong>
+                  <p>상단의 추천 종목이나 검색 결과를 선택하면 분석 본문과 점수 카드가 표시됩니다.</p>
+                  <div className="ai-report-score-grid ai-report-score-grid-placeholder" aria-hidden="true">
+                    {scoreCards.map((score) => (
+                      <div className="ai-report-score-card" key={score.key}>
+                        <span>{score.label}</span>
+                        <strong>-</strong>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </div>
+            </div>
+          )}
         </>
       ) : null}
     </section>

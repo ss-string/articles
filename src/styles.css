@@ -669,6 +669,16 @@ h3 {
   color: #0f766e;
 }
 
+.ai-report-empty-detail {
+  display: grid;
+  gap: 14px;
+}
+
+.ai-report-score-grid-placeholder {
+  margin-top: 4px;
+  opacity: 0.55;
+}
+
 .ai-report-sidebar,
 .ai-report-main,
 .ai-report-total-view,
