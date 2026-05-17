@@ -621,6 +621,7 @@ h3 {
 }
 
 .ai-report-search-form input {
+  -webkit-appearance: searchfield;
   width: 100%;
   min-width: 0;
   min-height: 42px;
@@ -630,6 +631,12 @@ h3 {
   color: #172033;
   font: inherit;
   font-weight: 750;
+}
+
+.ai-report-search-form input::-webkit-search-cancel-button {
+  -webkit-appearance: searchfield-cancel-button;
+  display: block;
+  cursor: pointer;
 }
 
 .ai-report-search-form button {
