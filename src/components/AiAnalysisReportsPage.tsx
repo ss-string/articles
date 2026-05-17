@@ -460,7 +460,7 @@ export function AiAnalysisReportsPage({ queryRows }: AiAnalysisReportsPageProps)
   );
   const emptySearchReports = useMemo<SearchReport[]>(
     () =>
-      reports
+      representatives
         .map((report, index) => ({
           report: {
             ...report,
@@ -471,7 +471,7 @@ export function AiAnalysisReportsPage({ queryRows }: AiAnalysisReportsPageProps)
         .sort(compareSearchReportEntries)
         .slice(0, 10)
         .map(({ report }) => report),
-    [historyCountsByStockCode, reports],
+    [historyCountsByStockCode, representatives],
   );
   const selectedRepresentativeExists = representatives.some((report) => report.stockCode === selectedStockCode);
   const activeStockCode = selectedRepresentativeExists ? selectedStockCode : null;

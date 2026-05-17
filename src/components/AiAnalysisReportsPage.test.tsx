@@ -130,7 +130,11 @@ describe('AiAnalysisReportsPage', () => {
     expect(await screen.findByText('표시할 AI 분석 리포트가 없습니다.')).toBeInTheDocument();
   });
 
-  it('starts with an empty search input, no selected stock, and top total-score recommendations', async () => {
+  it('starts with an empty search input, no selected stock, and top latest-report score recommendations by stock', async () => {
+    const latestMediumScoreSamsungRow = createSamsungRow({
+      total_score: 80,
+      updated_at: '2026-05-17T09:26:10.444135+00:00',
+    });
     const highScoreOlderSamsungRow = createSamsungRow({
       id: 'samsung-high-score-older',
       issue_date: '2026-05-09',
@@ -138,7 +142,7 @@ describe('AiAnalysisReportsPage', () => {
       updated_at: '2026-05-09T09:00:00+00:00',
     });
     const rows = [
-      latestSamsungRow,
+      latestMediumScoreSamsungRow,
       highScoreOlderSamsungRow,
       createRecommendationRow(1, 41, 17),
       createRecommendationRow(2, 92, 10),
@@ -163,9 +167,9 @@ describe('AiAnalysisReportsPage', () => {
     expect(within(search).getByText('점수 상위 추천')).toBeInTheDocument();
     expect(within(search).getAllByRole('button').map((button) => button.textContent)).toEqual([
       '검색',
-      '삼성전자 005930 · 95 · 2건',
       '추천종목2 100002 · 92 · 1건',
       '추천종목3 100003 · 88 · 1건',
+      '삼성전자 005930 · 80 · 2건',
       '추천종목4 100004 · 79 · 1건',
       '추천종목5 100005 · 78 · 1건',
       '추천종목6 100006 · 77 · 1건',
@@ -174,6 +178,7 @@ describe('AiAnalysisReportsPage', () => {
       '추천종목9 100009 · 74 · 1건',
       '추천종목10 100010 · 73 · 1건',
     ]);
+    expect(within(search).queryByRole('button', { name: /삼성전자 005930 · 95/ })).not.toBeInTheDocument();
     expect(within(search).queryByRole('button', { name: /추천종목1 100001/ })).not.toBeInTheDocument();
     expect(within(search).queryByRole('button', { name: /추천종목11 100011/ })).not.toBeInTheDocument();
     expect(within(search).queryByRole('button', { name: /추천종목12 100012/ })).not.toBeInTheDocument();
