@@ -60,4 +60,10 @@ describe('styles.css layout regressions', () => {
     expect(styles).toContain('justify-self: end;');
     expect(styles).not.toContain('justify-self: center;');
   });
+
+  it('keeps the native WebKit search cancel control visible for AI report search', () => {
+    expectRuleDeclaration('.ai-report-search-form input', '-webkit-appearance: searchfield;');
+    expectRuleDeclaration('.ai-report-search-form input::-webkit-search-cancel-button', '-webkit-appearance: searchfield-cancel-button;');
+    expectRuleDeclaration('.ai-report-search-form input::-webkit-search-cancel-button', 'display: block;');
+  });
 });
